@@ -19,6 +19,7 @@ Lumi 是一個跨平台（Windows / macOS）的桌面 AI 助理，使用者自�
 2. `plan/00-master-plan.md`：里程碑與已定案的決策
 3. 目前要執行的那份 `plan/NN-*.md`
 4. 動到小精靈時：`docs/sprite-dev-guide.md`
+5. 動到工作台或設定視窗的介面時：`docs/ui-spec.md`
 
 ## 3. 工作方式
 
@@ -97,6 +98,9 @@ Lumi.App ──► Lumi.Sprites.* ──► Lumi.Sprites.Abstractions
 - 一律繼承 `ToolBase<TArgs>`，參數用強型別 record；JSON Schema 由 `JsonSchemaExporter` 自動產生，不要手寫。
 - `Descriptor` 必須寫清楚的 `Description`：模型要靠它判斷何時呼叫。
 - 必須宣告**權限等級**：`ReadOnly`、`Write`、`Network`、`Destructive`。`Write` 以上預設要使用者確認。
+  - 權限等級是必填項目，不給預設值；沒有宣告就無法編譯。移植過來的工具也要逐一補上。
+  - `Write`、`Network` 可以選「本次對話都允許」（只存在記憶體）；`Destructive` 每次都問，不提供記住選項。
+  - 確認 UI 與拒絕、停止時的行為見 `docs/ui-spec.md` 第 5 節。
 - 必須宣告**可用模式**：工作台、小精靈，或兩者都可用。
 - 檔案類工具只能存取 `ToolContext.Scope`（使用者加入的檔案與資料夾）。路徑要正規化並檢查，防止用 `..` 跳出範圍。
 - 錯誤用 `ToolResult.Error(...)` 回傳給模型，不要讓例外直接往外丟。
@@ -138,6 +142,9 @@ Lumi.App ──► Lumi.Sprites.* ──► Lumi.Sprites.Abstractions
 - 背景執行緒不要直接改 UI，要透過 `Dispatcher.UIThread`。
 - **所有顯示對話內容的地方都要經過 `EmojiText`**（切成字形叢集、emoji 叢集指定 emoji 字型）。不要直接設定 `TextBlock.Text`，否則 ❤️‍🔥 這類組合 emoji 會被拆開。
 - 介面文字使用繁體中文，集中放在資源檔。
+- **字型一律打包進 app**（IBM Plex Sans、Noto Sans TC、JetBrains Mono），元件只引用 `LumiUiFont`／`LumiMonoFont` 資源，不直接寫字型名稱，也不依賴系統字型。
+- **顏色一律引用主題 token**（Light／Dark 兩套，預設跟隨系統），不在元件裡寫死色碼。token 清單見 `docs/ui-spec.md` 第 1 節。
+- 回應中（含等待工具確認）停用模式切換與模型切換；小精靈回應中仍可「開啟工作台查看」，但工作台此時不能送出訊息（`docs/ui-spec.md` 2.2）。
 - 小精靈的「殼」與「角色」嚴格分離，詳見 `docs/sprite-dev-guide.md`。
 
 ## 13. 繪製與效能（POC 實測得到的教訓）
