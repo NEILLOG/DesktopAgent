@@ -51,8 +51,8 @@ Lumi.App ──► Lumi.Sprites.* ──► Lumi.Sprites.Abstractions
    ├──► Lumi.Providers ─┐
    ├──► Lumi.Tools ─────┤
    ├──► Lumi.Speech ────┼──► Lumi.Core
-   ├──► Lumi.Infrastructure ┘
-   └──► Lumi.Platform
+   ├──► Lumi.Infrastructure ┤
+   └──► Lumi.Platform ──────┘
 ```
 
 | 專案 | 職責 | 規則 |
@@ -61,8 +61,8 @@ Lumi.App ──► Lumi.Sprites.* ──► Lumi.Sprites.Abstractions
 | `Lumi.Providers` | Anthropic 原生、OpenAI 相容 | 只透過 `IChatProvider` 對外；各家格式轉換留在這一層 |
 | `Lumi.Tools` | 內建工具 | 每個工具都是 `ToolBase<TArgs>` |
 | `Lumi.Speech` | 公司內部 Whisper 服務的客戶端 | 只透過 `ISpeechToText` 對外 |
-| `Lumi.Infrastructure` | SQLite、設定檔、金鑰安全儲存 | 實作 Core 的儲存介面 |
-| `Lumi.Platform` | 所有 P/Invoke（游標、點擊穿透、錄音） | **原生呼叫只能出現在這裡** |
+| `Lumi.Infrastructure` | SQLite、設定檔 | 實作 Core 的儲存介面 |
+| `Lumi.Platform` | 所有 P/Invoke（游標、點擊穿透、錄音）、金鑰安全儲存（DPAPI、Keychain） | **原生呼叫只能出現在這裡**；實作 Core 的平台介面 |
 | `Lumi.Sprites.Abstractions` | 角色介面、狀態、manifest、`SpriteLimits` | 帶版本號；改介面要升版並記錄 |
 | `Lumi.Sprites.*` | 各個角色 | 只畫自己，不碰視窗、平台、對話 |
 | `Lumi.App` | Avalonia UI、工作台、小精靈殼、設定頁、DI 組裝 | 唯一的組裝點（composition root） |
@@ -128,6 +128,8 @@ Lumi.App ──► Lumi.Sprites.* ──► Lumi.Sprites.Abstractions
 - 「連線」（供應商、Base URL、金鑰）和「模型設定」是兩層，各自可以新增多筆。
 - 工作台與小精靈可以各自指定預設模型。
 - **金鑰與 Token 只能存在 `ISecretStore`**，不能出現在設定檔、SQLite、log、例外訊息或 UI 截圖中。log 一律遮蔽。
+- 金鑰在程式裡以 `SecretValue` 傳遞（`ToString()` 回傳 `***`），只在真正使用的地方呼叫 `Reveal()`。
+- macOS Keychain 的 service 名稱固定為 `io.github.neillog.lumi`（同 bundle id），不得更改。
 
 ## 11. 語音
 

@@ -29,7 +29,9 @@ Lumi 是一個跨平台（Windows / macOS）的桌面 AI 助理。使用者自�
 agent.md                    給 AI agent 與開發者的開發指引（必讀）
 plan/                       工作計畫
   00-master-plan.md         主計畫：里程碑、決策紀錄、待確認事項
+  01-skeleton-chat.md       M1 細部計畫：方案骨架、金鑰儲存、Anthropic、工作台
 docs/
+  ui-spec.md                工作台 UI 規格（字型、色系、元件行為）
   sprite-dev-guide.md       小精靈角色開發指南
 poc/
   Lumi.OrbPoc/              光球 POC（驗證小精靈視窗的可行性）
@@ -42,8 +44,8 @@ Lumi.Core                   資料模型、核心介面、對話迴圈（不依�
 Lumi.Providers              Anthropic、OpenAI 相容
 Lumi.Tools                  內建工具
 Lumi.Speech                 語音轉文字
-Lumi.Infrastructure         SQLite、設定、金鑰安全儲存
-Lumi.Platform               原生 API（游標、點擊穿透、錄音）
+Lumi.Infrastructure         SQLite、設定
+Lumi.Platform               原生 API（游標、點擊穿透、錄音）、金鑰安全儲存（DPAPI、Keychain）
 Lumi.Sprites.Abstractions   小精靈角色介面
 Lumi.Sprites.*              各個角色
 Lumi.App                    Avalonia 介面

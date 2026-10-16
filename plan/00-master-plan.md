@@ -49,6 +49,7 @@ M2、M3、M5 都只依賴 M1，可以依需要調整順序。
 - 建立方案與各專案，相依方向依 `agent.md` 第 5 節
 - 用 Generic Host 組裝 DI；Avalonia 從 Host 取得服務
 - 外觀基礎：打包字型與 `LumiUiFont`／`LumiMonoFont` 資源、Light／Dark 主題 token（預設跟隨系統），規格見 `docs/ui-spec.md` 第 1 節
+- `ISecretStore`：Windows DPAPI、macOS Keychain（從 M2 提前）
 - Core：`ChatEvent`、訊息與對話模型、`IChatProvider`
 - Anthropic Provider：串流（SSE）、usage
 - 工作台最小版：訊息列表、輸入框、送出與停止
@@ -63,7 +64,6 @@ M2、M3、M5 都只依賴 M1，可以依需要調整順序。
 
 - 連線與模型設定，兩層各自可以新增多筆；測試連線；列出可選模型
 - OpenAI 相容 Provider（涵蓋 OpenAI、Ollama、公司 Gateway）
-- `ISecretStore`：Windows DPAPI、macOS Keychain
 - 頂端模型切換選單；工作台與小精靈可以各自指定預設模型
 - 工具列：設定、歷史對話、新對話、切換到小精靈；回應中停用模式切換與模型切換
 - 設定頁做成獨立視窗（可與工作台並排）
@@ -196,6 +196,10 @@ M2、M3、M5 都只依賴 M1，可以依需要調整順序。
 | 2026-10-16 | 權限確認嵌在工具卡片內；`Destructive` 每次詢問，`Write`／`Network` 可選本次對話都允許 |
 | 2026-10-16 | 深淺兩套色系，預設跟隨系統；琥珀 `#F2B544` 為唯一強調色 |
 | 2026-10-16 | 字型統一打包：IBM Plex Sans、Noto Sans TC、JetBrains Mono（兩平台相同） |
+| 2026-10-17 | M1 拆成 1A～1D 四段，細部計畫見 `plan/01-skeleton-chat.md`；只建立當段需要的專案 |
+| 2026-10-17 | `ISecretStore`（DPAPI、Keychain）從 M2 提前到 M1；實作放 `Lumi.Platform`，不放 Infrastructure |
+| 2026-10-17 | macOS bundle id 與 Keychain service 名稱定為 `io.github.neillog.lumi`，定案後不更改 |
+| 2026-10-17 | 「Core 不引用 Avalonia」與「P/Invoke 只在 Platform」以架構測試保證 |
 
 ## 待確認事項
 
