@@ -1,6 +1,6 @@
 # 01 方案骨架與基本對話
 
-- 狀態：1A、1B、1C 已完成（Windows 待驗）；**1D 程式完成，待手動驗收（D10，需要你的金鑰）**
+- 狀態：1A、1B、1C 已完成（Windows 待驗）；**1D 完成（Mac 手動驗收通過）**；M1 只剩 Windows 驗證
 - 對應里程碑：M1
 
 ## 目標
@@ -666,7 +666,7 @@ public sealed class ConversationService
 - [x] **D7 缺金鑰對話框**：`ApiKeyDialog` 與觸發、儲存後自動重送。
 - [x] **D8 啟動流程**：載入最近一則對話；DI 組裝。
 - [x] **D9 架構測試**：`Microsoft.Data.Sqlite` 只在 Infrastructure。
-- [ ] **D10 手動驗收**（Mac，需要你的金鑰；**待你執行**）：見下方驗收標準。
+- [x] **D10 手動驗收**（Mac 已通過；Windows 待驗）：見下方驗收標準。
 - [x] **D11 文件**：README、主計畫 M1 狀態、本檔實作紀錄。
 
 ### 驗收標準
@@ -674,12 +674,13 @@ public sealed class ConversationService
 主計畫 M1 的完成標準：能連續對話、中途停止、重開程式後對話還在；Core 不引用 Avalonia；乾淨的 Windows 11 上沒有出現細明體或正黑體。具體：
 
 - [x] `dotnet build` 零警告，`dotnet test` 全過。
-- [ ] 實際和 `claude-opus-5-5` 連續對話至少 3 輪，文字邊收邊顯示，中文與 emoji 正常。
-- [ ] 回應中按停止：立刻停下，已收到的文字留著並標示「你已停止這次回應」，之後可以繼續對話。
-- [ ] 關掉再打開，最近一則對話完整還原（含已停止的訊息與思考過程）。
-- [ ] 沒有金鑰時送出會跳對話框，存好後自動送出；錯誤金鑰會再跳一次並說明是金鑰無效。
-- [ ] 狀態列的 token 數字與 API 回傳的 usage 一致。
-- [ ] 資料庫裡搜尋不到金鑰字串。
+- [x] 實際和 `claude-opus-5-5` 連續對話至少 3 輪，文字邊收邊顯示，中文與 emoji 正常。
+- [x] 回應中按停止：立刻停下，已收到的文字留著並標示「你已停止這次回應」，之後可以繼續對話。
+- [x] 關掉再打開，最近一則對話完整還原（含已停止的訊息與思考過程）。
+- [x] 沒有金鑰時送出會跳對話框，存好後自動送出。
+- [ ] 錯誤金鑰會再跳一次並說明是金鑰無效（ViewModel 測試涵蓋，實機未測）。
+- [x] 狀態列的 token 數字與 API 回傳的 usage 一致。
+- [x] 資料庫裡搜尋不到金鑰字串。
 - [ ] Windows 11 上同樣可以完成以上操作（M1 整體的 Windows 驗證一起做）。
 
 ## 實作紀錄
@@ -738,5 +739,8 @@ public sealed class ConversationService
 - `Lumi.App.Tests` 複製了一份 `Lumi.Core.Tests` 的假 store 與假 Provider（測試專案不互相參考，同 1B 的做法）。
 - `AnthropicDevOptions.ApiKeySecret` 改成公開常數，金鑰對話框與 Provider 共用同一個名稱。
 - 連線狀態點（狀態列右側）照計畫 M1 不做。
-- **尚未驗證**：D10 手動驗收（需要你的金鑰）；Windows 全部。
+- **D10 手動驗收（2026-10-18，Mac）**：使用者實測通過——缺金鑰對話框存好後自動送出、連續對話 3 輪以上（中文與 emoji 正常）、中途停止、重開後還原、狀態列 token 數字。
+  另外確認：金鑰在登入鑰匙圈（service `io.github.neillog.lumi`、account `connection/dev-anthropic/api-key`）；資料庫有 5 則使用者訊息、4 則完成與 1 則已停止的助理訊息。
+  資料庫搜尋 `sk-ant`：第一次用 `grep -c` 回報 1 筆，但之後用原始位元組逐一比對、`grep -a -o`、`strings` 三種方式都是 0 筆，也不在任何訊息或標題裡，第一次的結果無法重現。程式上也沒有任何路徑會把金鑰寫進資料庫。
+- **尚未驗證**：Windows 全部（「錯誤金鑰會再跳一次對話框」這項 Mac 也沒有實測，邏輯由 ViewModel 測試涵蓋）。
 
