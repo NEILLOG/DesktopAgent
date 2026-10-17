@@ -1,6 +1,6 @@
 # 01 方案骨架與基本對話
 
-- 狀態：1A、1B、1C 已完成（Windows 待驗）；1D 只列大綱，輪到時再展開並確認
+- 狀態：1A、1B、1C 已完成（Windows 待驗）；**1D 程式完成，待手動驗收（D10，需要你的金鑰）**
 - 對應里程碑：M1
 
 ## 目標
@@ -49,6 +49,11 @@ M1 範圍大，拆成四段，每段結束都要能編譯、能執行、測試�
 | Q9 | 要不要開「拒絕時自動改用其他模型」（server-side fallbacks）？ | 建議開：`claude-opus-5-5` 的安全分類器偶爾會誤擋正常請求（回 `stop_reason: refusal`）；開了之後由 API 在同一次呼叫內改用其他模型回答。要加 beta 標頭，回應可能多出 `fallback` 區塊，要原樣保存才能再送回去。可在設定裡關掉。 | ✅ 已確認 | 1C |
 | Q10 | `ChatEvent` 八種事件，1C 要全部定義嗎？ | 建議 1C 只定義會發出的五種（`TextDelta`、`ThinkingDelta`、`Usage`、`Completed`、`Failed`）；工具相關的三種（`ToolCallStarted`、`ToolCallCompleted`、`ApprovalRequired`）到 M3 有工具規格時再加，避免先猜欄位。 | ✅ 已確認 | 1C、M3 |
 | Q11 | fixture 從哪裡來？ | 先依官方文件的格式手寫（測試不能呼叫真實 API）。C11（錄製工具）先不做，之後有需要再補。 | ✅ 已確認 | 1C |
+| Q12 | 缺金鑰對話框什麼時候跳？（Q2 留下的部分） | 送出時才檢查，不在啟動時跳：收到 `MissingApiKey`、`InvalidApiKey`（401）、`SecretUnreadable` 就跳出對話框；按「儲存」後存進 `ISecretStore`，**自動重送剛才那則訊息**；按「取消」則留下錯誤列，可以之後按「重試」。 | ✅ 已確認 | 1D |
+| Q13 | M1 要不要「新對話」按鈕？ | 要，只做一顆按鈕（頂端列左側），開一則空白對話。歷史對話抽屜、切換舊對話是 M2。 | ✅ 已確認 | 1D |
+| Q14 | 思考過程在 M1 怎麼顯示？ | 先用最簡單的方式接上（收合的「思考過程」，展開是純文字），正式的樣式到 M2 做 ui-spec 第 3 節時再處理。 | ✅ 已確認 | 1D |
+| Q15 | API 失敗時要不要存檔？ | 使用者的訊息一定存；失敗的助理回應**不存**，錯誤列只在畫面上，提供「重試」。重開程式後錯誤列消失，但使用者的訊息還在，可以直接再送一次。 | ✅ 已確認 | 1D |
+| Q16 | 資料庫檔案放哪、叫什麼？ | Mac：`~/Library/Application Support/Lumi/lumi.db`；Windows：`%APPDATA%\Lumi\lumi.db`（和 1B 的 `secrets.json` 同一個資料夾）。 | ✅ 已確認 | 1D |
 | Q8 | Keychain 的 service 名稱 | `io.github.neillog.lumi`（沒有自有網域，依 GitHub 帳號的慣例格式），同時作為 M11 的 macOS bundle id。定案後不再更改，改了舊的鑰匙圈項目會找不到。 | ✅ 已確認 | 1B、M11 |
 
 ---
@@ -512,16 +517,170 @@ public enum ChatFailureKind
 - [x] 架構測試證明 Core 不引用 `Anthropic` SDK（只有 `Lumi.Providers` 引用）。
 - [x] ~~（有 C11 時）用真實金鑰錄一次~~：C11 依 Q11 先不做。
 
-## 1D 工作台最小版與 SQLite（大綱，輪到時展開）
+## 1D 工作台最小版與 SQLite
 
-- `IConversationStore` + SQLite 實作：`conversations`、`messages` 兩張表、schema 版本表；資料庫放使用者資料夾（Mac：`~/Library/Application Support/Lumi`，Windows：`%APPDATA%\Lumi`）
-- 最小對話流程（Core）：組請求 → 呼叫 Provider → 轉發事件 → 完成後存檔；停止時保留已收到的文字並標記「已停止」
-- 工作台：訊息列表（`EmojiTextBlock`，M1 先純文字，Markdown 是 M2）、輸入框（Enter 送出、Shift+Enter 換行）、送出／停止切換
-- 缺金鑰時：最小的「輸入 Anthropic API 金鑰」對話框（密碼欄位、儲存、取消），存進 `ISecretStore`；M2 由設定頁取代
+### 範圍
+
+**做**
+- Core：`IConversationStore` 介面、對話流程 `ConversationService`（組請求、呼叫 Provider、存檔、停止）
+- `Lumi.Infrastructure`：SQLite 實作、schema 版本管理、資料庫路徑
+- 工作台：訊息列表、思考過程（最簡版）、輸入框、送出／停止、錯誤列與重試、狀態列、「新對話」按鈕
+- 缺金鑰時的最小輸入對話框
 - 啟動時載入最近一則對話
-- 驗收：主計畫 M1 的完成標準
+- 測試：SQLite 實作、對話流程、ViewModel
 
----
+**不做**
+- Markdown 渲染、程式碼區塊、複製與重新產生（M2）
+- 歷史對話抽屜、切換舊對話、刪除對話（M2）
+- 模型切換、設定頁（M2；M1 用 `appsettings.json` 的模型）
+- 檔案與資料夾上下文、語音（M4、M6）
+- 小精靈（M7）
+
+### 設計
+
+#### `IConversationStore`（`Lumi.Core/Chat/`）
+
+```csharp
+public interface IConversationStore
+{
+    Task<Conversation> CreateAsync(string title, CancellationToken ct = default);
+    Task<Conversation?> GetLatestAsync(CancellationToken ct = default);            // 依 UpdatedAt
+    Task<IReadOnlyList<ChatMessage>> GetMessagesAsync(string conversationId, CancellationToken ct = default);
+    Task AppendMessageAsync(string conversationId, ChatMessage message, CancellationToken ct = default);
+    Task RenameAsync(string conversationId, string title, CancellationToken ct = default);
+}
+```
+
+- **只有新增，沒有修改或刪除訊息**：配合「對話歷史只能往後加」（`agent.md` 第 7 節）。M2 的「重新產生」需要從尾端移除時再加方法。
+- `AppendMessageAsync` 同時更新該對話的 `UpdatedAt`。
+
+#### SQLite（`Lumi.Infrastructure/Persistence/`）
+
+- 套件：`Microsoft.Data.Sqlite`。每次操作開一條連線（SQLite 連線很便宜），啟動時設 `PRAGMA journal_mode=WAL`、`foreign_keys=ON`。
+- 資料表：
+
+```sql
+CREATE TABLE schema_version (version INTEGER NOT NULL);
+
+CREATE TABLE conversations (
+  id          TEXT PRIMARY KEY,
+  title       TEXT NOT NULL,
+  created_at  TEXT NOT NULL,          -- ISO 8601 UTC
+  updated_at  TEXT NOT NULL
+);
+
+CREATE TABLE messages (
+  id              TEXT PRIMARY KEY,
+  conversation_id TEXT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
+  seq             INTEGER NOT NULL,   -- 對話內的順序，從 1 開始；排序以它為準，不靠 id
+  role            TEXT NOT NULL,      -- user / assistant
+  status          TEXT NOT NULL,      -- complete / stopped / failed
+  model_id        TEXT,
+  content_json    TEXT NOT NULL,      -- ContentBlock 陣列，用 1C 的 JSON 序列化，thinking signature 原樣保存
+  input_tokens    INTEGER, output_tokens INTEGER,
+  cache_creation_input_tokens INTEGER, cache_read_input_tokens INTEGER,
+  created_at      TEXT NOT NULL,
+  UNIQUE (conversation_id, seq)
+);
+CREATE INDEX ix_conversations_updated ON conversations(updated_at);
+```
+
+- schema 版本：程式內一串依序執行的 migration（M1 只有第 1 版），啟動時檢查 `schema_version`，在同一個 transaction 裡補到最新。資料庫版本比程式新時拒絕開啟並回報（避免舊版程式寫壞新版資料）。
+- 資料庫路徑（Q16）：`LumiPaths.DataDirectory` 依作業系統決定，放 `Lumi.Infrastructure`；測試用暫存資料夾。
+- 金鑰不會進資料庫：`ContentBlock` 裡沒有金鑰，架構上也沒有路徑把 `SecretValue` 寫進來。
+
+#### 對話流程 `ConversationService`（`Lumi.Core/Chat/`）
+
+```csharp
+public sealed class ConversationService
+{
+    // 送出一則使用者訊息：先存使用者訊息，再串流助理回應
+    IAsyncEnumerable<ChatEvent> SendAsync(string conversationId, string userText, CancellationToken ct);
+    // 不新增使用者訊息，直接用目前的歷史再要一次回應（錯誤列的「重試」、存好金鑰後的自動重送）
+    IAsyncEnumerable<ChatEvent> RetryAsync(string conversationId, CancellationToken ct);
+}
+```
+
+流程：
+1. `SendAsync`：把使用者訊息存檔（`Complete`）。第一則訊息時，用前 30 個字當對話標題。
+2. 讀出整段歷史，**組成請求**：
+   - 略過沒有內容的訊息（例如還沒收到任何文字就停止的回應）。
+   - 連續兩則以上同角色的訊息合併成一則（例如上一輪失敗沒有助理回應，使用者又送了一則）。API 要求 user／assistant 交替；合併只發生在送出的請求裡，資料庫保持原樣。
+   - 只送 `Complete` 和 `Stopped` 的訊息。
+3. 呼叫 `IChatProvider.StreamAsync`，事件原樣轉給呼叫端，同時累積文字。
+4. 收到 `Completed` → 存助理訊息（`Complete`，含 thinking 與 usage）。
+5. 收到 `Failed` → 不存（Q15）。
+6. 取消（`OperationCanceledException`）→ 如果已經收到文字，存一則 `Stopped` 的助理訊息（只有文字，未完成的思考內容不保留，見 1C），然後把例外往外丟，讓 UI 知道是停止。存檔用 `CancellationToken.None`，不能因為取消而存不進去。
+
+- 模型與 `MaxTokens` 從 `AnthropicDevOptions` 來；Core 不認得 Providers 的型別，所以由 App 注入一個 `ChatDefaults`（`ModelId`、`MaxTokens`、`ContextWindow`）給 Core。M2 由 `IModelCatalog` 取代。
+- 同一則對話同時只能有一個回應進行中，第二次呼叫丟 `InvalidOperationException`（UI 本來就會停用送出鈕，這是防呆）。
+
+#### 工作台 UI（`Lumi.App`）
+
+版面沿用 1A 的四塊，內容換成真的：
+
+| 區塊 | M1 內容 |
+|---|---|
+| 頂端列 | 左：「新對話」按鈕（Q13）、Lumi 標誌；中：目前模型名稱（只顯示，不能切換） |
+| 訊息區 | 使用者訊息靠右、`UserBubble` 底色；助理訊息靠左、不加底，左側小光球（純色圓點）。文字一律用 `EmojiTextBlock`。思考過程用最簡單的收合區塊接上（Q14），正式樣式是 M2。停止的訊息尾端顯示「你已停止這次回應」。失敗時最後一則下面顯示錯誤列（原因 + 「重試」）。 |
+| 輸入區 | 多行輸入框：Enter 送出、Shift+Enter 換行、最多 8 行後捲動；右下送出（琥珀圓形）／停止切換。回應中輸入框仍可打字，送出鈕換成停止，旁邊提示「回應結束後才能送出」（ui-spec 2.2）。 |
+| 狀態列 | `輸入 N · 輸出 N · 回合 N · 上下文 [進度條] 14K / 1M`（ui-spec 2.3）；數字取最後一次回應的 usage，上下文 = 該次的 input + output token。連線狀態點 M1 先不做。 |
+
+- ViewModel：`WorkbenchViewModel`（頂端、輸入、狀態列、指令）、`MessageViewModel`（單則訊息，串流中會持續更新 `Text`、`Thinking`）。用 CommunityToolkit.Mvvm 的 `[ObservableProperty]`、`[RelayCommand]`；送出與停止是同一個 `CancellationTokenSource`。
+- 執行緒：`ConversationService` 在背景執行，事件透過 `IUiDispatcher`（App 內的小介面，實作是 `Dispatcher.UIThread.Post`）回到 UI 執行緒更新，ViewModel 不直接碰 Avalonia 的 Dispatcher，所以 ViewModel 測試不需要 Avalonia。
+- 串流文字更新頻率：每個 `TextDelta` 直接 append。若實測卡頓，再改成 50 ms 合併一次（記在實作紀錄）。
+- 自動捲動：在最底部時跟著捲；使用者往上捲之後就不自動捲，回到底部再恢復。
+- 啟動：載入 `GetLatestAsync()` 的對話與訊息；沒有對話就建一則空的。
+- 所有新文字放 `Strings.resx`，顏色只用 token（1A 的色碼檢查測試會守住）。
+
+#### 缺金鑰對話框（Q12）
+
+- `ApiKeyDialog`：說明文字、密碼欄位（`PasswordChar`）、「儲存」「取消」。不顯示既有金鑰。
+- 觸發：`Failed` 的 Kind 是 `MissingApiKey`、`InvalidApiKey`、`SecretUnreadable`。後兩者的說明文字不同（「金鑰無效，請重新輸入」／「金鑰無法讀取，請重新輸入」）。
+- 儲存：`ISecretStore.SetAsync(connection/dev-anthropic/api-key)`，成功後自動 `RetryAsync`。取消：保留錯誤列。
+- 輸入的字串去掉前後空白；空字串不能儲存。金鑰不寫進 log、ViewModel 不保留（存完就清空欄位）。
+- M2 由設定頁取代，所以這個對話框的程式碼盡量獨立，之後整個刪掉。
+
+#### 專案與套件
+
+- `Lumi.Infrastructure`：加 `Microsoft.Data.Sqlite`、`AddLumiInfrastructure()`。
+- `Lumi.Core`：`AddLumiCore()` 註冊 `ConversationService`。
+- 新增 `tests/Lumi.Infrastructure.Tests`。
+- 架構測試：只有 `Lumi.Infrastructure` 引用 `Microsoft.Data.Sqlite`。
+
+#### 測試
+
+- `Lumi.Infrastructure.Tests`（暫存資料夾的真 SQLite 檔）：建立／讀回對話、訊息順序、`content_json` 來回（含 thinking signature、中文、emoji）、`GetLatestAsync` 依更新時間、重開連線後資料還在、migration 從空資料庫建到最新、資料庫版本比程式新時拒絕開啟。
+- `Lumi.Core.Tests`（假 Provider + 記憶體 store）：送出時先存使用者訊息、`Completed` 存助理訊息、`Failed` 不存、取消時存 `Stopped`（有文字才存）、空訊息略過、連續同角色合併、`RetryAsync` 不新增使用者訊息、第一則訊息設標題、同時兩次呼叫被擋。
+- `Lumi.App.Tests`（假 `ConversationService` 依賴、同步的 `IUiDispatcher`）：送出後輸入框清空、回應中送出停用且停止可用、停止後恢復、收到缺金鑰 → 要求開對話框、狀態列數字、Enter／Shift+Enter 的判斷。
+- 手動驗收（需要你的金鑰，會產生少量 API 費用）：實際對話數輪、中途停止、重開程式後對話還在、缺金鑰與錯誤金鑰的對話框。
+
+### 工作項目
+
+- [x] **D1 Store 介面**：`IConversationStore`、`ChatDefaults`。
+- [x] **D2 SQLite**：`Lumi.Infrastructure` 套件、`LumiPaths`、schema 與 migration、`SqliteConversationStore`、`AddLumiInfrastructure()`。
+- [x] **D3 Infrastructure 測試**：`Lumi.Infrastructure.Tests` 加進方案。
+- [x] **D4 對話流程**：`ConversationService`（送出、重試、組請求的略過與合併、存檔、取消）與測試。
+- [x] **D5 ViewModel**：`WorkbenchViewModel`、`MessageViewModel`、`IUiDispatcher`；測試。
+- [x] **D6 工作台畫面**：訊息列表、思考過程（最簡版）、錯誤列、輸入框鍵盤行為、送出／停止、狀態列、新對話、自動捲動；新字串進資源檔。
+- [x] **D7 缺金鑰對話框**：`ApiKeyDialog` 與觸發、儲存後自動重送。
+- [x] **D8 啟動流程**：載入最近一則對話；DI 組裝。
+- [x] **D9 架構測試**：`Microsoft.Data.Sqlite` 只在 Infrastructure。
+- [ ] **D10 手動驗收**（Mac，需要你的金鑰；**待你執行**）：見下方驗收標準。
+- [x] **D11 文件**：README、主計畫 M1 狀態、本檔實作紀錄。
+
+### 驗收標準
+
+主計畫 M1 的完成標準：能連續對話、中途停止、重開程式後對話還在；Core 不引用 Avalonia；乾淨的 Windows 11 上沒有出現細明體或正黑體。具體：
+
+- [x] `dotnet build` 零警告，`dotnet test` 全過。
+- [ ] 實際和 `claude-opus-5-5` 連續對話至少 3 輪，文字邊收邊顯示，中文與 emoji 正常。
+- [ ] 回應中按停止：立刻停下，已收到的文字留著並標示「你已停止這次回應」，之後可以繼續對話。
+- [ ] 關掉再打開，最近一則對話完整還原（含已停止的訊息與思考過程）。
+- [ ] 沒有金鑰時送出會跳對話框，存好後自動送出；錯誤金鑰會再跳一次並說明是金鑰無效。
+- [ ] 狀態列的 token 數字與 API 回傳的 usage 一致。
+- [ ] 資料庫裡搜尋不到金鑰字串。
+- [ ] Windows 11 上同樣可以完成以上操作（M1 整體的 Windows 驗證一起做）。
 
 ## 實作紀錄
 
@@ -566,3 +725,18 @@ public enum ChatFailureKind
 - **`fallback-block.sse` 的區塊格式**：Anthropic 文件沒有給完整 schema，但這個 skill 裡的 jq 範例明確示範了 `content[] | select(.type=="fallback")` 配上 `.from.model`／`.to.model`，所以照這個格式寫 fixture（agent.md 第 3 節：沒有規格不要自己發明格式——這裡的「規格」來源是官方文件引用的範例，不是憑空猜的）。測試只驗證不崩潰、存成 `ProviderBlock`、後面的文字正常，不驗證 `RawJson` 的確切序列化形狀（那是 SDK 內部的序列化細節，沒有把握精確斷言）。
 - **`InternalsVisibleTo`**：`Lumi.Providers` 加了 `AssemblyInfo.cs` 讓 `Lumi.Providers.Tests` 能測內部的 `AnthropicRequestConverter`／`AnthropicStreamAccumulator`／`AnthropicErrorMapper`，這三個類別本來就不該是公開 API。
 - **尚未做**：C11（錄製工具）依 Q11 先不做；Windows 全部待驗（1A、1B、1C 共通）。
+
+### 1D（2026-10-18）
+
+- **沒有做 `IUiDispatcher`**（計畫有）：命令在 UI 執行緒上執行，`await foreach` 會回到 UI 的同步內容，事件本來就在 UI 執行緒處理，不需要另外轉送。ViewModel 測試在沒有同步內容的 xUnit 下直接跑，一樣不需要 Avalonia。
+- **錯誤列的文字直接用 `ChatFailure.Message`**（Providers 裡寫好的繁中），沒有在 App 依 `ChatFailureKind` 對應資源檔。M2 做完整錯誤列（換模型重試）時再搬進資源檔。金鑰相關的三種錯誤走對話框，文字在資源檔。
+- **思考過程**（Q14）：Avalonia 預設的 `Expander`，標題只有「思考過程」，沒有「· N 秒」。
+- **視窗標題**：第一則訊息送出時跟著改成對話標題（和資料庫一致）。第一版漏了，寫測試時發現。
+- **啟動時**沒有任何對話會建一則空白的「新對話」，所以第一次開啟就會建立資料庫檔案。
+- **串流文字**每個 `TextDelta` 直接接到字串後面，`EmojiTextBlock` 每次重算整段；長回應是 O(n²)，M1 先這樣，實測卡頓再改成合併更新。
+- **Enter／Shift+Enter** 是 code-behind 的視覺行為（tunnel 攔截），沒有單元測試，靠手動驗收。
+- `Lumi.App.Tests` 複製了一份 `Lumi.Core.Tests` 的假 store 與假 Provider（測試專案不互相參考，同 1B 的做法）。
+- `AnthropicDevOptions.ApiKeySecret` 改成公開常數，金鑰對話框與 Provider 共用同一個名稱。
+- 連線狀態點（狀態列右側）照計畫 M1 不做。
+- **尚未驗證**：D10 手動驗收（需要你的金鑰）；Windows 全部。
+

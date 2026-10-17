@@ -7,7 +7,7 @@ Lumi 是一個跨平台（Windows / macOS）的桌面 AI 助理。使用者自�
 - **工作台**：完整的對話視窗。可以切換模型、加入檔案或資料夾當上下文、語音輸入，並顯示 token 用量與回合數。
 - **小精靈**：一個住在桌面上的透明角色（第一個角色是會呼吸的光球）。游標靠近時才浮出輸入列，用簡短的氣泡回答，並用動畫表現聆聽、思考、呼叫工具、完成等過程。
 
-> 目前狀態：**M1 進行中**。光球 POC 已在 macOS 驗證；1A（方案骨架與外觀）、1B（金鑰安全儲存）、1C（Core 模型與 Anthropic Provider）已完成。
+> 目前狀態：**M1 進行中**。光球 POC 已在 macOS 驗證；M1 的四段（骨架與外觀、金鑰安全儲存、Anthropic Provider、工作台與 SQLite）程式已完成，可以在工作台和 Claude 對話；待手動驗收與 Windows 驗證。
 
 ## 特色
 
@@ -36,14 +36,15 @@ docs/
 src/
   Lumi.Core/                資料模型、核心介面、對話迴圈（不依賴 UI）
   Lumi.Providers/           Anthropic（官方 SDK）、OpenAI 相容（M2）
-  Lumi.Infrastructure/      SQLite、設定（1A 先建空專案，1D 才寫）
+  Lumi.Infrastructure/      SQLite（對話與訊息）
   Lumi.Platform/            原生 API、金鑰安全儲存（DPAPI、Keychain）
   Lumi.App/                 Avalonia 介面與 DI 組裝（唯一的 composition root）
 tests/
   Lumi.Core.Tests/
   Lumi.Platform.Tests/      金鑰儲存的契約測試（記憶體、DPAPI、Keychain）
   Lumi.Providers.Tests/     Anthropic Provider 的 fixture 測試（不呼叫真實 API）
-  Lumi.App.Tests/           EmojiText 等純函式
+  Lumi.Infrastructure.Tests/ SQLite 實作（暫存資料夾的真資料庫檔）
+  Lumi.App.Tests/           ViewModel、EmojiText、字串資源
   Lumi.Architecture.Tests/  相依規則、色碼檢查、P/Invoke 與供應商 SDK 的歸屬
 poc/
   Lumi.OrbPoc/              光球 POC（驗證小精靈視窗的可行性，不在 Lumi.sln 內）
