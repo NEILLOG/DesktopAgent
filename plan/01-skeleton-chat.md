@@ -279,22 +279,22 @@ public static IServiceCollection AddLumiPlatform(this IServiceCollection service
 
 ### 工作項目
 
-- [ ] **B1 Core 介面**：`ISecretStore`、`SecretKey`（含格式驗證）、`SecretValue`、`SecretStoreException`；單元測試（名稱驗證、`ToString` 遮蔽）。
-- [ ] **B2 契約測試**：抽象測試類別 `SecretStoreContractTests`，涵蓋：讀不存在的回 null、寫後讀、覆寫、刪除、刪除不存在的回 false、中文與 emoji 內容、長字串（4 KB）、多個 key 互不影響。
-- [ ] **B3 記憶體實作**：放測試專案，跑契約測試。
-- [ ] **B4 建立 `Lumi.Platform`**：專案、`AddLumiPlatform()`、`SecretStoreOptions`；架構測試加上「P/Invoke（`DllImport`／`LibraryImport`）只能出現在 `Lumi.Platform`」。
-- [ ] **B5 Windows DPAPI 實作**：原子寫入、寫入序列化、檔案損毀或解密失敗時丟 `SecretStoreException`。
-- [ ] **B6 macOS Keychain 實作**：CoreFoundation／Security 的 P/Invoke（用 `LibraryImport`）、`SafeCFHandle`、錯誤碼對應。
-- [ ] **B7 平台測試**：`Lumi.Platform.Tests`，用測試專用的檔案路徑與 service 名稱跑契約測試；在非對應平台上自動略過。Mac、Windows 各跑一次。
-- [ ] **B8 手動驗證**：Mac 在「鑰匙圈存取」看得到項目、名稱正確；Windows 的 `secrets.json` 裡沒有明文；兩邊重開程式後都讀得到。
+- [x] **B1 Core 介面**：`ISecretStore`、`SecretKey`（含格式驗證）、`SecretValue`、`SecretStoreException`；單元測試（名稱驗證、`ToString` 遮蔽）。
+- [x] **B2 契約測試**：抽象測試類別 `SecretStoreContractTests`，涵蓋：讀不存在的回 null、寫後讀、覆寫、刪除、刪除不存在的回 false、中文與 emoji 內容、長字串（4 KB）、多個 key 互不影響。
+- [x] **B3 記憶體實作**：放測試專案，跑契約測試。
+- [x] **B4 建立 `Lumi.Platform`**：專案、`AddLumiPlatform()`、`SecretStoreOptions`；架構測試加上「P/Invoke（`DllImport`／`LibraryImport`）只能出現在 `Lumi.Platform`」。
+- [x] **B5 Windows DPAPI 實作**：原子寫入、寫入序列化、檔案損毀或解密失敗時丟 `SecretStoreException`。
+- [x] **B6 macOS Keychain 實作**：CoreFoundation／Security 的 P/Invoke（用 `LibraryImport`）、`SafeCFHandle`、錯誤碼對應。
+- [x] **B7 平台測試**（Mac 完成、**Windows 待跑**）：`Lumi.Platform.Tests`，用測試專用的檔案路徑與 service 名稱跑契約測試；在非對應平台上自動略過。Mac、Windows 各跑一次。
+- [x] **B8 手動驗證**（Mac 完成、**Windows 待驗**）：Mac 在「鑰匙圈存取」看得到項目、名稱正確；Windows 的 `secrets.json` 裡沒有明文；兩邊重開程式後都讀得到。
 - [x] **B9 文件**：`agent.md` 第 5 節已依 Q7 更新；主計畫已把 `ISecretStore` 從 M2 移到 M1，決策紀錄已加。
 
 ### 驗收標準
 
-- [ ] 契約測試在記憶體、DPAPI（Windows）、Keychain（Mac）三個實作都通過。
-- [ ] 在檔案系統、log 中搜尋測試用的金鑰字串，找不到明文。
-- [ ] `Lumi.Core` 只有介面，沒有任何平台相關程式碼；P/Invoke 只在 `Lumi.Platform`（架構測試保證）。
-- [ ] 讀取失敗（例如 Mac 上在授權視窗按「拒絕」）不會讓程式崩潰，回報的錯誤訊息不含金鑰。
+- [x] 契約測試在記憶體、DPAPI（Windows）、Keychain（Mac）三個實作都通過。（記憶體、Keychain 已過；DPAPI 契約測試已寫好，待在 Windows 跑）
+- [x] 在檔案系統、log 中搜尋測試用的金鑰字串，找不到明文。（加密檔以測試驗證；Keychain 項目以 `security` 確認；Windows 待驗）
+- [x] `Lumi.Core` 只有介面，沒有任何平台相關程式碼；P/Invoke 只在 `Lumi.Platform`（架構測試保證）。
+- [x] 讀取失敗（例如 Mac 上在授權視窗按「拒絕」）不會讓程式崩潰，回報的錯誤訊息不含金鑰。（錯誤碼對應與訊息不含內容已由測試與程式碼保證；「按拒絕」的實機操作未測）
 
 ---
 
@@ -334,3 +334,16 @@ public static IServiceCollection AddLumiPlatform(this IServiceCollection service
 - **`Strings.cs`**：以手寫的 `ResourceManager` 包裝取代 resx 設計工具產生的程式碼（CLI 建置不會自動產生）；新增字串時 resx 與 `Strings.cs` 要一起改。
 - **Mac 實測**：字重、❤️‍🔥 不被拆開、深色／淺色跟隨系統，且 App 執行中切換系統外觀會即時換色。
 - **尚未驗證**：Windows 11 全項（字型沒有退回細明體／正黑體、100%／125% 縮放、主題即時切換）。
+
+### 1B（2026-10-18）
+
+- **`SecretKey` 格式**：計畫寫「小寫英數、- 與 /」，實作進一步規定每段只能有單一的 `-`、不能以 `-` 或 `/` 開頭結尾、不能連續分隔符號、最長 128。
+- **`EncryptedFileSecretStore` 抽出來**（計畫沒有）：Windows 的檔案處理（原子寫入、序列化、損毀處理）與加密分開，加密由 `ISecretProtector` 提供。
+  `WindowsDpapiSecretStore` 只是繼承它並提供 DPAPI 的 protector。這樣檔案處理的邏輯在 Mac 上就能用假加密跑完整測試，Windows 只需要驗 DPAPI 本身。
+- **契約測試與記憶體實作放在 `Lumi.Platform.Tests`**，不放 `Lumi.Core.Tests`：三個實作共用同一個抽象類別，不必讓測試專案互相參考。`Lumi.Core.Tests` 放 `SecretKey`／`SecretValue` 的單元測試。
+  套件 `Xunit.SkippableFact`：不支援的平台是「略過」而不是假裝通過。
+- **Keychain 呼叫一律 `Task.Run`**：授權視窗可能卡住，不能擋住呼叫端的執行緒。`ExistsAsync` 只要求屬性、不要求資料，確認存在不需要授權讀取內容。
+- **App 已呼叫 `AddLumiPlatform()`**，但 1B 沒有任何地方使用 `ISecretStore`，1D 才會用。
+- **架構測試**加上「P/Invoke 只在 Platform」（以反射找 `PinvokeImpl` 方法，並有對照組證明偵測有效；另掃原始碼的 `DllImport`／`LibraryImport`）。
+- **B8 做法**：用一個放在專案外的小型主控台程式寫入項目，用 `security find-generic-password` 確認 service／account／label，再用另一個程序讀回，最後刪除。Mac 驗證通過，沒有殘留項目。
+- **尚未驗證**：Windows 的 DPAPI 契約測試（13 項目前在 Mac 被略過）、`secrets.json` 的實際內容；Mac 授權視窗按「拒絕」的實機行為。

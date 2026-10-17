@@ -7,7 +7,7 @@ Lumi 是一個跨平台（Windows / macOS）的桌面 AI 助理。使用者自�
 - **工作台**：完整的對話視窗。可以切換模型、加入檔案或資料夾當上下文、語音輸入，並顯示 token 用量與回合數。
 - **小精靈**：一個住在桌面上的透明角色（第一個角色是會呼吸的光球）。游標靠近時才浮出輸入列，用簡短的氣泡回答，並用動畫表現聆聽、思考、呼叫工具、完成等過程。
 
-> 目前狀態：**M1 進行中**。光球 POC 已在 macOS 驗證；正式方案的骨架與外觀基礎（1A）已完成，可以開出工作台骨架視窗。
+> 目前狀態：**M1 進行中**。光球 POC 已在 macOS 驗證；1A（方案骨架與外觀）、1B（金鑰安全儲存）已完成。
 
 ## 特色
 
@@ -37,9 +37,11 @@ src/
   Lumi.Core/                資料模型、核心介面、對話迴圈（不依賴 UI）
   Lumi.Providers/           Anthropic、OpenAI 相容（1A 先建空專案）
   Lumi.Infrastructure/      SQLite、設定（1A 先建空專案）
+  Lumi.Platform/            原生 API、金鑰安全儲存（DPAPI、Keychain）
   Lumi.App/                 Avalonia 介面與 DI 組裝（唯一的 composition root）
 tests/
   Lumi.Core.Tests/
+  Lumi.Platform.Tests/      金鑰儲存的契約測試（記憶體、DPAPI、Keychain）
   Lumi.App.Tests/           EmojiText 等純函式
   Lumi.Architecture.Tests/  相依規則、色碼檢查
 poc/
@@ -49,7 +51,6 @@ poc/
 之後會加入的專案（詳見 `agent.md`）：
 
 ```
-Lumi.Platform               原生 API（游標、點擊穿透、錄音）、金鑰安全儲存（DPAPI、Keychain）
 Lumi.Tools                  內建工具
 Lumi.Speech                 語音轉文字
 Lumi.Sprites.Abstractions   小精靈角色介面
