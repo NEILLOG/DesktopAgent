@@ -144,27 +144,27 @@ poc/                         維持原樣，不納入 Lumi.sln
 
 ### 工作項目
 
-- [ ] **A1 方案與共用設定**：`global.json`、`Directory.Build.props`、`Directory.Packages.props`、`Lumi.sln`；`.gitignore` 確認涵蓋 `bin/`、`obj/`。
-- [ ] **A2 建立專案**：`Lumi.Core`、`Lumi.Providers`、`Lumi.Infrastructure`（類別庫）、`Lumi.App`（Avalonia 桌面）；設定專案參考。`app.manifest` 沿用 POC 的設定（DPI 感知）。
-- [ ] **A3 字型驗證（先做）**：在 Lumi.App 放三套字型，畫一個測試畫面顯示中英混排在 400／500／700 三種字重；Mac 確認後，Windows 11 再確認一次。可變字重不行就改靜態檔，並更新 ui-spec 1.1 與決策紀錄。
-- [ ] **A4 字型資源**：`EmbeddedFontCollection`、`LumiUiFont`／`LumiMonoFont`、全域預設字型與字級；授權檔。
-- [ ] **A5 主題 token**：`Tokens.axaml` 兩套色系、Fluent 強調色覆寫、跟隨系統；色碼檢查。
-- [ ] **A6 Host 組裝**：`Program`、`App(IServiceProvider)`、`AddLumiCore()`／`AddLumiApp()` 擴充方法、`appsettings.json`、Logging；程式關閉時 Host 正常停止。
-- [ ] **A7 字串資源**：`Strings.resx` 與引用方式。
-- [ ] **A8 工作台主視窗骨架**：`WorkbenchWindow` + `WorkbenchViewModel`（CommunityToolkit.Mvvm），四塊版面用 token 上色；放一段含中英文、程式碼字型、❤️‍🔥 的示範文字作為驗收用。
-- [ ] **A9 EmojiText 搬入**：`EmojiTextBlock` 控制項；示範文字改用它顯示。
-- [ ] **A10 測試專案**：`Lumi.Core.Tests`（先放一個 smoke test）、`Lumi.Architecture.Tests`（Core 不參考 Avalonia、Core 沒有專案參考）。
-- [ ] **A11 文件**：README 的「專案結構」與「怎麼執行」改成正式方案；主計畫 M1 狀態改 🟨；本檔實作紀錄。
+- [x] **A1 方案與共用設定**：`global.json`、`Directory.Build.props`、`Directory.Packages.props`、`Lumi.sln`；`.gitignore` 確認涵蓋 `bin/`、`obj/`。
+- [x] **A2 建立專案**：`Lumi.Core`、`Lumi.Providers`、`Lumi.Infrastructure`（類別庫）、`Lumi.App`（Avalonia 桌面）；設定專案參考。`app.manifest` 沿用 POC 的設定（DPI 感知）。
+- [x] **A3 字型驗證（先做）**（Mac 完成、**Windows 11 待驗**）：在 Lumi.App 放三套字型，畫一個測試畫面顯示中英混排在 400／500／700 三種字重；Mac 確認後，Windows 11 再確認一次。可變字重不行就改靜態檔，並更新 ui-spec 1.1 與決策紀錄。
+- [x] **A4 字型資源**：`EmbeddedFontCollection`、`LumiUiFont`／`LumiMonoFont`、全域預設字型與字級；授權檔。
+- [x] **A5 主題 token**：`Tokens.axaml` 兩套色系、Fluent 強調色覆寫、跟隨系統；色碼檢查。
+- [x] **A6 Host 組裝**：`Program`、`App(IServiceProvider)`、`AddLumiCore()`／`AddLumiApp()` 擴充方法、`appsettings.json`、Logging；程式關閉時 Host 正常停止。
+- [x] **A7 字串資源**：`Strings.resx` 與引用方式。
+- [x] **A8 工作台主視窗骨架**：`WorkbenchWindow` + `WorkbenchViewModel`（CommunityToolkit.Mvvm），四塊版面用 token 上色；放一段含中英文、程式碼字型、❤️‍🔥 的示範文字作為驗收用。
+- [x] **A9 EmojiText 搬入**：`EmojiTextBlock` 控制項；示範文字改用它顯示。
+- [x] **A10 測試專案**：`Lumi.Core.Tests`（先放一個 smoke test）、`Lumi.Architecture.Tests`（Core 不參考 Avalonia、Core 沒有專案參考）。
+- [x] **A11 文件**：README 的「專案結構」與「怎麼執行」改成正式方案；主計畫 M1 狀態改 🟨；本檔實作紀錄。
 
 ### 驗收標準
 
-- [ ] `dotnet build` 零警告（`TreatWarningsAsErrors`），`dotnet test` 全過。
+- [x] `dotnet build` 零警告（`TreatWarningsAsErrors`），`dotnet test` 全過。
 - [ ] Mac 與 Windows 11 都能 `dotnet run` 開出工作台骨架視窗。
-- [ ] 系統切換淺色／深色時，視窗即時換色，不需重啟。
+- [x] 系統切換淺色／深色時，視窗即時換色，不需重啟。（Mac 已驗；Windows 待驗）
 - [ ] 乾淨的 Windows 11（沒有另外安裝字型）上，中文是 Noto Sans TC，不是細明體或正黑體；程式碼文字是 JetBrains Mono。1920×1080 在 100%、125% 縮放下各看一次。
-- [ ] 示範文字中的 ❤️‍🔥 沒有被拆開。
-- [ ] 架構測試證明 `Lumi.Core` 不引用 Avalonia。
-- [ ] `Lumi.App` 的 axaml 除了 `Tokens.axaml` 沒有寫死色碼。
+- [x] 示範文字中的 ❤️‍🔥 沒有被拆開。
+- [x] 架構測試證明 `Lumi.Core` 不引用 Avalonia。
+- [x] `Lumi.App` 的 axaml 除了 `Tokens.axaml` 沒有寫死色碼。
 
 ---
 
@@ -321,4 +321,16 @@ public static IServiceCollection AddLumiPlatform(this IServiceCollection service
 
 ## 實作紀錄
 
-（偏離原計畫的地方與原因，實作時填寫）
+### 1A（2026-10-18）
+
+- **字型改用靜態檔**（偏離計畫）：A3 驗證發現 Avalonia 11.3 不套用可變字型的 `wght` 軸，Noto Sans TC 與 JetBrains Mono 在 500／700 仍是 400。
+  改成各放 Regular／Medium／Bold 靜態檔（用 fonttools 從可變字型切出，每個 Noto 檔約 7 MB）；IBM Plex Sans 本來就用官方靜態檔。
+  已更新 `docs/ui-spec.md` 1.1、`Assets/Fonts/LICENSES/README.md` 與主計畫決策紀錄。
+- **多了 `Lumi.App.Tests`**：計畫只列兩個測試專案，但 A9 要求 `EmojiText.IsEmoji` 的單元測試，放在新的 App 測試專案。
+- **`tests/Directory.Build.props`**：測試專案共用 `Using Xunit`。
+- **Fluent 強調色**：`ColorPaletteResources` 無法取 ThemeDictionaries 的值，所以 `Tokens.axaml` 另有一個不分淺深色的 `LumiAccentFixedColor`，供 `App.axaml` 引用，仍符合「`Tokens.axaml` 以外沒有色碼」。
+- **NoWarn AVLN3001**：Window 由 DI 以建構子注入 ViewModel，不走執行階段 XAML 載入器，Avalonia 的這則警告不適用。
+- **`EmojiTextBlock`** 直接繼承 `TextBlock` 並在 `Text` 變更時呼叫 `EmojiText.Apply`（不另開新屬性），可直接取代 `TextBlock` 使用 `Text` 繫結。
+- **`Strings.cs`**：以手寫的 `ResourceManager` 包裝取代 resx 設計工具產生的程式碼（CLI 建置不會自動產生）；新增字串時 resx 與 `Strings.cs` 要一起改。
+- **Mac 實測**：字重、❤️‍🔥 不被拆開、深色／淺色跟隨系統，且 App 執行中切換系統外觀會即時換色。
+- **尚未驗證**：Windows 11 全項（字型沒有退回細明體／正黑體、100%／125% 縮放、主題即時切換）。

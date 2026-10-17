@@ -7,7 +7,7 @@ Lumi 是一個跨平台（Windows / macOS）的桌面 AI 助理。使用者自�
 - **工作台**：完整的對話視窗。可以切換模型、加入檔案或資料夾當上下文、語音輸入，並顯示 token 用量與回合數。
 - **小精靈**：一個住在桌面上的透明角色（第一個角色是會呼吸的光球）。游標靠近時才浮出輸入列，用簡短的氣泡回答，並用動畫表現聆聽、思考、呼叫工具、完成等過程。
 
-> 目前狀態：**規劃與 POC 階段**。光球 POC 已在 macOS 驗證，正式程式尚未開始。
+> 目前狀態：**M1 進行中**。光球 POC 已在 macOS 驗證；正式方案的骨架與外觀基礎（1A）已完成，可以開出工作台骨架視窗。
 
 ## 特色
 
@@ -33,22 +33,37 @@ plan/                       工作計畫
 docs/
   ui-spec.md                工作台 UI 規格（字型、色系、元件行為）
   sprite-dev-guide.md       小精靈角色開發指南
+src/
+  Lumi.Core/                資料模型、核心介面、對話迴圈（不依賴 UI）
+  Lumi.Providers/           Anthropic、OpenAI 相容（1A 先建空專案）
+  Lumi.Infrastructure/      SQLite、設定（1A 先建空專案）
+  Lumi.App/                 Avalonia 介面與 DI 組裝（唯一的 composition root）
+tests/
+  Lumi.Core.Tests/
+  Lumi.App.Tests/           EmojiText 等純函式
+  Lumi.Architecture.Tests/  相依規則、色碼檢查
 poc/
-  Lumi.OrbPoc/              光球 POC（驗證小精靈視窗的可行性）
+  Lumi.OrbPoc/              光球 POC（驗證小精靈視窗的可行性，不在 Lumi.sln 內）
 ```
 
-正式程式預計的分層（尚未建立），詳見 `agent.md`：
+之後會加入的專案（詳見 `agent.md`）：
 
 ```
-Lumi.Core                   資料模型、核心介面、對話迴圈（不依賴 UI）
-Lumi.Providers              Anthropic、OpenAI 相容
+Lumi.Platform               原生 API（游標、點擊穿透、錄音）、金鑰安全儲存（DPAPI、Keychain）
 Lumi.Tools                  內建工具
 Lumi.Speech                 語音轉文字
-Lumi.Infrastructure         SQLite、設定
-Lumi.Platform               原生 API（游標、點擊穿透、錄音）、金鑰安全儲存（DPAPI、Keychain）
 Lumi.Sprites.Abstractions   小精靈角色介面
 Lumi.Sprites.*              各個角色
-Lumi.App                    Avalonia 介面
+```
+
+## 執行工作台
+
+需要 [.NET 10 SDK](https://dotnet.microsoft.com/download)。
+
+```bash
+dotnet build            # 零警告
+dotnet test
+dotnet run --project src/Lumi.App
 ```
 
 ## 試跑光球 POC

@@ -14,15 +14,16 @@
 | 用途 | 字型 | 授權 |
 |---|---|---|
 | 英文介面 | IBM Plex Sans | SIL OFL |
-| 中文 | Noto Sans TC（可變字重） | SIL OFL |
-| 程式碼、路徑、指令 | JetBrains Mono | SIL OFL |
+| 中文 | Noto Sans TC（靜態 400／500／700） | SIL OFL |
+| 程式碼、路徑、指令 | JetBrains Mono（靜態 400／500／700） | SIL OFL |
 
 - 字型檔放在 `Lumi.App/Assets/Fonts/`，設為 `AvaloniaResource`；授權檔放在 `Assets/Fonts/LICENSES/`。
 - 在 `AppBuilder.ConfigureFonts` 註冊 `EmbeddedFontCollection`（key 例如 `fonts:Lumi`）。
 - 全域定義兩個資源，元件一律引用，不直接寫字型名稱：
   - `LumiUiFont`：`IBM Plex Sans, Noto Sans TC`（英文先走 Plex，中文字元交給 Noto）
   - `LumiMonoFont`：`JetBrains Mono, Noto Sans TC`（程式碼裡的中文註解也有字）
-- 中文只放一個可變字重檔，涵蓋 400／500／700；不做子集化（模型輸出是任意文字）。三套合計約 20 MB，可接受。
+- 中文與等寬字型各放 400／500／700 三個靜態檔；不做子集化（模型輸出是任意文字）。三套合計約 22 MB，可接受。
+- **不使用可變字型**：Avalonia 11.3（Skia）不會套用 `wght` 軸，500／700 會停在 400（2026-10-17 在 macOS 實測）。靜態檔由可變字型用 fonttools 切出，來源與做法見 `Assets/Fonts/LICENSES/README.md`。
 - Emoji 仍由 `EmojiText` 依字形叢集指定 emoji 字型，與上面的備援鏈並存。
 - 字級：內文 15、工具卡片 14、輔助文字 12–13（Avalonia 單位）。
 - 驗收：
