@@ -12,7 +12,7 @@
 | # | 里程碑 | 狀態 | 依賴 |
 |---|---|---|---|
 | M0 | 光球 POC：驗證小精靈視窗 | 🟨 Mac 已驗證，Windows 待測 | — |
-| M1 | 方案骨架與基本對話 | 🟨 1A、1B 完成（待 Win 驗證） | M0 |
+| M1 | 方案骨架與基本對話 | 🟨 1A、1B、1C 完成（待 Win 驗證） | M0 |
 | M2 | 模型管理、設定頁與工作台完整介面 | ⬜ | M1 |
 | M3 | Tool 框架與對話迴圈 | ⬜ | M1 |
 | M4 | 檔案與資料夾上下文 | ⬜ | M3 |
@@ -201,6 +201,10 @@ M2、M3、M5 都只依賴 M1，可以依需要調整順序。
 | 2026-10-17 | macOS bundle id 與 Keychain service 名稱定為 `io.github.neillog.lumi`，定案後不更改 |
 | 2026-10-17 | 「Core 不引用 Avalonia」與「P/Invoke 只在 Platform」以架構測試保證 |
 | 2026-10-18 | 字型改用靜態字重檔（Noto Sans TC、JetBrains Mono 各 400／500／700）：Avalonia 11.3 不支援可變字型的字重軸 |
+| 2026-10-18 | Anthropic 改用官方 SDK（NuGet `Anthropic`），不自己寫 HTTP／SSE 解析；只在 `Lumi.Providers` 引用，走 `client.Beta.Messages`（server-side fallback 只在 beta） |
+| 2026-10-18 | 開啟 server-side fallback（拒絕時自動換 `claude-opus-4-8` 回答），可在設定關閉 |
+| 2026-10-18 | `ChatEvent` 先只定義 `TextDelta`／`ThinkingDelta`／`Usage`／`Completed`／`Failed` 五種，工具相關三種留到 M3 |
+| 2026-10-18 | 對話歷史只能往後加，thinking 區塊（含 signature）要原樣送回；寫進 `agent.md` 第 7 節 |
 
 ## 待確認事項
 

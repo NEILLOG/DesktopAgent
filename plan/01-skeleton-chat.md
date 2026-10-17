@@ -1,6 +1,6 @@
 # 01 方案骨架與基本對話
 
-- 狀態：1A、1B 已確認，可以開工；1C、1D 只列大綱，輪到時再展開並確認
+- 狀態：1A、1B、1C 已完成（Windows 待驗）；1D 只列大綱，輪到時再展開並確認
 - 對應里程碑：M1
 
 ## 目標
@@ -16,7 +16,7 @@ M1 範圍大，拆成四段，每段結束都要能編譯、能執行、測試�
 |---|---|---|---|
 | **1A** | 方案骨架與外觀基礎 | 方案與專案、Generic Host + Avalonia、字型、Light／Dark 主題 token、空的工作台視窗 | M0 |
 | **1B** | 金鑰安全儲存 | `ISecretStore`、Windows DPAPI 實作、macOS Keychain 實作、測試用記憶體實作、契約測試 | 1A |
-| 1C | Core 模型與 Anthropic Provider | `ChatEvent`、訊息與對話模型、`IChatProvider`、SSE 解析、Anthropic 串流與 usage、fixture 測試 | 1B |
+| 1C | Core 模型與 Anthropic Provider | `ChatEvent`、訊息與對話模型、`IChatProvider`、Anthropic 串流與 usage、fixture 測試 | 1B |
 | 1D | 工作台最小版與 SQLite | `IConversationStore` + SQLite、訊息列表（經過 `EmojiText`）、輸入框、送出與停止、缺金鑰時的最小輸入對話框、重開後還原 | 1C |
 
 主計畫 M1 的項目對應：
@@ -41,11 +41,14 @@ M1 範圍大，拆成四段，每段結束都要能編譯、能執行、測試�
 |---|---|---|---|---|
 | Q1 | M1 要建立哪些專案？ | 只建需要的。1A：`Lumi.Core`、`Lumi.Providers`、`Lumi.Infrastructure`、`Lumi.App` + 測試；1B 再建 `Lumi.Platform`。 | ✅ 已確認 | 1A |
 | Q2 | M1 的 API 金鑰從哪裡來？ | `ISecretStore` 提前到 M1（1B）。設定頁仍在 M2，所以 1D 在缺金鑰時跳一個最小的輸入對話框，存進 `ISecretStore`；M2 由設定頁取代。不使用環境變數。 | ✅ 已確認提前；對話框待確認 | 1B、1D |
-| Q3 | M1 用哪個模型、Base URL？ | 寫在 `appsettings.json` 的 `Lumi:Dev:Anthropic`（`BaseUrl`、`Model`、`MaxTokens`、`ContextWindow`），只放非機密值；M2 由 `IModelCatalog` 取代。 | 待確認 | 1C |
-| Q4 | Anthropic 用官方 SDK 還是自己寫？ | 自己寫：`IHttpClientFactory` typed client + 自寫 SSE 解析。 | 待確認 | 1C |
+| Q3 | M1 用哪個模型、Base URL？ | 寫在 `appsettings.json` 的 `Lumi:Dev:Anthropic`，只放非機密值；M2 由 `IModelCatalog` 取代。建議預設 `claude-opus-5-5`、`https://api.anthropic.com`、`MaxTokens` 64000、`ContextWindow` 1000000（細節見 1C「設定」）。 | ✅ 已確認 | 1C |
+| Q4 | Anthropic 用官方 SDK 還是自己寫？ | **建議改用官方 SDK**（NuGet `Anthropic`），只在 `Lumi.Providers` 內使用。它可以接我們的 `HttpClient`，所以仍走 `IHttpClientFactory`，測試也能用假 handler 餵 fixture。比較見 1C「Q4 兩個選項」。 | ✅ 已確認 | 1C、M2 |
 | Q5 | 「Core 不引用 Avalonia」怎麼守？ | 架構測試。 | ✅ 已確認 | 1A |
-| Q6 | Noto Sans TC 可變字重在 Avalonia 能不能正確出 400／500／700？ | 1A 第一項就做驗證（A3）。 | 待驗證 | 1A |
+| Q6 | Noto Sans TC 可變字重在 Avalonia 能不能正確出 400／500／700？ | 1A 第一項就做驗證（A3）。結果：不行，改用靜態字重檔（見實作紀錄）。 | ✅ 已驗證（Mac） | 1A |
 | Q7 | 金鑰實作放哪個專案？ | 放 `Lumi.Platform`（見 1B 設計「放哪一層」）。`agent.md` 第 5 節已同步修改。 | ✅ 已確認 | 1B |
+| Q9 | 要不要開「拒絕時自動改用其他模型」（server-side fallbacks）？ | 建議開：`claude-opus-5-5` 的安全分類器偶爾會誤擋正常請求（回 `stop_reason: refusal`）；開了之後由 API 在同一次呼叫內改用其他模型回答。要加 beta 標頭，回應可能多出 `fallback` 區塊，要原樣保存才能再送回去。可在設定裡關掉。 | ✅ 已確認 | 1C |
+| Q10 | `ChatEvent` 八種事件，1C 要全部定義嗎？ | 建議 1C 只定義會發出的五種（`TextDelta`、`ThinkingDelta`、`Usage`、`Completed`、`Failed`）；工具相關的三種（`ToolCallStarted`、`ToolCallCompleted`、`ApprovalRequired`）到 M3 有工具規格時再加，避免先猜欄位。 | ✅ 已確認 | 1C、M3 |
+| Q11 | fixture 從哪裡來？ | 先依官方文件的格式手寫（測試不能呼叫真實 API）。C11（錄製工具）先不做，之後有需要再補。 | ✅ 已確認 | 1C |
 | Q8 | Keychain 的 service 名稱 | `io.github.neillog.lumi`（沒有自有網域，依 GitHub 帳號的慣例格式），同時作為 M11 的 macOS bundle id。定案後不再更改，改了舊的鑰匙圈項目會找不到。 | ✅ 已確認 | 1B、M11 |
 
 ---
@@ -298,15 +301,216 @@ public static IServiceCollection AddLumiPlatform(this IServiceCollection service
 
 ---
 
-## 1C Core 模型與 Anthropic Provider（大綱，輪到時展開）
+## 1C Core 模型與 Anthropic Provider
 
-- Core 模型：`ChatMessage`（角色、內容區塊）、`Conversation`、`ChatRequest`（模型、system、訊息、`MaxTokens`）、`ChatEvent` 的八種事件（`agent.md` 第 7 節），M1 實際會發出 `TextDelta`、`ThinkingDelta`、`Usage`、`Completed`、`Failed`
-- `IChatProvider`：`IAsyncEnumerable<ChatEvent> StreamAsync(ChatRequest, CancellationToken)`
-- SSE 解析器：以完整事件為單位、UTF-8 有狀態解碼（放 Providers 共用，OpenAI 相容在 M2 也會用）
-- Anthropic Provider：`POST {BaseUrl}/v1/messages`、`stream: true`、`x-api-key`（從 `ISecretStore` 取）、`anthropic-version`；處理 `message_start`、`content_block_*`、`message_delta`、`message_stop`、`ping`、`error`；usage 合併 `message_start` 與 `message_delta` 的數字
-- HTTP log 遮蔽 `x-api-key`、`Authorization` 標頭
-- 錯誤：HTTP 4xx／5xx、串流中的 `error` 事件、取消，都轉成 `Failed` 或正常結束；缺金鑰時回 `Failed`（原因：未設定金鑰）
-- 測試：錄製好的 SSE fixture（含中文、emoji 跨 chunk 切斷、thinking、錯誤事件、中途取消）
+### 範圍
+
+**做**
+- Core：訊息與對話模型、內容區塊、`ChatRequest`、`ChatEvent`、`TokenUsage`、`IChatProvider`
+- `Lumi.Providers`：Anthropic Provider（串流、thinking、usage、錯誤對應），從 `ISecretStore` 取金鑰
+- HTTP log 遮蔽 `x-api-key`、`Authorization`
+- `Lumi.Providers.Tests`：fixture 測試（不呼叫真實 API）
+- 架構測試：Core 不引用供應商 SDK
+
+**不做**
+- 工具呼叫（M3）、Prompt 分層（M5；1C 不送 system prompt）
+- 對話迴圈與存檔（1D）、任何 UI（1D）
+- OpenAI 相容（M2）、多組連線與模型（M2 的 `IModelCatalog`）
+- 自動重試串流中斷的回應（只有「還沒開始串流」的連線錯誤會由 SDK 重試）
+
+### Q4 兩個選項
+
+| | A. 官方 SDK（建議） | B. 自己寫 HTTP + SSE |
+|---|---|---|
+| 做法 | `Lumi.Providers` 引用 NuGet `Anthropic`（目前 12.58.0），把 SDK 的串流事件轉成 `ChatEvent` | typed client 自己組 JSON、自己解析 SSE |
+| `IHttpClientFactory` | 可以：SDK 的 client 有 `HttpClient` 屬性，傳入 factory 建立的 client | 可以 |
+| 要自己維護 | 只有事件轉換與錯誤對應 | 請求與回應的格式、SSE 解析、重試、`anthropic-version`、新欄位 |
+| API 改版（新區塊類型、新 beta） | 升 SDK 版本 | 自己追 |
+| 對 M2 的影響 | OpenAI 相容仍要另寫，屆時再決定用 OpenAI SDK 或自寫 SSE 解析 | SSE 解析可共用 |
+| 風險 | 多一個相依（只在 Providers）；SDK 型別不能外流到 Core | 格式細節（thinking signature、fallback 區塊、usage 合併）容易漏 |
+
+`agent.md` 第 4 節沒有禁止供應商 SDK，只規定 Core 不能引用；第 5 節本來就寫「各家格式轉換留在 Providers」。選 A 不需要改 `agent.md`，但要在主計畫決策紀錄加一筆。
+選 A 時，原計畫的「SSE 解析器（放 Providers 共用）」從 1C 移到 M2，看那時的需要再決定。下面的設計以 A 為準；選 B 時只有「Anthropic Provider」一節要換掉，其他不變。
+
+### 設計
+
+#### Core 模型（`Lumi.Core/Chat/`）
+
+```csharp
+public enum ChatRole { User, Assistant }
+
+// 內容區塊。為了能把對話原樣送回 API，回應裡的每個區塊都要保留下來。
+public abstract record ContentBlock;
+public sealed record TextBlock(string Text) : ContentBlock;
+public sealed record ThinkingBlock(string Thinking, string Signature) : ContentBlock;   // Signature 是供應商的不透明資料，原樣送回
+public sealed record RedactedThinkingBlock(string Data) : ContentBlock;
+// 不認得或供應商專屬的區塊（例如 fallback 區塊）：存原始 JSON，只有同一個供應商會送回去，其他供應商略過
+public sealed record ProviderBlock(string Provider, string Type, string RawJson) : ContentBlock;
+
+public enum MessageStatus { Complete, Stopped, Failed }
+
+public sealed record ChatMessage(
+    string Id, ChatRole Role, IReadOnlyList<ContentBlock> Content,
+    DateTimeOffset CreatedAt, MessageStatus Status = MessageStatus.Complete,
+    string? ModelId = null, TokenUsage? Usage = null);
+
+public sealed record Conversation(string Id, string Title, DateTimeOffset CreatedAt, DateTimeOffset UpdatedAt);
+
+public sealed record ChatRequest(string ModelId, IReadOnlyList<ChatMessage> Messages, int MaxTokens);
+
+public sealed record TokenUsage(int InputTokens, int OutputTokens, int CacheCreationInputTokens, int CacheReadInputTokens);
+```
+
+- ID 用 `Guid.CreateVersion7()` 的字串（依時間排序，1D 存 SQLite 時方便）。
+- `ContentBlock` 的 JSON 序列化（`[JsonPolymorphic]`）放 Core，1D 存檔時用；1C 先寫好並測來回轉換。
+- **對話歷史只能往後加**：已送出的訊息與區塊不能修改或重排，thinking 區塊要原樣送回。新模型會檢查 thinking 區塊的 signature 與前面的對話是否一致，改過歷史會回 400。從尾端移除（例如 M2 的「重新產生」）沒有問題。這條規則寫進 `agent.md` 第 7 節。
+
+#### `ChatEvent` 與 `IChatProvider`
+
+```csharp
+public abstract record ChatEvent;
+public sealed record TextDelta(string Text) : ChatEvent;
+public sealed record ThinkingDelta(string Text) : ChatEvent;
+public sealed record Usage(TokenUsage Tokens) : ChatEvent;            // 數字有更新就發，最後一次為準
+public sealed record Completed(ChatMessage Message, StopReason Reason) : ChatEvent;
+public sealed record Failed(ChatFailure Failure) : ChatEvent;
+// ToolCallStarted、ToolCallCompleted、ApprovalRequired：M3（見 Q10）
+
+public enum StopReason { EndTurn, MaxTokens, StopSequence, Other }
+
+public interface IChatProvider
+{
+    IAsyncEnumerable<ChatEvent> StreamAsync(ChatRequest request, CancellationToken ct = default);
+}
+```
+
+事件順序的約定（寫進介面註解，fixture 測試逐條驗證）：
+- 一次呼叫**剛好以一個 `Completed` 或一個 `Failed` 結束**，之後不再有事件。
+- `Completed.Message` 是完整的助理訊息，包含 thinking 區塊與 signature，1D 直接存檔。
+- **取消**：丟 `OperationCanceledException`，不發 `Failed`。已收到的文字由呼叫端（1D 的對話流程）自己累積，存成 `Stopped`。未完成的 thinking 沒有 signature、不能送回，不保留。
+- 例外不往外丟（取消除外），一律轉成 `Failed`。
+
+`ChatFailure`：
+
+```csharp
+public sealed record ChatFailure(ChatFailureKind Kind, string Message, bool Retryable, TimeSpan? RetryAfter = null, string? RequestId = null);
+
+public enum ChatFailureKind
+{
+    MissingApiKey,      // ISecretStore 沒有金鑰（1D 跳出輸入對話框）
+    SecretUnreadable,   // SecretStoreException
+    InvalidApiKey,      // 401
+    PermissionDenied,   // 403
+    ModelNotFound,      // 404
+    BadRequest,         // 400、413
+    RateLimited,        // 429，帶 retry-after
+    Overloaded,         // 529
+    ServerError,        // 其他 5xx
+    Network,            // 連不上、DNS、TLS、逾時
+    StreamError,        // 串流中途收到 error 事件或連線中斷
+    Refused,            // stop_reason: refusal（含 fallback 也拒絕）
+    Unknown,
+}
+```
+
+`Message` 是給使用者看的繁中說明（放資源檔的文字由 1D 對應，Provider 只給 Kind 與供應商原始訊息），**不得包含金鑰**。`refusal` 時已串出的部分內容要丟掉，不存檔。
+
+#### Anthropic Provider（`Lumi.Providers/Anthropic/`）
+
+- `AnthropicChatProvider : IChatProvider`，typed client：`services.AddHttpClient<AnthropicChatProvider>()`，`IChatProvider` 轉註冊到它。每次呼叫用 factory 給的 `HttpClient` 建 SDK client，`ApiKey` 從 `ISecretStore` 讀（`connection/dev-anthropic/api-key`），用完不保留。
+- 請求：`model`、`max_tokens`、`messages`、`stream`；`thinking: {type: "adaptive", display: "summarized"}`（`claude-opus-5-5` 一律會思考，不設 display 的話 thinking 內容是空字串，UI 就沒東西可顯示）；`output_config.effort` 有設才送（不設時這個模型預設 `medium`）；Q9 開啟時加 `fallbacks: "default"` 與 beta `server-side-fallback-2026-07-01`。
+- 內容區塊轉換：`TextBlock`、`ThinkingBlock`（含 signature）、`RedactedThinkingBlock` 對應 SDK 型別；`ProviderBlock(Provider: "anthropic")` 原樣放回；其他供應商的 `ProviderBlock` 略過。
+- 事件對應：
+
+| API 事件 | 處理 |
+|---|---|
+| `message_start` | 記下 message id、model、初始 usage → 發 `Usage` |
+| `content_block_start` | 依類型開一個累積中的區塊（text／thinking／redacted_thinking／其他存原始 JSON） |
+| `content_block_delta` `text_delta` | 累積 → 發 `TextDelta` |
+| `content_block_delta` `thinking_delta` | 累積 → 發 `ThinkingDelta` |
+| `content_block_delta` `signature_delta` | 累積到該 thinking 區塊的 signature，不發事件 |
+| `content_block_stop` | 區塊完成 |
+| `message_delta` | 記下 `stop_reason`；usage 合併（每個欄位以最後收到的值為準）→ 發 `Usage` |
+| `message_stop` | `stop_reason` 是 `refusal` → `Failed(Refused)`；否則 `Completed` |
+| `ping` | 略過 |
+| `error` | `Failed`（`overloaded_error` → Overloaded，其餘 → StreamError） |
+| 沒看過的事件 | 略過並記 Debug log（API 會新增事件類型，不能因此失敗） |
+
+- 錯誤對應：SDK 的例外類別（`Anthropic.Exceptions`）→ `ChatFailureKind`，依上表；連線類例外 → `Network`；串流中斷 → `StreamError`。SDK 的重試次數設 2（只重試還沒開始串流的 429／5xx／連線錯誤）。
+- 逾時：長回應可能串很多分鐘，SDK 與 `HttpClient` 的逾時都要放寬（實作時確認 SDK 的 `Timeout` 是整個請求還是到第一個 byte）；停止一律靠 `CancellationToken`。
+- log：`AddHttpClient` 加 `RedactLoggedHeaders(["x-api-key", "authorization"])`；Provider 自己的 log 不記請求與回應內容，只記 model、stop reason、usage、request id。
+
+#### 設定（Q3）
+
+`appsettings.json`：
+
+```json
+"Lumi": {
+  "Dev": {
+    "Anthropic": {
+      "BaseUrl": "https://api.anthropic.com",
+      "Model": "claude-opus-5-5",
+      "MaxTokens": 64000,
+      "ContextWindow": 1000000,
+      "Effort": null,
+      "UseServerFallbacks": true
+    }
+  }
+}
+```
+
+- 對應 `AnthropicDevOptions`（Providers），`ValidateOnStart`：BaseUrl 必須是 https 的絕對網址、MaxTokens 1～128000。
+- `ContextWindow` 1C 不用，1D 的狀態列用。
+- 金鑰不在這裡：只放 `ISecretStore`。
+
+#### 專案與套件
+
+- `Lumi.Providers`：加 `Anthropic`、`Microsoft.Extensions.Http`。
+- 新增 `tests/Lumi.Providers.Tests`。
+- `Lumi.App`：呼叫 `AddLumiProviders()`、綁定設定；1C 不會實際呼叫 Provider，UI 在 1D。
+- 架構測試：只有 `Lumi.Providers` 能引用 `Anthropic` 組件。
+
+#### 測試
+
+- 假的 `HttpMessageHandler` 回傳 fixture，並**故意把回應切成很小的片段**（1、3、7 byte）送出，確保中文與 emoji 被切在 UTF-8 中間也不會壞。
+- Fixture（`tests/Lumi.Providers.Tests/Fixtures/anthropic/*.sse`、`*.json`）：
+  - 純文字；中文 + ❤️‍🔥 等組合 emoji；thinking + signature + 文字
+  - 中途夾 `ping`；沒看過的事件類型
+  - `stop_reason: max_tokens`；`refusal`（開頭就拒絕、串到一半才拒絕）；含 `fallback` 區塊的回應
+  - 串流中的 `error` 事件（`overloaded_error`）；串到一半連線中斷
+  - HTTP 400／401／404／429（含 retry-after）／529 的 JSON 錯誤
+- 其他測試：
+  - 請求內容：model、max_tokens、stream、thinking 設定、fallbacks 開關、送回的 thinking 區塊與 signature 原樣保留
+  - `x-api-key` 只出現在送出的標頭，不在 log、例外、`ChatFailure` 裡
+  - 缺金鑰 → `Failed(MissingApiKey)`，而且沒有發出任何 HTTP 請求
+  - 取消：串到一半取消 → `OperationCanceledException`，連線被關閉
+  - 事件順序約定（剛好一個結尾事件、結尾後沒有事件）
+  - `ContentBlock` JSON 來回轉換
+- 選用（Q11）：`tools/RecordAnthropicFixture`，本機手動執行、用你的金鑰錄一次真實回應，不在 CI 跑。
+
+### 工作項目
+
+- [x] **C1 Core 模型**：`ChatMessage`、`ContentBlock` 各類型、`Conversation`、`ChatRequest`、`TokenUsage`；`ContentBlock` 的 JSON 序列化與測試。
+- [x] **C2 事件與介面**：`ChatEvent` 五種、`StopReason`、`ChatFailure`、`IChatProvider`（註解寫明事件順序與取消的約定）。
+- [x] **C3 設定**：`AnthropicDevOptions`、`appsettings.json`、驗證。
+- [x] **C4 Provider 骨架**：套件、`AddLumiProviders()`、typed client、header 遮蔽、從 `ISecretStore` 取金鑰、缺金鑰處理。
+- [x] **C5 請求轉換**：Core 訊息 → SDK 請求（含 thinking 區塊原樣送回、`ProviderBlock` 篩選、thinking／effort／fallbacks 設定）。
+- [x] **C6 串流轉換**：SDK 事件 → `ChatEvent`、區塊累積、usage 合併、stop reason、refusal。
+- [x] **C7 錯誤對應**：HTTP 錯誤、串流 error、連線中斷 → `ChatFailure`。
+- [x] **C8 Fixture 與測試**：上面列的 fixture 與測試；`Lumi.Providers.Tests` 加進方案。
+- [x] **C9 架構測試**：Core 不引用 `Anthropic`；只有 Providers 引用。
+- [x] **C10 文件**：`agent.md` 第 7 節加「對話歷史只能往後加、thinking 區塊原樣送回」；主計畫決策紀錄（Q4、Q9）；本檔實作紀錄。
+- [ ] ~~C11（選用，Q11）手動錄製工具~~：先不做，只用手寫 fixture；之後要核對格式再補。
+
+### 驗收標準
+
+- [x] `dotnet build` 零警告，`dotnet test` 全過，測試中沒有任何真實的網路呼叫。
+- [x] 所有 fixture 在 1／3／7 byte 切塊下結果一致，中文與 emoji 完整。
+- [x] 每次呼叫剛好以一個 `Completed` 或 `Failed` 結束；取消時丟 `OperationCanceledException`。
+- [x] `Completed.Message` 送回 Provider 時，thinking 區塊與 signature 和收到時完全相同。
+- [x] 金鑰不出現在 log、例外訊息、`ChatFailure` 中（測試保證）。
+- [x] 架構測試證明 Core 不引用 `Anthropic` SDK（只有 `Lumi.Providers` 引用）。
+- [x] ~~（有 C11 時）用真實金鑰錄一次~~：C11 依 Q11 先不做。
 
 ## 1D 工作台最小版與 SQLite（大綱，輪到時展開）
 
@@ -347,3 +551,18 @@ public static IServiceCollection AddLumiPlatform(this IServiceCollection service
 - **架構測試**加上「P/Invoke 只在 Platform」（以反射找 `PinvokeImpl` 方法，並有對照組證明偵測有效；另掃原始碼的 `DllImport`／`LibraryImport`）。
 - **B8 做法**：用一個放在專案外的小型主控台程式寫入項目，用 `security find-generic-password` 確認 service／account／label，再用另一個程序讀回，最後刪除。Mac 驗證通過，沒有殘留項目。
 - **尚未驗證**：Windows 的 DPAPI 契約測試（13 項目前在 Mac 被略過）、`secrets.json` 的實際內容；Mac 授權視窗按「拒絕」的實機行為。
+
+### 1C（2026-10-18）
+
+- **確認 Q4 後改用官方 SDK**：NuGet `Anthropic` 12.58.0，只在 `Lumi.Providers` 引用；走 `client.Beta.Messages`（不是 `client.Messages`），因為 server-side fallback（Q9）的 `Fallbacks` 欄位只在 beta 端點存在。
+- **官方 SDK 的命名比文件描述的更不一致**，以下是實測（用故意寫錯型別讓編譯器報出真正型別名稱的方式逐一確認，不是用反射探針）：
+  - `content_block_start` 事件的 `ContentBlock` 屬性型別就叫 `ContentBlock`（在 `Beta.Messages` 命名空間下，不是 `BetaContentBlock`），但它的 `TryPick*` 方法卻是 `TryPickBetaText`／`TryPickBetaThinking`／`TryPickBetaRedactedThinking`（Beta 前綴只出現在方法名稱，不在型別名稱）。`content_block_delta` 的 `Delta` 聯集則相反：型別和方法都沒有 Beta 前綴（`TryPickText`／`TryPickThinking`／`TryPickSignature`）。
+  - `message_delta` 的 `stop_reason` 是 `ApiEnum<string, BetaStopReason>`，呼叫 `.ToString()` 印出的是型別資訊，不是 wire 值；要用它的隱含轉換（`(string)` 或直接指派給 `string`）才拿得到 `"end_turn"`／`"refusal"` 這些實際字串。第一版用了 `.ToString()`，被 fixture 測試抓到（`StopReason` 永遠是 `Other`）。
+  - `Fallbacks` 沒有 `"default"` 純量形式的建構方式（至少目前這版 SDK 找不到），改用文件給的陣列形式：`Fallbacks = [new(Model.ClaudeOpus4_8)]`，候補模型固定是 `claude-opus-4-8`（官方文件：cyber 類別的拒絕會建議導到它）。
+  - `AnthropicRateLimitException`、`AnthropicApiException` 目前沒有公開的 `RetryAfter`／`RequestId` 屬性（編譯器直接否認這兩個成員存在），`ChatFailure` 的這兩個欄位先留 null，不影響 `ChatFailureKind` 的分類。
+- **串流中途的 `error` 事件，SDK 一律包成 `AnthropicSseException`**，把 `overloaded_error` 這些細節壓平成同一種例外。伺服器原始的錯誤 JSON 會原封不動放在 `Exception.Message`（實測得到，不是文件保證的行為），所以 `AnthropicErrorMapper` 從訊息裡撈 `error.type` 字串來還原 `Overloaded` 分類；撈不到就當一般的 `StreamError`。訊息格式是 `"...: '{...}'"`（結尾還有一個單引號），所以是從第一個 `{` 切到最後一個 `}`，不能切到字串尾端。
+- **`StreamAsync` 的 enumerator 延後到迴圈內、在 try 裡才建立**（而不是在迴圈外先 `GetAsyncEnumerator()`）：`CreateStreaming(...).GetAsyncEnumerator(...)` 會不會立刻送出 HTTP 請求、因而立刻丟例外，是 SDK 的實作細節，不能假設一定是延遲求值；建在迴圈外會讓「請求一開始就失敗」繞過 try/catch，直接讓例外往外丟，違反「例外一律轉成 `Failed`」的驗收標準。
+- **fixture 用純文字 `.sse`／`.json` 檔案**（照計畫），但用假的 `HttpMessageHandler` + 會把每次讀取限制在 1／3／7 byte 的 `Stream` 來餵，而不是直接餵位元組給一個手寫的 SSE 解析器——因為改用官方 SDK 後，SSE 解析本身是 SDK 的責任（`System.Net.ServerSentEvents`），我們的測試驗證的是「就算底層的網路讀取被切得很碎，最後組出來的中文與組合 emoji 還是完整的」這件事有沒有在整條路徑上成立。
+- **`fallback-block.sse` 的區塊格式**：Anthropic 文件沒有給完整 schema，但這個 skill 裡的 jq 範例明確示範了 `content[] | select(.type=="fallback")` 配上 `.from.model`／`.to.model`，所以照這個格式寫 fixture（agent.md 第 3 節：沒有規格不要自己發明格式——這裡的「規格」來源是官方文件引用的範例，不是憑空猜的）。測試只驗證不崩潰、存成 `ProviderBlock`、後面的文字正常，不驗證 `RawJson` 的確切序列化形狀（那是 SDK 內部的序列化細節，沒有把握精確斷言）。
+- **`InternalsVisibleTo`**：`Lumi.Providers` 加了 `AssemblyInfo.cs` 讓 `Lumi.Providers.Tests` 能測內部的 `AnthropicRequestConverter`／`AnthropicStreamAccumulator`／`AnthropicErrorMapper`，這三個類別本來就不該是公開 API。
+- **尚未做**：C11（錄製工具）依 Q11 先不做；Windows 全部待驗（1A、1B、1C 共通）。

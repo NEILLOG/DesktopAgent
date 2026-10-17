@@ -89,7 +89,10 @@ Lumi.App ──► Lumi.Sprites.* ──► Lumi.Sprites.Abstractions
 - 對話迴圈輸出 `IAsyncEnumerable<ChatEvent>`。事件種類：`TextDelta`、`ThinkingDelta`、`ToolCallStarted`、`ToolCallCompleted`、`ApprovalRequired`、`Usage`、`Completed`、`Failed`。
 - UI 只消費事件，不直接呼叫供應商。**小精靈的動畫狀態也是從這些事件推導出來的。**
 - 所有非同步方法都要接受 `CancellationToken`，並且真的往下傳。
-- SSE 解析：以「完整事件」為單位解析 JSON，UTF-8 解碼要有狀態。不要逐 byte 轉字串，否則 emoji 和中文會被切壞。
+- Anthropic 走官方 SDK（NuGet `Anthropic`，只在 `Lumi.Providers` 引用），不自己寫 HTTP／SSE 解析（M1 的 Q4）。
+  SDK 吃我們自己的 `HttpClient`（`IHttpClientFactory` typed client），測試用假的 `HttpMessageHandler` 餵 fixture。
+- **對話歷史只能往後加**：已送出的訊息與內容區塊不能修改或重排；thinking 區塊（含 signature／`redacted_thinking` 的資料）要原樣存檔、原樣送回下一次請求。模型會檢查這段歷史的一致性，改過會回 400。
+  從尾端移除訊息（例如「重新產生」）沒問題。不認得的內容區塊（例如供應商專屬的 fallback 區塊）存成 `ProviderBlock`，只送回產生它的那個供應商。
 - token 用量以供應商回傳的 `usage` 為準。只有送出前的上下文預估才用估算值。
 - 工具呼叫迴圈要有最大次數限制，預設 10 次，超過就停止並回報。
 
