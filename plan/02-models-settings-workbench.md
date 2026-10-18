@@ -1,6 +1,6 @@
 # 02 模型管理、設定頁與工作台完整介面
 
-- 狀態：2A 完成；2B 程式完成（B5 併入 2C 的手動驗收）；2C 已展開，待你確認後開工；2D、2E 只寫到會影響架構的程度，輪到時再展開
+- 狀態：2A、2B、2C 程式完成，待手動驗收（C9，含 B5）；2D、2E 只寫到會影響架構的程度，輪到時再展開
 - 對應里程碑：M2
 - 前置：M1 在 Mac 完成；Windows 驗證可以和 M2 並行，不擋開工
 
@@ -284,20 +284,20 @@ public sealed record ResolvedModel(ModelSettings Model, ConnectionSettings Conne
 
 ### 工作項目
 
-- [ ] **C1 目錄補強**：`IModelCatalog.HasApiKeyAsync`（只查有沒有）＋ `JsonModelCatalog` 實作與測試；2A 的假目錄補上。
-- [ ] **C2 主題**：`ThemeService`（對應函式、訂閱變更、啟動套用）＋測試。
-- [ ] **C3 共用元件**：`IConfirmService` 與視窗實作、`ISettingsWindowService`、設定視窗骨架（分類導覽、`LoadProblem` 提示、關閉詢問）。
-- [ ] **C4 連線分頁**：清單、表單、金鑰欄位、驗證、測試連線、儲存／清除／刪除、未儲存詢問；ViewModel 測試。
-- [ ] **C5 模型設定分頁**：預設模型下拉、分組清單、表單、可用模型列出、手動輸入、預設值與自動帶入；ViewModel 測試。
-- [ ] **C6 一般分頁**：主題選擇。
-- [ ] **C7 缺金鑰流程**：`SettingsApiKeyPrompt`、刪除 `ApiKeyDialog*`；工作台頂端加「設定」按鈕。
-- [ ] **C8 字串資源**：所有新文字進 `Strings.resx`／`Strings.cs`（`StringsTests` 會檢查同步）；色碼檢查測試守住不寫死顏色。
-- [ ] **C9 手動驗收**（需要你操作，同時完成 B5）：見驗收標準。
-- [ ] **C10 文件**：`agent.md`（如有新規則）、本檔實作紀錄、主計畫狀態。
+- [x] **C1 目錄補強**：`IModelCatalog.HasApiKeyAsync`（只查有沒有）＋ `JsonModelCatalog` 實作與測試；2A 的假目錄補上。
+- [x] **C2 主題**：`ThemeService`（對應函式、訂閱變更、啟動套用）＋測試。
+- [x] **C3 共用元件**：`IConfirmService` 與視窗實作、`ISettingsWindowService`、設定視窗骨架（分類導覽、`LoadProblem` 提示、關閉詢問）。
+- [x] **C4 連線分頁**：清單、表單、金鑰欄位、驗證、測試連線、儲存／清除／刪除、未儲存詢問；ViewModel 測試。
+- [x] **C5 模型設定分頁**：預設模型下拉、分組清單、表單、可用模型列出、手動輸入、預設值與自動帶入；ViewModel 測試。
+- [x] **C6 一般分頁**：主題選擇。
+- [x] **C7 缺金鑰流程**：`SettingsApiKeyPrompt`、刪除 `ApiKeyDialog*`；工作台頂端加「設定」按鈕。
+- [x] **C8 字串資源**：所有新文字進 `Strings.resx`／`Strings.cs`（`StringsTests` 會檢查同步）；色碼檢查測試守住不寫死顏色。
+- [ ] **C9 手動驗收**（需要你操作，同時完成 B5）：見驗收標準。（**待你執行**）
+- [x] **C10 文件**：`agent.md`（如有新規則）、本檔實作紀錄、主計畫狀態。
 
 ### 驗收標準
 
-- [ ] `dotnet build` 零警告、`dotnet test` 全過。
+- [x] `dotnet build` 零警告、`dotnet test` 全過。
 - [ ] 設定視窗可以和工作台並排使用；重複按「設定」只會帶到前面，不會開第二個。
 - [ ] 新增一個 OpenAI 相容連線（公司 Gateway 或 Ollama）→ 測試連線成功並列出模型 → 新增模型設定 → 設為工作台預設 → 回工作台送出訊息收到回答（B5）。
 - [ ] 故意把 Base URL 改錯、金鑰改錯、關掉服務，測試連線各自顯示對應的原因。
@@ -354,4 +354,16 @@ public sealed record ResolvedModel(ModelSettings Model, ConnectionSettings Conne
 - **逾時**：串流用的 `HttpClient` 逾時設成無限（本機模型載入、長回答可能很久，停止靠 `CancellationToken`）；測試連線 30 秒。
 - **Anthropic 的 `Models.List`** 用 SDK；測試連線要求一定要有金鑰（沒有就直接回「尚未輸入」，不送請求）。OpenAI 相容沒有金鑰仍會送請求（Ollama）。
 - **B5 手動驗收還沒做**：這台電腦沒有 Ollama，公司 Gateway 要你實測。2C（設定視窗）還沒有，要先驗可以手動編輯 `~/Library/Application Support/Lumi/settings.json`：在 `connections` 加一筆 `{"id":"company","name":"公司 Gateway","format":"openAICompatible","baseUrl":"https://…/v1"}`、在 `models` 加一筆 `{"id":"m-company","connectionId":"company","modelId":"你的模型","displayName":"…","maxOutputTokens":4096,"contextWindow":128000,"showThinking":false}`，並把 `workbenchModelId` 改成 `m-company`；金鑰則要先有 2C 的設定頁才能存（目前缺金鑰對話框會把金鑰存到工作台目前模型的連線，所以這樣設定後送出會跳對話框，輸入金鑰即可）。
+
+### 2C（2026-10-19）
+
+- **模型清單的「分組」**：計畫寫「依連線分組」，Avalonia 的 `ListBox` 沒有分組標頭，所以做成依連線名稱排序、每一列顯示「連線名稱 · 模型 ID」，沒有真的分組標頭。
+- **畫面確認**：Mac 上實際開過設定視窗（連線、模型設定、缺金鑰流程）。模型分頁用你的金鑰真的列出 13 個可用模型，順便驗證了 Anthropic 的測試連線。沒有輔助使用權限所以無法自動點擊，是用暫時的環境變數在啟動時開視窗截圖，截完已移除（不在 commit 裡）。截圖時修掉兩個視覺問題：選取列（琥珀底）文字對比不夠、分頁標題字太大。
+- **新增 `IModelCatalog.HasApiKeyAsync`**：只查有沒有金鑰、不讀內容；M1 搬家的連線沒有末 4 碼，設定頁就只顯示「已設定」。
+- **缺金鑰流程多擋一種無限重送**：金鑰「無效」時，使用者開了設定視窗什麼都沒改就關掉，不能算「存好了」，否則會重送→失敗→再開視窗，一直循環。所以 `SettingsApiKeyPrompt` 對 Invalid／Unreadable 要求視窗開著期間設定真的被儲存過（`Changed` 事件）；Missing 則只看現在有沒有金鑰。
+- **`ThemeService`** 用委派套用主題，所以不需要真的有 Avalonia 應用程式就能測試；啟動時先套用一次。
+- **連線狀態點**只存在記憶體（`ConnectionStatusCache`）：連線一改、一刪、清金鑰就清掉，因為舊的結果不準了。
+- **設定視窗每次開啟都重新建立**（關掉就丟掉），狀態一律從目錄重讀，不用處理「視窗關著但 ViewModel 還活著」的過期問題。
+- **刪除 M1 的 `ApiKeyDialog`**、`ApiKeyDialogViewModel`、`ApiKeyPromptService` 與相關字串。
+- **還沒做**：Windows 全部；`ConfirmDialog`（確認視窗）、設定視窗的鍵盤操作與無障礙沒有另外測試。
 
