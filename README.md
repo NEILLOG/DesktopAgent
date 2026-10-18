@@ -40,12 +40,14 @@ src/
   Lumi.Providers/           Anthropic（官方 SDK）、OpenAI 相容（M2）
   Lumi.Infrastructure/      SQLite（對話與訊息）
   Lumi.Platform/            原生 API、金鑰安全儲存（DPAPI、Keychain）
+  Lumi.Tools/               內建工具（目前時間、計算，以及示範用的筆記工具）
   Lumi.App/                 Avalonia 介面與 DI 組裝（唯一的 composition root）
 tests/
   Lumi.Core.Tests/
   Lumi.Platform.Tests/      金鑰儲存的契約測試（記憶體、DPAPI、Keychain）
   Lumi.Providers.Tests/     Anthropic Provider 的 fixture 測試（不呼叫真實 API）
   Lumi.Infrastructure.Tests/ SQLite 實作（暫存資料夾的真資料庫檔）
+  Lumi.Tools.Tests/         工具與運算式解析器（含惡意輸入）
   Lumi.App.Tests/           ViewModel、Markdown 解析與渲染（含 Avalonia.Headless）、EmojiText、字串資源
   Lumi.Architecture.Tests/  相依規則、色碼檢查、P/Invoke 與供應商 SDK 的歸屬
 poc/
@@ -55,7 +57,6 @@ poc/
 之後會加入的專案（詳見 `agent.md`）：
 
 ```
-Lumi.Tools                  內建工具
 Lumi.Speech                 語音轉文字
 Lumi.Sprites.Abstractions   小精靈角色介面
 Lumi.Sprites.*              各個角色

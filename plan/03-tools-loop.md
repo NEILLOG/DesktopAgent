@@ -1,6 +1,6 @@
 # 03 Tool 框架與對話迴圈
 
-- 狀態：草稿，待確認「開工前要確認的事」後從 3A 開工
+- 狀態：**3A 完成**（2026-10-19）；3B、3C 待做
 - 對應里程碑：M3
 - 前置：M2 程式完成；手動驗收與 Windows 驗證可以和 M3 並行，不擋開工
 
@@ -200,24 +200,24 @@ ToolCallCompleted(string CallId, ToolResultBlock Result)
 
 ### 工作項目
 
-- [ ] **A1 資料模型**：`ChatRole.Tool`、`ToolUseBlock`、`ToolResultBlock`、`ToolApproval`、`StopReason.ToolUse`、三個新事件、`ChatFailureKind.ToolLoopLimit`；JSON 多型測試（舊資料仍可讀）。
-- [ ] **A2 工具介面與基底**：`ITool`、`ToolBase<TArgs>`、`ToolDescriptor`、`ToolResult`、`ToolPreview`、`ToolContext`、`ToolPermission`、`ToolModes`；Schema 產生（含 `[Description]`）、引數解析、結果截斷；測試。
-- [ ] **A3 註冊與查找**：`IToolRegistry`、`AddLumiTool<T>()`、啟動時驗證；測試。
-- [ ] **A4 權限**：`IToolApprovalService`、`ApprovalDecision`、`ToolPermissionMemory`、各等級的規則；測試。
-- [ ] **A5 對話迴圈**：`ConversationService` 的工具迴圈、逾時、取消時補結果、次數上限、`RetryAsync` 接受 `Tool` 結尾、`RegenerateAsync` 移除整輪；用假 Provider 與假工具測。
-- [ ] **A6 歷史修補**：`BuildRequestMessages` 保持 `tool_use`／`tool_result` 成對、缺結果補錯誤結果、不會把工具訊息和使用者訊息錯誤合併；測試。
-- [ ] **A7 `Lumi.Tools`**：專案、四個工具、運算式解析器（要有大量測試，包含惡意輸入）、`AddLumiTools()`；`Lumi.App` 組裝。
-- [ ] **A8 存檔**：SQLite 的 `tool` 角色、schema 升到 2、舊資料庫自動升級的測試、新資料庫被舊版拒絕的測試。
-- [ ] **A9 `ModelSettings.ToolsEnabled`**：資料模型、設定檔向前相容、迴圈依它決定是否帶工具；測試。
-- [ ] **A10 架構測試與文件**：工具只在 `Lumi.Tools`／都繼承 `ToolBase<>`；`agent.md` 第 7、8 節補充（事件順序、停止時補結果、權限記憶只在記憶體）；本檔實作紀錄。
+- [x] **A1 資料模型**：`ChatRole.Tool`、`ToolUseBlock`、`ToolResultBlock`、`ToolApproval`、`StopReason.ToolUse`、三個新事件、`ChatFailureKind.ToolLoopLimit`；JSON 多型測試（舊資料仍可讀）。
+- [x] **A2 工具介面與基底**：`ITool`、`ToolBase<TArgs>`、`ToolDescriptor`、`ToolResult`、`ToolPreview`、`ToolContext`、`ToolPermission`、`ToolModes`；Schema 產生（含 `[Description]`）、引數解析、結果截斷；測試。
+- [x] **A3 註冊與查找**：`IToolRegistry`、`AddLumiTool<T>()`、啟動時驗證；測試。
+- [x] **A4 權限**：`IToolApprovalService`、`ApprovalDecision`、`ToolPermissionMemory`、各等級的規則；測試。
+- [x] **A5 對話迴圈**：`ConversationService` 的工具迴圈、逾時、取消時補結果、次數上限、`RetryAsync` 接受 `Tool` 結尾、`RegenerateAsync` 移除整輪；用假 Provider 與假工具測。
+- [x] **A6 歷史修補**：`BuildRequestMessages` 保持 `tool_use`／`tool_result` 成對、缺結果補錯誤結果、不會把工具訊息和使用者訊息錯誤合併；測試。
+- [x] **A7 `Lumi.Tools`**：專案、四個工具、運算式解析器（要有大量測試，包含惡意輸入）、`AddLumiTools()`；`Lumi.App` 組裝。
+- [x] **A8 存檔**：SQLite 的 `tool` 角色、schema 升到 2、舊資料庫自動升級的測試、新資料庫被舊版拒絕的測試。
+- [x] **A9 `ModelSettings.ToolsEnabled`**：資料模型、設定檔向前相容、迴圈依它決定是否帶工具；測試。
+- [x] **A10 架構測試與文件**：工具只在 `Lumi.Tools`／都繼承 `ToolBase<>`；`agent.md` 第 7、8 節補充（事件順序、停止時補結果、權限記憶只在記憶體）；本檔實作紀錄。
 
 ### 驗收標準
 
-- [ ] `dotnet build` 零警告、`dotnet test` 全過。
-- [ ] 用假 Provider（腳本化的回應）跑完：單次呼叫、連續多次呼叫、平行多個呼叫、未知工具、引數錯誤、工具丟例外、工具逾時、使用者拒絕、停止（等待確認中／執行中）、達到次數上限，每一種之後的歷史都能再送出（沒有缺結果的 `tool_use`）。
-- [ ] `Destructive` 每次都詢問；`Write` 選了「本次對話都允許」後同一則對話不再詢問、另一則對話仍詢問。
-- [ ] `calculate` 對 `1+2*3`、`(1+2)*3`、`2^10`、`sqrt(16)` 正確，對 `1/0`、`1+`、超長輸入、巢狀括號 10,000 層都回錯誤結果而不是當掉。
-- [ ] 舊的資料庫（schema 1）打開後自動升到 2，既有對話完好。
+- [x] `dotnet build` 零警告、`dotnet test` 全過。
+- [x] 用假 Provider（腳本化的回應）跑完：單次呼叫、連續多次呼叫、平行多個呼叫、未知工具、引數錯誤、工具丟例外、工具逾時、使用者拒絕、停止（等待確認中／執行中）、達到次數上限，每一種之後的歷史都能再送出（沒有缺結果的 `tool_use`）。
+- [x] `Destructive` 每次都詢問；`Write` 選了「本次對話都允許」後同一則對話不再詢問、另一則對話仍詢問。
+- [x] `calculate` 對 `1+2*3`、`(1+2)*3`、`2^10`、`sqrt(16)` 正確，對 `1/0`、`1+`、超長輸入、巢狀括號 10,000 層都回錯誤結果而不是當掉。
+- [x] 舊的資料庫（schema 1）打開後自動升到 2，既有對話完好。
 
 ---
 
@@ -276,4 +276,22 @@ ToolCallCompleted(string CallId, ToolResultBlock Result)
 
 ## 實作紀錄
 
-（偏離原計畫的地方與原因，實作時填寫）
+### 3A（2026-10-19）
+
+- **Q1～Q5 照建議採用**（`ChatRole.Tool`、四個示範／正式工具、`ToolsEnabled` 預設開、依序執行、只有思考的中間步驟不顯示）。
+- **`ToolBase<TArgs>` 的方法名稱**：子類別實作的是 `InvokeAsync`（不是 `ExecuteAsync`）。`TArgs = string` 時 `ExecuteAsync(TArgs, …)` 會和介面的 `ExecuteAsync(string argumentsJson, …)` 簽章衝突，改名一勞永逸。
+- **停止時補結果**：等待確認中或執行中按停止，該呼叫補「使用者已停止。」錯誤結果；同一輪**還沒開始的**呼叫也補同樣的結果（否則 `tool_use` 缺結果，下次送出會被 API 拒絕）。存檔用 `CancellationToken.None`，存完才丟 `OperationCanceledException`。
+- **次數上限**：`Failed(ToolLoopLimit)`，可重試；到上限時歷史的最後一則是 `Tool` 訊息（每個 `tool_use` 都有結果），所以「重試」直接接著跑，已完成的步驟不會重做。
+- **`AllowForConversation` 用在 `Destructive`** 時不記住，結果區塊記成 `AllowedOnce`。
+- **`BuildRequestMessages`**：助理訊息有 `tool_use` 時，緊接著一定產出一則 `Tool` 訊息——有存的用存的（順序依 `tool_use`），缺的補「對話被中斷，沒有取得這個工具的結果。」；沒有對應呼叫的結果與單獨出現的 `Tool` 訊息丟掉。只影響送出的請求，不改存檔。
+- **`RegenerateAsync`**：從尾端移除到最後一則使用者訊息為止（含工具訊息）；和 2D 一樣，沒有可用模型時在移除前就擋下來。
+- **`ConversationService` 保留三個參數的建構式**（不帶任何工具），既有測試與不需要工具的場合不用改；完整建構式由 DI 使用。`IToolApprovalService` 沒有註冊時預設 `DenyAllToolApprovalService`（`TryAdd`），App 在 3C 註冊自己的實作。
+- **示範工具**：筆記資料夾預設是「文件/Lumi/notes」，可用 `Lumi:Tools:NotesDirectory` 改；`save_note` 不覆蓋既有檔案（`FileMode.CreateNew`），檔名只接受簡單名稱（無路徑、副檔名只能 `.txt`／`.md`），完整路徑再檢查一次一定在筆記資料夾內。`Lumi:Tools:EnableDemoTools` 在 `AddLumiTools` 時決定要不要註冊那兩個工具。
+- **`calculate` 的範圍**：全形符號與 `×÷−` 會先換成半形；支援科學記號；長度上限 500、巢狀深度 64、函式參數 16 個；結果必須是有限數字。一萬層括號會先被長度上限擋下。
+- **`get_current_time`** 用 `TimeProvider`（含 `LocalTimeZone`），測試可以固定時間與時區。
+- **SQLite**：migration 2 只是 `SELECT 1`（沒有結構變更），目的是讓舊版程式拒絕開啟。「舊資料庫升級」的測試用把 `schema_version` 改回 1 模擬。
+- **`ModelsViewModel`** 多了 `ToolsEnabled` 屬性（含在「有沒有改動」的判斷裡），這樣編輯並儲存模型不會把它重設成預設值；勾選框和字串留給 3C。
+- **架構測試**：新增 `ToolRuleTests`（內建工具都在 `Lumi.Tools` 且繼承 `ToolBase<>`、其他組件沒有工具實作、每個工具都有被 `AddLumiTools` 註冊）；`Lumi.Tools` 加入「只參考 Core」「不參考 Avalonia」「沒有 P/Invoke／SDK／SQLite／Markdig」的規則。
+- **目前實際行為**：Provider 還沒送工具定義（3B），所以 App 現在不會真的呼叫工具；`Completed` 在一輪裡可能出現多次的處理（畫面）也留給 3C。
+- **測試數**：Core 112、Tools 98、Infrastructure 40、Platform 51（13 略過）、Providers 73、Architecture 45、App 213。
+

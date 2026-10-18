@@ -94,7 +94,10 @@ Lumi.App ──► Lumi.Sprites.* ──► Lumi.Sprites.Abstractions
 - **對話歷史只能往後加，或從尾端移除**：已送出的訊息與內容區塊不能修改、重排，也不能刪除中間的訊息；thinking 區塊（含 signature／`redacted_thinking` 的資料）要原樣存檔、原樣送回下一次請求。模型會檢查這段歷史的一致性，改過會回 400。
   從尾端移除訊息（例如「重新產生」，`IConversationStore.RemoveLastMessageAsync`）沒問題：前面每一則的內容都沒變。不認得的內容區塊（例如供應商專屬的 fallback 區塊）存成 `ProviderBlock`，只送回產生它的那個供應商。
 - token 用量以供應商回傳的 `usage` 為準。只有送出前的上下文預估才用估算值。
-- 工具呼叫迴圈要有最大次數限制，預設 10 次，超過就停止並回報。
+- 工具呼叫迴圈要有最大次數限制，預設 10 次（`ToolLoopOptions.MaxIterations`），超過就停止並回報 `ToolLoopLimit`。
+- **一輪回應可以有多個 `Completed`**（每次呼叫供應商一個）。一次工具呼叫的事件順序：`Completed`（`StopReason.ToolUse`）→ 每個呼叫依序 `ToolCallStarted` →（需要確認時 `ApprovalRequired`）→ `ToolCallCompleted`，然後下一次供應商呼叫。工具依序執行，不平行。
+- **每個 `tool_use` 都必須有 `tool_result`**，兩家 API 都會拒絕缺結果的歷史：使用者停止時要補「已停止」結果（包含同一輪還沒開始的呼叫），存檔不受取消影響；送出請求前 `BuildRequestMessages` 還會修補歷史（補上缺的結果、丟掉沒有對應呼叫的孤兒結果），只改請求，不改存檔。
+- 工具結果存成 `ChatRole.Tool` 訊息（一則可含多個 `ToolResultBlock`）；工具卡片標題需要的資料（顯示名稱、對象、摘要、耗時、確認方式）都存在結果區塊裡，重開程式後可重建。
 
 ## 8. Tool 規則
 
@@ -105,6 +108,8 @@ Lumi.App ──► Lumi.Sprites.* ──► Lumi.Sprites.Abstractions
   - `Write`、`Network` 可以選「本次對話都允許」（只存在記憶體）；`Destructive` 每次都問，不提供記住選項。
   - 確認 UI 與拒絕、停止時的行為見 `docs/ui-spec.md` 第 5 節。
 - 必須宣告**可用模式**：工作台、小精靈，或兩者都可用。
+- 內建工具都放在 `Lumi.Tools`（`Lumi.Core` 只有介面與基底類別），架構測試會檢查。工具的例外細節只寫進日誌，回給模型的是固定的「工具執行失敗」，不洩漏路徑等內部資訊。
+- 權限記憶（`ToolPermissionMemory`）只存在記憶體，依對話分開，重開程式就清空；沒有畫面可以詢問時（`DenyAllToolApprovalService`）一律拒絕。
 - 檔案類工具只能存取 `ToolContext.Scope`（使用者加入的檔案與資料夾）。路徑要正規化並檢查，防止用 `..` 跳出範圍。
 - 錯誤用 `ToolResult.Error(...)` 回傳給模型，不要讓例外直接往外丟。
 - 每個工具都要有逾時設定。
