@@ -1,6 +1,6 @@
 # 02 模型管理、設定頁與工作台完整介面
 
-- 狀態：2A 程式完成（待你實機確認搬家）；2B 待開工；2C～2E 只寫到會影響架構的程度，輪到時再展開
+- 狀態：2A 完成；2B 程式完成（待實機驗收 B5）；2C 待展開；2C～2E 只寫到會影響架構的程度，輪到時再展開
 - 對應里程碑：M2
 - 前置：M1 在 Mac 完成；Windows 驗證可以和 M2 並行，不擋開工
 
@@ -191,17 +191,17 @@ public sealed record ResolvedModel(ModelSettings Model, ConnectionSettings Conne
 
 ### 工作項目
 
-- [ ] **B1 串流 Provider**：請求轉換、SSE 解析、事件對應、錯誤對應。
-- [ ] **B2 列出模型／測試連線**：`IConnectionTester`，兩種格式各一個實作。
-- [ ] **B3 fixture 與測試**：純文字、中文與 emoji 切塊、`reasoning_content`、沒有 usage、`length`、`content_filter`、HTTP 錯誤、連不上、取消、無金鑰時不送 `Authorization`。
-- [ ] **B4 架構與分派**：`RoutingChatProvider` 接上；架構測試不變（OpenAI 相容不引用 SDK）。
-- [ ] **B5 手動驗收**：Ollama（本機）、公司 Gateway 各對話一次。
+- [x] **B1 串流 Provider**：請求轉換、SSE 解析、事件對應、錯誤對應。
+- [x] **B2 列出模型／測試連線**：`IConnectionTester`，兩種格式各一個實作。
+- [x] **B3 fixture 與測試**：純文字、中文與 emoji 切塊、`reasoning_content`、沒有 usage、`length`、`content_filter`、HTTP 錯誤、連不上、取消、無金鑰時不送 `Authorization`。
+- [x] **B4 架構與分派**：`RoutingChatProvider` 接上；架構測試不變（OpenAI 相容不引用 SDK）。
+- [ ] **B5 手動驗收**：Ollama（本機）、公司 Gateway 各對話一次。（待你執行；2C 完成前要手動編輯 `settings.json` 加連線，見下方實作紀錄）
 
 ### 驗收標準
 
-- [ ] fixture 測試在 1／3／7 byte 切塊下結果一致。
-- [ ] 同一則對話中途從 Anthropic 換到 OpenAI 相容再換回來，都能正常回答。
-- [ ] 測試連線能分辨：成功、金鑰錯誤、Base URL 錯、服務沒開。
+- [x] fixture 測試在 1／3／7 byte 切塊下結果一致。
+- [x] 同一則對話中途從 Anthropic 換到 OpenAI 相容再換回來，都能正常回答。（測試涵蓋：歷史來回後，thinking 區塊與 signature 仍原樣送回 Anthropic，OpenAI 只收到文字）
+- [x] 測試連線能分辨：成功、金鑰錯誤（401）、Base URL 錯（404）、服務沒開（連線失敗）。（測試涵蓋；實機待驗）
 
 ---
 
@@ -248,3 +248,16 @@ public sealed record ResolvedModel(ModelSettings Model, ConnectionSettings Conne
 - **組裝測試**（`Lumi.App.Tests/CompositionRootTests`）：用和 `Program` 相同的方式組 DI（暫存路徑、測試用 Keychain service），確認每個服務都解析得到、第一次啟動會搬出 `dev-anthropic` 連線。
 - **畫面上的確認沒做到**：開發時螢幕休眠，Avalonia 啟動時無法建立繪圖計時器（`RenderTimer`，錯誤碼 -6661），App 起不來；這是 macOS 的顯示狀態，不是程式問題。實機確認留給你。
 - **補記 1D**：Claude Code 執行指令的環境裡，`grep` 是轉給 `ugrep` 的 shell 函式（不是你終端機的設定）。1D 驗收時「資料庫搜尋 `sk-ant` 第一次回報 1 筆、之後重現不出來」，很可能是 `ugrep` 對二進位檔的計數方式不同；改用 Python 逐位元組比對才是可靠的結果（0 筆）。
+
+### 2B（2026-10-18）
+
+- **`IConnectionTester` 放 Core**（計畫只說「`IConnectionTester`」沒指定位置）：設定頁（App）只認得 Core 的介面；實作在 Providers，依連線格式分派（`RoutingConnectionTester`）。結果型別 `ConnectionTestResult` 帶模型 ID 清單或 `ChatFailure`，失敗原因沿用 `ChatFailureKind`，所以「金鑰錯、網址錯、服務沒開」分得出來。
+- **OpenAI 相容的最大輸出用 `max_tokens`**：這是各家相容伺服器最普遍支援的欄位；OpenAI 自己新的推理模型要的是 `max_completion_tokens`，目前不處理，遇到再加。
+- **串流結束的判斷**：收到 `[DONE]` 或 `finish_reason` 才算正常結束；連線關了但兩者都沒有 → `StreamError`（避免把被截斷的回應當成完整回答存檔）。有 `[DONE]` 但沒有 `finish_reason` 仍視為完成（有些相容伺服器這樣）。
+- **`reasoning_content` 只顯示、不存**：沒有 signature，不能送回；所以換回 Anthropic 時歷史裡不會有這段。
+- **usage**：OpenAI 的 `prompt_tokens` 含快取；轉成我們的 `TokenUsage` 時 `InputTokens` 扣掉 `cached_tokens`、快取另記，和 Anthropic 的算法一致。伺服器沒回 usage 時訊息的 `Usage` 是 null。
+- **錯誤內文不放進 `ChatFailure`**：伺服器回的錯誤訊息可能含敏感資訊，只用狀態碼分類，log 只記狀態碼。
+- **逾時**：串流用的 `HttpClient` 逾時設成無限（本機模型載入、長回答可能很久，停止靠 `CancellationToken`）；測試連線 30 秒。
+- **Anthropic 的 `Models.List`** 用 SDK；測試連線要求一定要有金鑰（沒有就直接回「尚未輸入」，不送請求）。OpenAI 相容沒有金鑰仍會送請求（Ollama）。
+- **B5 手動驗收還沒做**：這台電腦沒有 Ollama，公司 Gateway 要你實測。2C（設定視窗）還沒有，要先驗可以手動編輯 `~/Library/Application Support/Lumi/settings.json`：在 `connections` 加一筆 `{"id":"company","name":"公司 Gateway","format":"openAICompatible","baseUrl":"https://…/v1"}`、在 `models` 加一筆 `{"id":"m-company","connectionId":"company","modelId":"你的模型","displayName":"…","maxOutputTokens":4096,"contextWindow":128000,"showThinking":false}`，並把 `workbenchModelId` 改成 `m-company`；金鑰則要先有 2C 的設定頁才能存（目前缺金鑰對話框會把金鑰存到工作台目前模型的連線，所以這樣設定後送出會跳對話框，輸入金鑰即可）。
+
