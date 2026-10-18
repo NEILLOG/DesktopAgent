@@ -21,7 +21,7 @@ Lumi 是一個跨平台（Windows / macOS）的桌面 AI 助理。使用者自�
 
 ## 技術棧
 
-.NET 10 · Avalonia 11.3 · CommunityToolkit.Mvvm · Microsoft.Extensions.Hosting · SQLite · System.Text.Json
+.NET 10 · Avalonia 11.3 · CommunityToolkit.Mvvm · Microsoft.Extensions.Hosting · SQLite · System.Text.Json · Markdig（Markdown 解析）
 
 ## 專案結構
 
@@ -45,7 +45,7 @@ tests/
   Lumi.Platform.Tests/      金鑰儲存的契約測試（記憶體、DPAPI、Keychain）
   Lumi.Providers.Tests/     Anthropic Provider 的 fixture 測試（不呼叫真實 API）
   Lumi.Infrastructure.Tests/ SQLite 實作（暫存資料夾的真資料庫檔）
-  Lumi.App.Tests/           ViewModel、EmojiText、字串資源
+  Lumi.App.Tests/           ViewModel、Markdown 解析與渲染（含 Avalonia.Headless）、EmojiText、字串資源
   Lumi.Architecture.Tests/  相依規則、色碼檢查、P/Invoke 與供應商 SDK 的歸屬
 poc/
   Lumi.OrbPoc/              光球 POC（驗證小精靈視窗的可行性，不在 Lumi.sln 內）
