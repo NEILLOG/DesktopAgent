@@ -741,6 +741,6 @@ public sealed class ConversationService
 - 連線狀態點（狀態列右側）照計畫 M1 不做。
 - **D10 手動驗收（2026-10-18，Mac）**：使用者實測通過——缺金鑰對話框存好後自動送出、連續對話 3 輪以上（中文與 emoji 正常）、中途停止、重開後還原、狀態列 token 數字。
   另外確認：金鑰在登入鑰匙圈（service `io.github.neillog.lumi`、account `connection/dev-anthropic/api-key`）；資料庫有 5 則使用者訊息、4 則完成與 1 則已停止的助理訊息。
-  資料庫搜尋 `sk-ant`：第一次用 `grep -c` 回報 1 筆，但之後用原始位元組逐一比對、`grep -a -o`、`strings` 三種方式都是 0 筆，也不在任何訊息或標題裡，第一次的結果無法重現。程式上也沒有任何路徑會把金鑰寫進資料庫。
+  資料庫搜尋 `sk-ant`：第一次用 `grep -c` 回報 1 筆，但之後用原始位元組逐一比對、`grep -a -o`、`strings` 三種方式都是 0 筆，也不在任何訊息或標題裡，第一次的結果無法重現。程式上也沒有任何路徑會把金鑰寫進資料庫。（M2 時發現Claude Code 執行指令的環境裡，`grep` 是轉給 `ugrep` 的 shell 函式（不是你終端機的設定），很可能是它對二進位檔的計數方式造成的，見 `plan/02` 的 2A 實作紀錄。）
 - **尚未驗證**：Windows 全部（「錯誤金鑰會再跳一次對話框」這項 Mac 也沒有實測，邏輯由 ViewModel 測試涵蓋）。
 

@@ -1,6 +1,6 @@
 # 02 模型管理、設定頁與工作台完整介面
 
-- 狀態：Q1～Q4 已確認，2A 開工；2C～2E 只寫到會影響架構的程度，輪到時再展開
+- 狀態：2A 程式完成（待你實機確認搬家）；2B 待開工；2C～2E 只寫到會影響架構的程度，輪到時再展開
 - 對應里程碑：M2
 - 前置：M1 在 Mac 完成；Windows 驗證可以和 M2 並行，不擋開工
 
@@ -146,21 +146,21 @@ public sealed record ResolvedModel(ModelSettings Model, ConnectionSettings Conne
 
 ### 工作項目
 
-- [ ] **A1 Core 模型與介面**：`ProviderFormat`、`ConnectionSettings`、`ModelSettings`、`AppSettings`、`ThemePreference`、`IModelCatalog`、`ResolvedModel`。
-- [ ] **A2 原子寫入工具**：從 1B 的 `EncryptedFileSecretStore` 抽出共用的「暫存檔 + 取代」寫入，兩邊共用。
-- [ ] **A3 `JsonModelCatalog`**：讀寫、版本、損毀處理、刪除連線時連同模型與金鑰、預設模型的維護、`Changed` 事件；測試。
-- [ ] **A4 M1 搬家**：第一次啟動建立 `dev-anthropic` 連線與模型；移除 `AnthropicDevOptions`、`ChatDefaults`、`appsettings.json` 的 `Lumi:Dev`；測試（既有金鑰名稱不變）。
-- [ ] **A5 分派**：`ChatRequest` 帶 `ResolvedModel`；`RoutingChatProvider`；Anthropic Provider 改讀連線；`ShowThinking` 關閉時不要求 summarized；更新 1C、1D 的測試。
-- [ ] **A6 工作台接上**：送出時用工作台預設模型；沒有任何模型時的提示；狀態列的上下文上限改讀模型設定。
-- [ ] **A7 架構測試**：設定檔型別不含 `SecretValue`。
-- [ ] **A8 文件**：`agent.md`、主計畫決策紀錄（Q1、Q3）、本檔實作紀錄。
+- [x] **A1 Core 模型與介面**：`ProviderFormat`、`ConnectionSettings`、`ModelSettings`、`AppSettings`、`ThemePreference`、`IModelCatalog`、`ResolvedModel`。
+- [x] **A2 原子寫入工具**：從 1B 的 `EncryptedFileSecretStore` 抽出共用的「暫存檔 + 取代」寫入，兩邊共用。
+- [x] **A3 `JsonModelCatalog`**：讀寫、版本、損毀處理、刪除連線時連同模型與金鑰、預設模型的維護、`Changed` 事件；測試。
+- [x] **A4 M1 搬家**：第一次啟動建立 `dev-anthropic` 連線與模型；移除 `AnthropicDevOptions`、`ChatDefaults`、`appsettings.json` 的 `Lumi:Dev`；測試（既有金鑰名稱不變）。
+- [x] **A5 分派**：`ChatRequest` 帶 `ResolvedModel`；`RoutingChatProvider`；Anthropic Provider 改讀連線；`ShowThinking` 關閉時不要求 summarized；更新 1C、1D 的測試。
+- [x] **A6 工作台接上**：送出時用工作台預設模型；沒有任何模型時的提示；狀態列的上下文上限改讀模型設定。
+- [x] **A7 架構測試**：設定檔型別不含 `SecretValue`。
+- [x] **A8 文件**：`agent.md`、主計畫決策紀錄（Q1、Q3）、本檔實作紀錄。
 
 ### 驗收標準
 
-- [ ] `dotnet build` 零警告、`dotnet test` 全過。
-- [ ] 從 M1 升級後第一次開啟：不用重新輸入金鑰就能繼續對話，舊對話還在。
-- [ ] `settings.json` 裡搜尋不到金鑰；只有末 4 碼的提示。
-- [ ] 手動把 `settings.json` 改壞：程式能啟動、保留壞掉的檔案、提示一次。
+- [x] `dotnet build` 零警告、`dotnet test` 全過。
+- [ ] 從 M1 升級後第一次開啟：不用重新輸入金鑰就能繼續對話，舊對話還在。（搬家邏輯由組裝測試驗證；實機待你確認）
+- [x] `settings.json` 裡搜尋不到金鑰；只有末 4 碼的提示。（測試保證）
+- [x] 手動把 `settings.json` 改壞：程式能啟動、保留壞掉的檔案、提示一次。（測試涵蓋；畫面上的提示列待實機確認）
 
 ---
 
@@ -234,4 +234,17 @@ public sealed record ResolvedModel(ModelSettings Model, ConnectionSettings Conne
 
 ## 實作紀錄
 
-（偏離原計畫的地方與原因，實作時填寫）
+### 2A（2026-10-18）
+
+- **`AtomicFile` 放在 `Lumi.Core/IO/`**：1B 的金鑰檔（Platform）和設定檔（Infrastructure）共用，兩者唯一的共同依賴是 Core。
+- **`IUiDispatcher` 加回來**（1D 拿掉了）：`IModelCatalog.Changed` 可能從背景執行緒觸發，ViewModel 需要把更新丟回 UI 執行緒。命令本身仍在 UI 執行緒上。
+- **`AnthropicDevOptions` 拆掉**：連線資訊改由 `IModelCatalog` 提供；只剩 Provider 本身的行為（effort、server-side fallback）放在 `AnthropicProviderOptions`，預設值就是正式行為，`appsettings.json` 的 `Lumi:Providers:Anthropic` 可選擇性覆寫。`ChatDefaults` 刪除。`appsettings.json` 只剩 Logging。
+- **搬家建立的連線沒有 `ApiKeyHint`**：要算末 4 碼得讀鑰匙圈，Mac 開發期可能跳授權視窗，所以不讀；2C 的設定頁用 `ExistsAsync`（只查屬性、不讀內容）顯示「已設定」。
+- **`ShowThinking` 關掉時完全不送 `thinking` 參數**：不只是不顯示，這樣不支援 adaptive thinking 的舊 Anthropic 模型也能用。
+- **別家供應商的 `ProviderBlock`**：1C 是丟例外（要求呼叫端先篩選）；有了分派之後改成 Anthropic 轉換時直接略過，略過後沒內容的訊息整則不送。
+- **`RoutingChatProvider`**：OpenAI 相容在 2B 之前回 `Failed`（訊息「還不支援」），不發 HTTP。
+- **新增 `ChatFailureKind.ModelNotConfigured`**：模型全部刪光時，送出會保留使用者訊息並顯示錯誤列。
+- **設定檔損毀／版本太新**：工作台頂端顯示一次性的提示列（「知道了」關掉）。版本太新時不寫檔（所有儲存都會失敗），避免舊版程式蓋掉新版的設定。
+- **組裝測試**（`Lumi.App.Tests/CompositionRootTests`）：用和 `Program` 相同的方式組 DI（暫存路徑、測試用 Keychain service），確認每個服務都解析得到、第一次啟動會搬出 `dev-anthropic` 連線。
+- **畫面上的確認沒做到**：開發時螢幕休眠，Avalonia 啟動時無法建立繪圖計時器（`RenderTimer`，錯誤碼 -6661），App 起不來；這是 macOS 的顯示狀態，不是程式問題。實機確認留給你。
+- **補記 1D**：Claude Code 執行指令的環境裡，`grep` 是轉給 `ugrep` 的 shell 函式（不是你終端機的設定）。1D 驗收時「資料庫搜尋 `sk-ant` 第一次回報 1 筆、之後重現不出來」，很可能是 `ugrep` 對二進位檔的計數方式不同；改用 Python 逐位元組比對才是可靠的結果（0 筆）。

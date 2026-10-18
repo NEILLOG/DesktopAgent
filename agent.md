@@ -130,6 +130,8 @@ Lumi.App ──► Lumi.Sprites.* ──► Lumi.Sprites.Abstractions
 
 - 「連線」（供應商、Base URL、金鑰）和「模型設定」是兩層，各自可以新增多筆。
 - 工作台與小精靈可以各自指定預設模型。
+- 連線與模型設定由 `IModelCatalog` 管理，存在使用者資料夾的 `settings.json`；裡面只有金鑰的末 4 碼提示（`ApiKeyHint`），金鑰本身經過 `IModelCatalog` 寫進 `ISecretStore`。
+- 工作台「現在用哪個模型」就是設定裡的工作台預設模型；頂端的模型切換就是改這個值，不另外記每則對話的模型。
 - **金鑰與 Token 只能存在 `ISecretStore`**，不能出現在設定檔、SQLite、log、例外訊息或 UI 截圖中。log 一律遮蔽。
 - 金鑰在程式裡以 `SecretValue` 傳遞（`ToString()` 回傳 `***`），只在真正使用的地方呼叫 `Reveal()`。
 - macOS Keychain 的 service 名稱固定為 `io.github.neillog.lumi`（同 bundle id），不得更改。
