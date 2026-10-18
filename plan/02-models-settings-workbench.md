@@ -1,6 +1,6 @@
 # 02 模型管理、設定頁與工作台完整介面
 
-- 狀態：2A、2B、2C 程式完成，待手動驗收（C9，含 B5）；2D 已展開，待你確認後開工；2E 只寫到會影響架構的程度，輪到時再展開
+- 狀態：2A、2B、2C 程式完成，待手動驗收（C9，含 B5）；2D 程式完成，待手動驗收（D8）；2E 只寫到會影響架構的程度，輪到時再展開
 - 對應里程碑：M2
 - 前置：M1 在 Mac 完成；Windows 驗證可以和 M2 並行，不擋開工
 
@@ -409,19 +409,19 @@ public sealed record ResolvedModel(ModelSettings Model, ConnectionSettings Conne
 
 ### 工作項目
 
-- [ ] **D1 儲存**：`IConversationStore.ListAsync`、`RemoveLastMessageAsync`（介面、SQLite、兩份假 store）＋測試；`agent.md` 第 7 節放寬規則。
-- [ ] **D2 重新產生**：`ConversationService.RegenerateAsync` ＋測試。
-- [ ] **D3 連線狀態**：`ConnectionStatusCache.MarkResult`、失敗分類函式 ＋測試。
-- [ ] **D4 訊息 ViewModel**：token 文字、思考秒數（`TimeProvider`）、最後一則旗標、已複製、`IClipboardService` ＋測試。
-- [ ] **D5 工作台 ViewModel**：`StopAndWaitAsync`、切換對話、新對話的新行為、金鑰視窗後的重送檢查、`HistoryViewModel`、`ModelSwitcherViewModel`、換模型重試、連線狀態屬性 ＋測試。
-- [ ] **D6 畫面**：頂端工具列、膠囊與 `ModelPicker`、歷史抽屜、動作列、思考過程標題、錯誤列新按鈕、狀態列右側；`ClipboardService` 實作。
-- [ ] **D7 字串資源**。
-- [ ] **D8 手動驗收**（需要你操作）：見驗收標準。
-- [ ] **D9 文件**：`agent.md`、`docs/ui-spec.md`（如有出入）、本檔實作紀錄、主計畫狀態。
+- [x] **D1 儲存**：`IConversationStore.ListAsync`、`RemoveLastMessageAsync`（介面、SQLite、兩份假 store）＋測試；`agent.md` 第 7 節放寬規則。
+- [x] **D2 重新產生**：`ConversationService.RegenerateAsync` ＋測試。
+- [x] **D3 連線狀態**：`ConnectionStatusCache.MarkResult`、失敗分類函式 ＋測試。
+- [x] **D4 訊息 ViewModel**：token 文字、思考秒數（`TimeProvider`）、最後一則旗標、已複製、`IClipboardService` ＋測試。
+- [x] **D5 工作台 ViewModel**：`StopAndWaitAsync`、切換對話、新對話的新行為、金鑰視窗後的重送檢查、`HistoryViewModel`、`ModelSwitcherViewModel`、換模型重試、連線狀態屬性 ＋測試。
+- [x] **D6 畫面**：頂端工具列、膠囊與 `ModelPicker`、歷史抽屜、動作列、思考過程標題、錯誤列新按鈕、狀態列右側；`ClipboardService` 實作。
+- [x] **D7 字串資源**。
+- [ ] **D8 手動驗收**（需要你操作）：見驗收標準。（**待你執行**）
+- [x] **D9 文件**：`agent.md`、`docs/ui-spec.md`（如有出入）、本檔實作紀錄、主計畫狀態。
 
 ### 驗收標準
 
-- [ ] `dotnet build` 零警告、`dotnet test` 全過。
+- [x] `dotnet build` 零警告、`dotnet test` 全過。
 - [ ] 模型切換膠囊：切到另一個模型後下一則回應確實用它；重開程式維持；跨連線（Anthropic ↔ OpenAI 相容）都能切。
 - [ ] 回應中：膠囊與小精靈按鈕停用並顯示提示；按停止後恢復。
 - [ ] 歷史對話：能列出多則對話並切換；回應中切換會先停止（已收到的文字留成「已停止」）；舊回應不會跑到新對話裡。
@@ -481,4 +481,17 @@ public sealed record ResolvedModel(ModelSettings Model, ConnectionSettings Conne
 - **設定視窗每次開啟都重新建立**（關掉就丟掉），狀態一律從目錄重讀，不用處理「視窗關著但 ViewModel 還活著」的過期問題。
 - **刪除 M1 的 `ApiKeyDialog`**、`ApiKeyDialogViewModel`、`ApiKeyPromptService` 與相關字串。
 - **還沒做**：Windows 全部；`ConfirmDialog`（確認視窗）、設定視窗的鍵盤操作與無障礙沒有另外測試。
+
+### 2D（2026-10-19）
+
+- **沒有做 `OpenSetup`**（模型選單的「沒有模型時點膠囊直接開設定」）：膠囊的彈出選單裡本來就有「管理連線與模型…」，多一個入口是重複的，刪掉了。沒有模型時膠囊顯示「未設定模型，點此開啟設定」，點開選單裡有說明與「管理連線與模型…」。
+- **`ModelSwitcherViewModel` 加了 `Selected` 事件**：選了模型後由畫面據此關掉彈出選單（兩個選單：頂端膠囊、錯誤列的「換模型重試」，各一個執行個體）。
+- **金鑰視窗期間的重送檢查**照計畫做了，而且把「回應收尾」和「事後處理（金鑰視窗、重送）」拆成兩個階段：`StopAndWaitAsync` 只等第一階段，所以金鑰視窗開著時切換對話不會被卡住。這個情境有測試（`KeyPromptStaysOpen_UserSwitchesConversation_NoRetryHitsTheOtherConversation`）。
+- **重新產生失敗時畫面與資料庫對齊**：重新產生會先移除舊答案，如果之後失敗，畫面會從資料庫重讀（舊答案可能已經被移除了）；模型都沒設定時，在移除之前就擋下來，舊答案原封不動。
+- **回合數改成重新計算**（`RefreshMessageState`：非串流中的助理訊息數），不再 `Turns++`：重新產生、停止、失敗、切換對話都走同一條路，不會算錯。
+- **切換對話不清空輸入框的草稿**（草稿屬於視窗，不屬於對話）。
+- **歷史清單的時間**用 `TimeProvider.LocalTimeZone`，所以測試可以固定時區；今天顯示 `HH:mm`，其他 `M/d`。
+- **畫面確認**：Mac 上實際看過歷史抽屜、模型選單（含打勾、搜尋框、「管理連線與模型…」）、動作列（複製、重新產生只在最後一則、token）、狀態列右側的連線狀態。一樣是用暫時的環境變數在啟動時打開（沒有輔助使用權限無法點擊），已移除。
+- **一個不穩的測試修掉了**：`ChangingDefaultDropdowns_AppliesImmediately` 偶爾失敗，原因是測試等「目錄的值」變了就繼續，但畫面的更新（在 `Changed` 事件裡、稍後才跑）和測試的執行緒同時動到清單。改成等畫面狀態本身。
+- **還沒做**：複製目前沒有鍵盤快速鍵；歷史抽屜開關狀態不會記住（重開程式是收合的）；Windows 全部。
 

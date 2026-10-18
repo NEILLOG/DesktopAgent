@@ -13,7 +13,7 @@
 |---|---|---|---|
 | M0 | 光球 POC：驗證小精靈視窗 | 🟨 Mac 已驗證，Windows 待測 | — |
 | M1 | 方案骨架與基本對話 | 🟨 Mac 完成，待 Windows 驗證 | M0 |
-| M2 | 模型管理、設定頁與工作台完整介面 | 🟨 2A、2B、2C 程式完成，待手動驗收（`plan/02-models-settings-workbench.md`） | M1 |
+| M2 | 模型管理、設定頁與工作台完整介面 | 🟨 2A～2D 程式完成，待手動驗收（`plan/02-models-settings-workbench.md`） | M1 |
 | M3 | Tool 框架與對話迴圈 | ⬜ | M1 |
 | M4 | 檔案與資料夾上下文 | ⬜ | M3 |
 | M5 | Prompt 分層與人設 | ⬜ | M1 |
