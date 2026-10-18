@@ -30,6 +30,7 @@ agent.md                    給 AI agent 與開發者的開發指引（必讀）
 plan/                       工作計畫
   00-master-plan.md         主計畫：里程碑、決策紀錄、待確認事項
   01-skeleton-chat.md       M1 細部計畫：方案骨架、金鑰儲存、Anthropic、工作台
+  02-models-settings-workbench.md  M2 細部計畫：模型管理、設定頁、工作台完整介面
 docs/
   ui-spec.md                工作台 UI 規格（字型、色系、元件行為）
   sprite-dev-guide.md       小精靈角色開發指南
