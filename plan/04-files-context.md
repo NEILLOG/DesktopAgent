@@ -1,6 +1,6 @@
 # 04 檔案與資料夾上下文
 
-- 狀態：草稿，待確認「開工前要確認的事」後從 4A 開工
+- 狀態：Q1～Q4 照建議確認（2026-10-20）；**4A 完成**，4B、4C 待做
 - 對應里程碑：M4
 - 前置：M3 程式完成（3A～3C）；M3 的手動驗收可以和 M4 並行，不擋開工
 
@@ -119,22 +119,22 @@ public sealed record ImageBlock(string FileName, string MediaType, string Displa
 
 ### 工作項目
 
-- [ ] **A1 Core**：`IFileScope`、`ScopeRoot`、`ScopeResolution`、`ContextItem`、`IConversationContextStore`、`ToolContext.Scope`（改既有建構處與測試）；沒有範圍時的空實作。
-- [ ] **A2 路徑安全**：`FileScope` 實作（正規化、符號連結、大小寫、目錄邊界、機密名單）；**大量測試**：`..`、絕對路徑、前綴誤判、符號連結逃逸（資料夾內與單一檔案）、UNC／裝置名稱（Windows 限定的測試標記）、大小寫差異、尾端分隔字元、空字串與非法字元、機密檔名。
-- [ ] **A3 `read_file`**：編碼偵測、二進位檔判斷、行號、`offset`／`limit`、截斷說明；測試。
-- [ ] **A4 `list_dir`**：深度、項目上限、略過名單、排序（資料夾在前）；測試。
-- [ ] **A5 `search`**：glob、正規表示式（`NonBacktracking`、逾時）、檔案與結果上限、略過二進位與大檔；測試（含惡意正規表示式）。
-- [ ] **A6 存檔**：`conversation_context` 資料表、schema 升到 3（含升級與舊版拒絕的測試）、`SqliteConversationContextStore`、記憶體替身；測試。
-- [ ] **A7 接進對話迴圈**：`ConversationService` 讀出對話的範圍、建立 `ToolContext.Scope`、範圍為空時不送檔案工具（讓工具標示 `RequiresScope`，由服務過濾）；假 Provider 腳本測試「讀範圍內檔案成功、讀範圍外被拒絕並由模型看到原因」。
-- [ ] **A8 組裝與文件**：`AddLumiTools` 註冊三個工具、DI、`EnableDemoTools` 預設改關、架構測試、`agent.md` 第 8 節（範圍與機密名單）、本檔實作紀錄、主計畫狀態。
+- [x] **A1 Core**：`IFileScope`、`ScopeRoot`、`ScopeResolution`、`ContextItem`、`IConversationContextStore`、`ToolContext.Scope`（改既有建構處與測試）；沒有範圍時的空實作。
+- [x] **A2 路徑安全**：`FileScope` 實作（正規化、符號連結、大小寫、目錄邊界、機密名單）；**大量測試**：`..`、絕對路徑、前綴誤判、符號連結逃逸（資料夾內與單一檔案）、UNC／裝置名稱（Windows 限定的測試標記）、大小寫差異、尾端分隔字元、空字串與非法字元、機密檔名。
+- [x] **A3 `read_file`**：編碼偵測、二進位檔判斷、行號、`offset`／`limit`、截斷說明；測試。
+- [x] **A4 `list_dir`**：深度、項目上限、略過名單、排序（資料夾在前）；測試。
+- [x] **A5 `search`**：glob、正規表示式（`NonBacktracking`、逾時）、檔案與結果上限、略過二進位與大檔；測試（含惡意正規表示式）。
+- [x] **A6 存檔**：`conversation_context` 資料表、schema 升到 3（含升級與舊版拒絕的測試）、`SqliteConversationContextStore`、記憶體替身；測試。
+- [x] **A7 接進對話迴圈**：`ConversationService` 讀出對話的範圍、建立 `ToolContext.Scope`、範圍為空時不送檔案工具（讓工具標示 `RequiresScope`，由服務過濾）；假 Provider 腳本測試「讀範圍內檔案成功、讀範圍外被拒絕並由模型看到原因」。
+- [x] **A8 組裝與文件**：`AddLumiTools` 註冊三個工具、DI、`EnableDemoTools` 預設改關、架構測試、`agent.md` 第 8 節（範圍與機密名單）、本檔實作紀錄、主計畫狀態。
 
 ### 驗收標準
 
-- [ ] `dotnet build` 零警告、`dotnet test` 全過。
-- [ ] 路徑安全測試涵蓋上面列的所有逃逸手法；**任何一種都讀不到範圍外的檔案**。
-- [ ] 模型（假 Provider）要求讀範圍外的檔案時，收到錯誤結果「不在可存取的範圍內」並能繼續對話；要求讀機密檔名時收到「被視為機密」。
-- [ ] 沒有範圍時，請求不帶這三個工具的定義。
-- [ ] 舊資料庫（schema 2）打開後自動升到 3，既有對話與訊息完好。
+- [x] `dotnet build` 零警告、`dotnet test` 全過。
+- [x] 路徑安全測試涵蓋上面列的所有逃逸手法；**任何一種都讀不到範圍外的檔案**。
+- [x] 模型（假 Provider）要求讀範圍外的檔案時，收到錯誤結果「不在可存取的範圍內」並能繼續對話；要求讀機密檔名時收到「被視為機密」。
+- [x] 沒有範圍時，請求不帶這三個工具的定義。
+- [x] 舊資料庫（schema 2）打開後自動升到 3，既有對話與訊息完好。
 
 ---
 
@@ -188,4 +188,21 @@ public sealed record ImageBlock(string FileName, string MediaType, string Displa
 
 ## 實作紀錄
 
-（偏離原計畫的地方與原因，實作時填寫）
+### 4A（2026-10-20）
+
+- **Q1～Q4 照建議採用**（快照語意、圖片存檔案、預設擋機密檔案、示範筆記工具保留但預設關）。
+- **新增 `Lumi.Core.Context`**（`ContextItem`、`ContextKind`、`IConversationContextStore`、空實作）與 `Lumi.Core.Tools.FileScope.cs`（`IFileScope`、`ScopeRoot`、`ScopeResolution`、`IFileScopeFactory`、空範圍）。`ToolContext` 多了必填的 `Scope`；`ToolDescriptor` 多了選填的 `RequiresScope`。
+- **`IFileScope` 多了 `ToDisplayPath`**（計畫沒寫）：工具回傳給模型與畫面的路徑要相對於範圍的根，有多個根時以名稱開頭，所以範圍自己負責換算。
+- **相對路徑的規則**（計畫只寫了「相對於某個根」，這裡定下來）：只有一個根時相對於它；有多個根時要以根的名稱開頭（重複的名稱加「 (2)」）；單一檔案的範圍只接受那個檔名。`list_dir` 在多個根又沒給路徑時列出各根的名稱。
+- **符號連結**：逐段展開（目標路徑本身經過符號連結也會再展開，上限 40 層，防止迴圈）；使用者加入的資料夾本身是符號連結（macOS 的 `/var`、`/tmp`）也正常——範圍用的是它指向的真實位置，測試裡的暫存資料夾剛好就是這種情況。壞掉的連結不丟例外。`list_dir` 與 `search` 遇到指向範圍外的連結只標示、不跟隨；範圍內的連結迴圈用「已走過的真實路徑」避開。
+- **平台規則可以在任何平台測試**：`FileScopeRules(CaseInsensitive, WindowsPathRules, NormalizeUnicode)` 預設依作業系統，測試可以指定另一個平台的規則；`CheckWindowsRules` 是純字串判斷。macOS 的 NFC／NFD 檔名差異也在比對時正規化。
+- **機密名單**（`ScopeRules`）：`.env`（`.env.example`／`.sample`／`.template`／`.dist` 不算）、`.env.*`、`*.pem`、`*.key`、`*.pfx`、`*.p12`、`id_rsa*`／`id_ed25519*`／`id_ecdsa*`／`id_dsa*`、`secrets.json`、`.git/` 與 `.ssh/` 內部。只檢查「根底下」的部分，所以使用者加入的資料夾本身叫什麼都可以。`list_dir` 會列出機密檔案的名稱並標「機密，不會讀取」；`search` 略過並在結尾報告略過了幾個。
+- **`read_file`**：嚴格 UTF-8（不合法就回錯誤，不默默換成亂碼）、UTF-8／UTF-16 BOM 自動處理、前 8 KB 有 NUL 就當二進位檔；以字元預算截斷並告訴模型用哪個 `offset` 繼續；總行數會一路數到檔尾（檔案上限 10 MB，所以便宜）；用 `FileShare.ReadWrite | Delete` 開檔，別的程式正在寫入的檔案（log）也讀得到。
+- **`search`**：正規表示式一律用 `NonBacktracking`（時間與輸入長度成正比，有測試用 `(a+)+$` 對 5,000 個 `a` 驗證），不支援反向參照與 lookaround 時回清楚的錯誤；glob 沒有斜線時只比對檔名；結果與掃描檔案數都有上限，結尾說明被截斷或略過了什麼。
+- **`EnableDemoTools` 預設改成 false**（`ToolsOptions` 與設定檔皆是）；`ToolsOptions.Files` 是 `FileToolOptions`（所有上限集中一處）。
+- **SQLite**：migration 3 建立 `conversation_context`（`UNIQUE(conversation_id, kind, path)`、`ON DELETE CASCADE`）；`SqliteConversationStore` 同時實作 `IConversationContextStore`（共用連線字串與初始化）。`AddAsync` 對已存在的項目：已送出的重設成待送出（再拍一次快照）、待送出的不動。
+- **`ConversationService`** 每一輪迴圈重新讀取對話的上下文項目、建立範圍、依 `RequiresScope` 過濾工具（工具執行中使用者加入資料夾，下一輪就會帶上）。完整建構式多兩個選填參數（`IConversationContextStore`、`IFileScopeFactory`），既有呼叫不用改；Core 的 `TryAdd` 預設是空實作，Infrastructure 與 Tools 註冊真正的實作。
+- **架構測試**：碰檔案系統的工具（示範筆記工具除外）原始碼必須出現 `context.Scope`；有對照組確認偵測方式找得到。
+- **抓到一個不穩的測試**：`SettingsHost.WaitUntil` 輪詢條件時，回應事件在背景執行緒修改畫面清單（正式程式有 UI 同步內容，測試沒有）會偶爾丟「Collection was modified」。多一個 `await` 改變了時序才浮現（3C 的工具卡片測試連續失敗）；輪詢改成遇到這個例外就當作「還沒好」。
+- **測試數**：Core 121、Tools 270（新增範圍 79 個、檔案工具 91 個）、Infrastructure 54、Architecture 47、Providers 103、App 257、Platform 51（13 略過）。
+

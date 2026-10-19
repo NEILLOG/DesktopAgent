@@ -111,6 +111,10 @@ Lumi.App ──► Lumi.Sprites.* ──► Lumi.Sprites.Abstractions
 - 內建工具都放在 `Lumi.Tools`（`Lumi.Core` 只有介面與基底類別），架構測試會檢查。工具的例外細節只寫進日誌，回給模型的是固定的「工具執行失敗」，不洩漏路徑等內部資訊。
 - 權限記憶（`ToolPermissionMemory`）只存在記憶體，依對話分開，重開程式就清空；沒有畫面可以詢問時（`DenyAllToolApprovalService`）一律拒絕。
 - 檔案類工具只能存取 `ToolContext.Scope`（使用者加入的檔案與資料夾）。路徑要正規化並檢查，防止用 `..` 跳出範圍。
+  - 路徑一律經過 `IFileScope.Resolve`：先正規化，再把**符號連結逐段展開成真實路徑**，最後確認真實路徑在某個根之下（用目錄分隔字元結尾比對前綴，`/a/b` 不會把 `/a/bc` 當成在裡面）。拒絕：`..` 跳出、範圍外的絕對路徑、符號連結指向範圍外、Windows 的 UNC／裝置名稱／替代資料流。失敗回 `ScopeResolution`（附給模型看的原因），不丟例外。
+  - 範圍內「明顯是機密」的檔案不讀（`.env*`、私鑰與憑證、`secrets.json`、`.git/`、`.ssh/`；名單在 `ScopeRules`），**使用者自己加入的單一檔案不擋**。
+  - 需要範圍的工具宣告 `RequiresScope`：對話沒有任何範圍時，請求不帶它們的定義。架構測試檢查：碰檔案系統的工具（示範用的筆記工具除外）必須經過 `context.Scope`。
+  - 上下文項目是「快照」：加入的項目在下一則使用者訊息帶上當下的內容；移除項目只是從範圍拿掉，已經送出的內容留在歷史裡（4B）。
 - 錯誤用 `ToolResult.Error(...)` 回傳給模型，不要讓例外直接往外丟。
 - 每個工具都要有逾時設定。
 - 註冊方式：`services.AddLumiTool<MyTool>()`。
