@@ -32,6 +32,7 @@ plan/                       工作計畫
   01-skeleton-chat.md       M1 細部計畫：方案骨架、金鑰儲存、Anthropic、工作台
   02-models-settings-workbench.md  M2 細部計畫：模型管理、設定頁、工作台完整介面
   03-tools-loop.md          M3 細部計畫：Tool 框架、對話迴圈、權限確認、工具卡片
+  04-files-context.md       M4 細部計畫：檔案與資料夾上下文、範圍限定的檔案工具
 docs/
   ui-spec.md                工作台 UI 規格（字型、色系、元件行為）
   sprite-dev-guide.md       小精靈角色開發指南
