@@ -55,7 +55,7 @@
 | AccentSoft / AccentBorder / AccentText（小精靈按鈕、資料夾 chip） | `#FDF3DC` / `#EBCB86` / `#7A5208` | `#2A2416` / `#6B5320` / `#F5C66B` |
 | Info（執行中、連結） | `#2F6FDB` | `#6FA0F0` |
 | Success | `#1F7A52` | `#4CC28A` |
-| Danger | `#A1360B` | `#F08A5D` |
+| Danger（文字 / 底 / 框；底與框用在失敗的工具卡片） | `#A1360B` / `#FDF2EE` / `#E3A58C` | `#F08A5D` / `#2D1A14` / `#7A3B25` |
 | Warning（圖示 / 文字 / 底 / 框） | `#B26B00` / `#8A5A0B` / `#FFFBF2` / `#E9B85A` | `#F2B544` / `#F5C66B` / `#2A2416` / `#6B5320` |
 | CodeBackground / CodeText | `#1A1D22` / `#D7DCE3` | 同左 |
 
