@@ -1,6 +1,6 @@
 # 03 Tool 框架與對話迴圈
 
-- 狀態：**3A 完成**（2026-10-19）；3B、3C 待做
+- 狀態：**3A、3B 完成**（2026-10-19）；3B 的手動驗收（P7）待你執行；3C 待做
 - 對應里程碑：M3
 - 前置：M2 程式完成；手動驗收與 Windows 驗證可以和 M3 並行，不擋開工
 
@@ -246,18 +246,18 @@ ToolCallCompleted(string CallId, ToolResultBlock Result)
 
 ### 工作項目
 
-- [ ] **P1 Anthropic 請求**：工具定義轉換、歷史轉換（含合併 tool_result、保留 thinking 順序）；測試。
-- [ ] **P2 Anthropic 串流**：`tool_use` 區塊累積、`input_json_delta`、`stop_reason: tool_use`、多個工具呼叫、thinking 與工具並存；fixture 以 1／3／7 byte 切塊。
-- [ ] **P3 OpenAI 請求**：工具定義、歷史轉換；測試。
-- [ ] **P4 OpenAI 串流**：`tool_calls` 累積（分段引數、缺 index、單 chunk、空引數、多個呼叫、文字與工具並存）、`finish_reason: tool_calls`；fixture 切塊測試。
-- [ ] **P5 錯誤提示**：帶工具時的 400 提示。
-- [ ] **P6 跨格式**：同一則對話含工具呼叫的歷史，在 Anthropic ↔ OpenAI 相容之間切換後仍能送出（工具區塊兩家都認得，thinking 只送回 Anthropic）；測試。
+- [x] **P1 Anthropic 請求**：工具定義轉換、歷史轉換（含合併 tool_result、保留 thinking 順序）；測試。
+- [x] **P2 Anthropic 串流**：`tool_use` 區塊累積、`input_json_delta`、`stop_reason: tool_use`、多個工具呼叫、thinking 與工具並存；fixture 以 1／3／7 byte 切塊。
+- [x] **P3 OpenAI 請求**：工具定義、歷史轉換；測試。
+- [x] **P4 OpenAI 串流**：`tool_calls` 累積（分段引數、缺 index、單 chunk、空引數、多個呼叫、文字與工具並存）、`finish_reason: tool_calls`；fixture 切塊測試。
+- [x] **P5 錯誤提示**：帶工具時的 400 提示。
+- [x] **P6 跨格式**：同一則對話含工具呼叫的歷史，在 Anthropic ↔ OpenAI 相容之間切換後仍能送出（工具區塊兩家都認得，thinking 只送回 Anthropic）；測試。
 - [ ] **P7 手動驗收**（需要你的金鑰，會有少量費用）：兩家各請模型呼叫 `get_current_time`、`calculate`，多輪對話正常。
 
 ### 驗收標準
 
-- [ ] 所有 fixture 在 1／3／7 byte 切塊下結果一致，引數 JSON 完整（含中文）。
-- [ ] 用腳本化的假 HTTP 回應，Anthropic 與 OpenAI 相容各自完成「模型呼叫工具 → 回填結果 → 模型回答」的兩次請求，第二次請求的內容符合各家格式。
+- [x] 所有 fixture 在 1／3／7 byte 切塊下結果一致，引數 JSON 完整（含中文）。
+- [x] 用腳本化的假 HTTP 回應，Anthropic 與 OpenAI 相容各自完成「模型呼叫工具 → 回填結果 → 模型回答」的兩次請求，第二次請求的內容符合各家格式。
 - [ ] 真實模型（Anthropic 與你的 Gateway）能完成多輪工具呼叫。
 
 ---
@@ -295,3 +295,15 @@ ToolCallCompleted(string CallId, ToolResultBlock Result)
 - **目前實際行為**：Provider 還沒送工具定義（3B），所以 App 現在不會真的呼叫工具；`Completed` 在一輪裡可能出現多次的處理（畫面）也留給 3C。
 - **測試數**：Core 112、Tools 98、Infrastructure 40、Platform 51（13 略過）、Providers 73、Architecture 45、App 213。
 
+### 3B（2026-10-19）
+
+- **Anthropic 工具定義用 SDK 的 rawData 建構式**（`new InputSchema(欄位表)`）把 Schema 的所有頂層欄位原樣帶過去；只設 `Properties`／`Required` 會丟掉 `additionalProperties: false`。測試確認送出的 JSON 帶著它。`MessageCreateParams` 是 record，沒有工具時完全不送 `tools`，有工具時用 `with { Tools = … }`。
+- **Anthropic 歷史**：`Tool` 訊息轉成使用者訊息裡的 `tool_result`；相鄰的使用者訊息合併，而且 `tool_result` 排在最前面（工具結果之後使用者又送了新訊息的情況，API 要求這樣）。工具呼叫那則助理訊息的 thinking 與簽章原樣送回。壞掉的 `InputJson` 送成 `{}`。
+- **Anthropic 串流**：`input_json_delta` 累積到 `content_block_stop`；**沒有收尾或引數不是合法 JSON 的工具呼叫不存**（例如 `max_tokens` 把引數截斷），否則歷史裡會留下送不出去的半截呼叫。沒有引數（空字串）存成 `{}`。
+- **OpenAI 相容串流**：依 `index` 累積；缺 `index` 時有 id 的是新呼叫、沒有 id 的接在最後一個呼叫上；伺服器沒給 id 就自己產生（`call_…`），回填結果用同一個。**有工具呼叫時一律視為 `StopReason.ToolUse`**——Ollama 等伺服器的 `finish_reason` 會回 `stop`。`finish_reason: length` 時引數不完整的呼叫丟掉。
+- **OpenAI 歷史**：助理訊息輸出 `tool_calls`（只有工具呼叫沒有文字時 `content` 是 null）；每個 `ToolResultBlock` 一則 `role: tool`；thinking 不送。
+- **400 提示**：請求帶了工具定義時，400／422 的訊息多一句「這個模型可能不支援工具，可以在模型設定關掉『使用工具』」；沒帶工具或其他狀態碼不加。
+- **抓到 3A 的一個潛在問題**：`ToolSchema.Options` 沒有指定 `TypeInfoResolver`，Schema 只有在選項「已被序列化使用過之後」才產生得出來（執行順序相依；Core 測試剛好踩不到，Providers 測試第一次就炸）。已改成明確指定 `DefaultJsonTypeInfoResolver`。
+- **工作台的過渡處理**（3C 之前，避免 App 壞掉）：重讀歷史時不顯示 `Tool` 訊息與「只有工具呼叫」的助理訊息；工具呼叫的 `Completed` 不結束串流中的氣泡；重新產生移除整輪的氣泡。App 在 3C 之前不會顯示工具卡片，也沒有確認視窗——`Write`／`Destructive` 的示範工具會被預設的 `DenyAllToolApprovalService` 自動拒絕，只有唯讀工具（`get_current_time`、`calculate`）會真的執行。
+- **測試數**：Providers 103（新增 Anthropic 12、OpenAI 15、跨格式與兩次請求 4）。
+- **沒有真的連線測過**：全部是 fixture 與假 HTTP 回應；真實伺服器的行為見 P7。
