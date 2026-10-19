@@ -1,6 +1,6 @@
 # 04 檔案與資料夾上下文
 
-- 狀態：Q1～Q4 照建議確認（2026-10-20）；**4A 完成**，4B、4C 待做
+- 狀態：Q1～Q4 照建議確認（2026-10-20）；**4A、4B 完成**（B8 手動驗收待你執行），4C 待做
 - 對應里程碑：M4
 - 前置：M3 程式完成（3A～3C）；M3 的手動驗收可以和 M4 並行，不擋開工
 
@@ -156,22 +156,22 @@ public sealed record ImageBlock(string FileName, string MediaType, string Displa
 
 ### 工作項目
 
-- [ ] **B1 內容區塊與存檔格式**：`ContextBlock`、`ImageBlock`、JSON 多型測試（舊資料仍可讀）。
-- [ ] **B2 `IContextAttachmentBuilder`**：檔案（嵌入／太大只放範圍／找不到）、資料夾（檔案樹、上限、略過名單）、圖片（驗證、存檔）；總量上限；測試（含 Unicode 檔名、空檔案、二進位檔、超大檔、權限不足）。
-- [ ] **B3 送出路徑**：`ConversationService` 嵌入與標記；失敗時不遺失；測試（沒有項目時行為不變、多個項目、嵌入後再送一次不會重複）。
-- [ ] **B4 Anthropic**：`ContextBlock` 轉文字、`ImageBlock` 轉 image 區塊；fixture 測試。
-- [ ] **B5 OpenAI 相容**：同上，圖片走 `image_url`；帶圖片時的 400 提示；fixture 測試。
-- [ ] **B6 `ITokenEstimator`**：啟發式；測試（中英混合、emoji、空字串、大檔）。
-- [ ] **B7 圖片清理**：刪除對話後的孤兒檔案；測試。
+- [x] **B1 內容區塊與存檔格式**：`ContextBlock`、`ImageBlock`、JSON 多型測試（舊資料仍可讀）。
+- [x] **B2 `IContextAttachmentBuilder`**：檔案（嵌入／太大只放範圍／找不到）、資料夾（檔案樹、上限、略過名單）、圖片（驗證、存檔）；總量上限；測試（含 Unicode 檔名、空檔案、二進位檔、超大檔、權限不足）。
+- [x] **B3 送出路徑**：`ConversationService` 嵌入與標記；失敗時不遺失；測試（沒有項目時行為不變、多個項目、嵌入後再送一次不會重複）。
+- [x] **B4 Anthropic**：`ContextBlock` 轉文字、`ImageBlock` 轉 image 區塊；fixture 測試。
+- [x] **B5 OpenAI 相容**：同上，圖片走 `image_url`；帶圖片時的 400 提示；fixture 測試。
+- [x] **B6 `ITokenEstimator`**：啟發式；測試（中英混合、emoji、空字串、大檔）。
+- [x] **B7 圖片清理**：刪除對話後的孤兒檔案；測試。
 - [ ] **B8 手動驗收**（需要你的金鑰）：兩家各加入一個小檔案問內容、加入圖片問畫面、加入資料夾請模型找某個檔案並讀取。
-- [ ] **B9 文件**：`agent.md`（快照語意、圖片存放）、本檔實作紀錄、主計畫狀態。
+- [x] **B9 文件**：`agent.md`（快照語意、圖片存放）、本檔實作紀錄、主計畫狀態。
 
 ### 驗收標準
 
-- [ ] 加入一個含上萬個檔案的資料夾：訊息裡只有不超過上限的檔案樹，token 預估不爆。
-- [ ] 同一個項目不會被送兩次；移除 chip 之後工具立刻讀不到，歷史裡的快照還在。
-- [ ] 兩家格式的圖片請求符合各家規格（fixture 驗證請求內容）。
-- [ ] 讀不到的檔案、太大的檔案、不支援的圖片格式都有清楚的說明，而且不會讓送出失敗。
+- [x] 加入一個含上萬個檔案的資料夾：訊息裡只有不超過上限的檔案樹，token 預估不爆。
+- [x] 同一個項目不會被送兩次；移除 chip 之後工具立刻讀不到，歷史裡的快照還在。
+- [x] 兩家格式的圖片請求符合各家規格（fixture 驗證請求內容）。
+- [x] 讀不到的檔案、太大的檔案、不支援的圖片格式都有清楚的說明，而且不會讓送出失敗。
 
 ---
 
@@ -206,3 +206,17 @@ public sealed record ImageBlock(string FileName, string MediaType, string Displa
 - **抓到一個不穩的測試**：`SettingsHost.WaitUntil` 輪詢條件時，回應事件在背景執行緒修改畫面清單（正式程式有 UI 同步內容，測試沒有）會偶爾丟「Collection was modified」。多一個 `await` 改變了時序才浮現（3C 的工具卡片測試連續失敗）；輪詢改成遇到這個例外就當作「還沒好」。
 - **測試數**：Core 121、Tools 270（新增範圍 79 個、檔案工具 91 個）、Infrastructure 54、Architecture 47、Providers 103、App 257、Platform 51（13 略過）。
 
+### 4B（2026-10-20）
+
+- **`ContextBlock` 多了 `Note` 欄位**（計畫的簽名沒有）：放不進內容時說明原因，同一個型別也用來表示「圖片讀不到／格式不支援」。順序是 `ContextBlock(Kind, DisplayName, Path, Content, Embedded, Note, ItemCount)`。
+- **轉成文字的格式集中在 `ContextBlockFormatter`（Core）**：檔案是 `<file path="絕對路徑">` ＋ 行號（和 `read_file` 同樣的 `PadLeft(6)` + Tab）；資料夾是 `<folder path=… entries=…>` ＋ 檔案樹；沒放內容的是自我結尾的標籤加 `note`。屬性值會跳脫 `"`、`<`、`&`，路徑或說明裡的字元跳不出標籤。用絕對路徑是因為不管有幾個範圍，絕對路徑一定能被 `read_file` 解析。
+- **`IContextAttachmentBuilder` 的介面多了 `EstimateTokensAsync`**：做法是「不存圖片的試跑」，再交給 `ITokenEstimator`；4C 要顯示預估時直接用。
+- **送出路徑**（`ConversationService.SendAsync`）：先讀待送出的項目、建構區塊、存使用者訊息，**訊息存好之後**才標記項目已送出（標記用 `CancellationToken.None`）。建構器丟例外時什麼都不存、項目維持待送出；訊息存好但標記失敗時（極少見）下次會重複帶一次，這個取捨比「標記了但訊息沒存」安全。`RetryAsync`／`RegenerateAsync` 不嵌入任何東西。
+- **`FolderTree`**：不跟隨符號連結（只標示「（符號連結）」，因為目標可能在範圍外）、機密資料夾不展開、機密檔案標示；放滿之後只數剩下幾個（上限 5 萬，超過寫「超過 50,000 個」），不會為了數數走遍整個大型資料夾。
+- **圖片格式**：`ImageFormats.Detect` 依魔術數字判斷（PNG、JPEG、GIF87a／89a、WebP），副檔名騙不了；BMP、SVG 等回「不支援的圖片格式」。
+- **附件存放**（`FileAttachmentStore`）：檔名是 SHA-256 加副檔名（相同內容一份）；先寫暫存檔再改名；**讀取時檔名必須完全符合格式**（64 位小寫十六進位＋已知副檔名），資料庫被改成 `../lumi.db` 也讀不到別的檔案（有測試）；清理只動自己建立的檔案（符合格式的附件與殘留的 `.tmp-*`），資料夾裡別的東西不碰。
+- **孤兒清理**：`AttachmentCleaner`（Core）＋`AttachmentCleanupService`（App，啟動時背景跑一次）。只在啟動時做，因為「圖片先存、訊息後存」的瞬間檔案看起來像孤兒。引用從資料庫掃描含圖片區塊的訊息得到（`SqliteConversationStore` 同時實作 `IAttachmentReferences`）。目前還沒有「刪除對話」的功能（M9），到時候同樣的清理在刪除後呼叫。
+- **Provider**：Anthropic 的圖片是 `image` 區塊（base64 來源，媒體類型對應 SDK 的 `MediaType` 列舉；注意成員名稱是 `ImageWebP`）；OpenAI 相容的使用者訊息沒有圖片時維持字串內容，有圖片才改成 `[text, image_url…]` 陣列（data URI）。兩家在圖片檔讀不到時都改成「[圖片「名稱」已經遺失，沒有送出]」。OpenAI 相容的使用者訊息多個文字區塊現在以空行隔開（原本直接相連）。400 的提示：請求帶了工具、圖片或兩者時分別說明「不支援工具」「不支援圖片」「不支援工具或圖片」。
+- **整合測試**（`ContextEndToEndTests`）：真的 SQLite、附件資料夾、檔案範圍、快照建構器與檔案工具，只有供應商是腳本：一個 1 萬個檔案的資料夾只產生不超過上限的檔案樹；資料夾＋檔案＋圖片送出後快照存檔、第二次不重複、重新加入拿到新快照而歷史不變；工具在範圍內讀得到、範圍外被拒絕；移除資料夾後下一輪不送檔案工具但歷史快照還在；檔案送出前被刪掉不會讓送出失敗。
+- **測試數**：Core 167、Tools 297、Infrastructure 83、Providers 120、App 263、Architecture 47、Platform 51（13 略過）。
+- **還沒做**：B8 手動驗收（需要你的金鑰）；4C 的畫面。

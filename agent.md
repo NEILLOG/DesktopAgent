@@ -93,7 +93,9 @@ Lumi.App ──► Lumi.Sprites.* ──► Lumi.Sprites.Abstractions
   SDK 吃我們自己的 `HttpClient`（`IHttpClientFactory` typed client），測試用假的 `HttpMessageHandler` 餵 fixture。
 - **對話歷史只能往後加，或從尾端移除**：已送出的訊息與內容區塊不能修改、重排，也不能刪除中間的訊息；thinking 區塊（含 signature／`redacted_thinking` 的資料）要原樣存檔、原樣送回下一次請求。模型會檢查這段歷史的一致性，改過會回 400。
   從尾端移除訊息（例如「重新產生」，`IConversationStore.RemoveLastMessageAsync`）沒問題：前面每一則的內容都沒變。不認得的內容區塊（例如供應商專屬的 fallback 區塊）存成 `ProviderBlock`，只送回產生它的那個供應商。
-- token 用量以供應商回傳的 `usage` 為準。只有送出前的上下文預估才用估算值。
+- **使用者加入的檔案、資料夾、圖片是「快照」**（M4）：加入的項目在**下一則使用者訊息**帶上當下的內容（`ContextBlock`、`ImageBlock`，和使用者的文字存成同一則訊息），之後不再重複送；移除項目只是從範圍拿掉（工具讀不到），已經送出的內容留在歷史裡，不會被收回；再加入同一個檔案＝再拍一次新快照。內容放不下（太大、不是文字、找不到）時不中斷送出，區塊用 `Note` 說明原因，檔案仍在範圍內，模型用 `read_file` 讀。轉成文字的格式只在 `ContextBlockFormatter` 定義一次，兩家 Provider 共用。
+- **圖片位元組不放進資料庫**：存成 `attachments/<sha256>.<ext>`（`IAttachmentStore`），訊息只記檔名；送給供應商時才讀出來轉 base64，讀不到就改成一段說明文字，不讓整個請求失敗。格式依檔案開頭的位元組判斷（PNG、JPEG、GIF、WebP，上限 5 MB），不信副檔名。啟動時清掉沒有被任何訊息引用的附件檔案。
+- token 用量以供應商回傳的 `usage` 為準。只有送出前的上下文預估才用估算值（`ITokenEstimator`，顯示成「≈ N tokens」）。
 - 工具呼叫迴圈要有最大次數限制，預設 10 次（`ToolLoopOptions.MaxIterations`），超過就停止並回報 `ToolLoopLimit`。
 - **一輪回應可以有多個 `Completed`**（每次呼叫供應商一個）。一次工具呼叫的事件順序：`Completed`（`StopReason.ToolUse`）→ 每個呼叫依序 `ToolCallStarted` →（需要確認時 `ApprovalRequired`）→ `ToolCallCompleted`，然後下一次供應商呼叫。工具依序執行，不平行。
 - **每個 `tool_use` 都必須有 `tool_result`**，兩家 API 都會拒絕缺結果的歷史：使用者停止時要補「已停止」結果（包含同一輪還沒開始的呼叫），存檔不受取消影響；送出請求前 `BuildRequestMessages` 還會修補歷史（補上缺的結果、丟掉沒有對應呼叫的孤兒結果），只改請求，不改存檔。
