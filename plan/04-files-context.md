@@ -1,6 +1,6 @@
 # 04 檔案與資料夾上下文
 
-- 狀態：Q1～Q4 照建議確認（2026-10-20）；**4A、4B 完成**（B8 手動驗收待你執行），4C 待做
+- 狀態：Q1～Q4 照建議確認（2026-10-20）；**4A～4C 程式完成**，待手動驗收（B8／C5，需要你的金鑰）
 - 對應里程碑：M4
 - 前置：M3 程式完成（3A～3C）；M3 的手動驗收可以和 M4 並行，不擋開工
 
@@ -175,14 +175,42 @@ public sealed record ImageBlock(string FileName, string MediaType, string Displa
 
 ---
 
-## 4C 輸入區 UI（大綱，4A、4B 完成後展開）
+## 4C 輸入區 UI
 
-- **上下文列**（ui-spec 6.1）：標題「此對話的上下文」、chip（檔案、資料夾用琥珀淡底並顯示檔案數、圖片縮圖）、每個可移除、右側「≈ N tokens」；狀態：待送出／已送出／找不到／太大（由模型按需讀取）。
-- **加入方式**：「加入檔案」「加入資料夾」（Avalonia `StorageProvider`，用 `IFilePickerService` 抽象讓 ViewModel 可測）、拖放、貼上截圖（剪貼簿圖片）。
-- **使用者氣泡**：上方顯示送出當時帶的 chip（來自訊息的 `ContextBlock`／`ImageBlock`，重開程式後仍在）。
-- **移除時的說明**：已送出的項目被移除，提示「模型之前看過的內容仍在這則對話裡」。
-- **回應中**：加入／移除停用或維持可用？（待展開時決定；預設回應中不能改範圍，避免工具執行到一半範圍變了）。
-- 測試：ViewModel（加入、移除、預估、重複加入、找不到）、Headless（chip 顯示、拖放事件）、手動驗收。
+### 範圍
+
+**做**：上下文列（chip、預估 token）、加入檔案／資料夾（選擇器、拖放、貼上截圖）、移除、使用者氣泡上方的 chip、回應中的限制。
+
+**不做**：小精靈的上下文操作（M7）、對 chip 內容的預覽視窗、設定上下文大小上限的畫面（上限在 `FileToolOptions`）。
+
+### 設計
+
+- **`ContextBarViewModel`**（注入 `WorkbenchViewModel`）：管理目前對話的項目清單（chip）、加入、移除、預估 token；對話切換、新對話、送出完成後重新載入。加入與移除在**回應中停用**（範圍不能在工具執行到一半時改變）。
+- **chip 的狀態**：待送出（下一則訊息會帶上）、已帶入（已經送出過，仍在範圍內）、有問題（找不到、不是文字檔、太大由模型按需讀取、不支援的圖片格式、圖片太大）。狀態由 `IContextInspector`（Core 介面、`Lumi.Tools` 實作）檢查檔案系統得到，**畫面不碰檔案系統**。
+- **加入時判斷種類**：資料夾 → 資料夾；檔案開頭是 PNG／JPEG／GIF／WebP → 圖片；其他 → 檔案（二進位檔也能加，但 chip 會標「不是文字檔」，不會放進內容）。選擇器、拖放、貼上都走同一條路（`AddPathsAsync`），重複加入同一項不會多一個 chip（存檔層已處理）。
+- **貼上截圖**：剪貼簿的圖片存進附件資料夾（`IAttachmentStore.SaveAsync`，新增 `GetPath` 取得完整路徑），再當成圖片項目加入，名稱「貼上的截圖 14:32」。
+- **預估 token**：對話歷史（`BuildRequestMessages` 之後）＋待送出項目（`IContextAttachmentBuilder.EstimateTokensAsync`）＋輸入框草稿，顯示成「≈ 18.2K tokens」；超過模型的上下文上限時改警告色。只是參考，說明寫在提示文字（實際用量看狀態列的供應商回傳值）。
+- **移除已帶入的項目**：列上顯示一次性的說明「已從範圍移除；模型之前看過的內容仍在這則對話裡」。
+- **使用者氣泡**：上方顯示送出當時帶的 chip——送出的瞬間用待送出的 chip、重讀歷史時由 `ContextBlock`／`ImageBlock` 重建（所以重開程式後還在）。
+- **畫面**：上下文列只在有項目時出現（輸入框上方）；輸入框左下「加入檔案」「加入資料夾」；整個輸入區接受拖放（拖進來時外框變色）；圖片 chip 顯示縮圖（在畫面層解碼，失敗就只顯示名稱）；資料夾 chip 琥珀淡底並顯示項目數。只用 token 上色。
+
+### 工作項目
+
+- [x] **C1 Core／Tools**：`IContextInspector`（`ClassifyAsync`、`InspectAsync`）與實作、`IAttachmentStore.GetPath`、資料夾項目計數；測試。
+- [x] **C2 `ContextBarViewModel`**：chip、加入／移除、預估、狀態、回應中停用、一次性說明；ViewModel 測試（用假的選擇器、剪貼簿、檢查器）。
+- [x] **C3 接進工作台**：`WorkbenchViewModel` 與對話切換／送出的整合、使用者氣泡的 chip（送出時與重讀時）、DI；測試。
+- [x] **C4 畫面**：上下文列、chip 樣式與縮圖、輸入框的按鈕、拖放、貼上；`IFilePickerService`、`IClipboardImageService` 的實作；Headless 測試（chip 顯示、按鈕、拖放事件）。
+- [ ] **C5 手動驗收**（需要你的金鑰）：這同時是 4B 的 B8——兩家各加入小檔案、圖片、資料夾，問內容、請模型找檔案並讀取、移除後再問。
+- [x] **C6 文件**：`docs/ui-spec.md`（與實作有出入處）、本檔實作紀錄、主計畫（M4 狀態）、README。
+
+### 驗收標準
+
+- [x] `dotnet build` 零警告、`dotnet test` 全過。
+- [x] 加入檔案、資料夾、圖片（選擇器、拖放、貼上）都能成為 chip；重複加入不會多一個；移除後範圍立刻縮小。
+- [x] 回應中不能加入或移除；回應結束後恢復。
+- [x] 送出後 chip 變成「已帶入」，使用者氣泡上方有 chip；重開程式後氣泡上的 chip 仍在。
+- [x] 預估 token 隨項目與歷史變動，超過上限時有警告。
+- [x] 找不到、不是文字檔、太大、不支援的圖片格式都在 chip 上看得到原因，而且不會讓加入或送出失敗。
 
 ---
 
@@ -220,3 +248,20 @@ public sealed record ImageBlock(string FileName, string MediaType, string Displa
 - **整合測試**（`ContextEndToEndTests`）：真的 SQLite、附件資料夾、檔案範圍、快照建構器與檔案工具，只有供應商是腳本：一個 1 萬個檔案的資料夾只產生不超過上限的檔案樹；資料夾＋檔案＋圖片送出後快照存檔、第二次不重複、重新加入拿到新快照而歷史不變；工具在範圍內讀得到、範圍外被拒絕；移除資料夾後下一輪不送檔案工具但歷史快照還在；檔案送出前被刪掉不會讓送出失敗。
 - **測試數**：Core 167、Tools 297、Infrastructure 83、Providers 120、App 263、Architecture 47、Platform 51（13 略過）。
 - **還沒做**：B8 手動驗收（需要你的金鑰）；4C 的畫面。
+
+### 4C（2026-10-21）
+
+- **新增 `IContextInspector`（Core 介面、`Lumi.Tools` 實作）**：畫面要知道「這個路徑是檔案、資料夾還是圖片」以及 chip 該標什麼問題，而 ViewModel 不能碰檔案系統。它和快照建構器用同一組上限（測試確認：chip 標「太大」的檔案，建構器就真的不嵌入），所以 chip 上看到的就是送出時會發生的事。資料夾項目數數到 1 萬就停（顯示「10,000+ 個項目」）。
+- **`IAttachmentStore.GetPath`**（預設實作回 null）：貼上的截圖要當成圖片項目加入，項目需要一個路徑；存進附件資料夾後用它取得完整路徑，之後走和一般圖片完全相同的流程（快照建構器讀檔、相同內容雜湊相同所以不會存兩份）。
+- **`ContextBarViewModel`**（注入 `WorkbenchViewModel`，選填參數，預設是什麼都不做的實例，所以既有的測試建構方式不用改）：
+  - 選擇器、拖放、貼上都走 `AddPathsAsync`；找不到的路徑列在 `Error`，其餘照常加入；重複加入不會多一個 chip（存檔層處理）。
+  - 回應中 `IsLocked`：命令停用，`AddPathsAsync` 與 `PasteImageAsync` 也直接不做事（拖放不會繞過鎖）。
+  - 重讀時用版本號丟掉過時的結果（切換對話途中舊的載入才完成）。
+  - 預估 token = 歷史（`BuildRequestMessages` 之後）＋待送出項目（`EstimateTokensAsync`）＋草稿；草稿變動只重算草稿那一項（不重讀檔案）。已帶入的項目不再算待送出（它們已經在歷史裡）。
+- **使用者氣泡的 chip**：送出的瞬間用待送出的 chip 先顯示；重讀歷史時由 `ContextBlock`／`ImageBlock` 重建（資料夾的項目數、沒放入內容的說明都在區塊裡）。氣泡上的 chip 沒有縮圖（區塊只記附件檔名，要縮圖得讓 ViewModel 認識附件路徑，不值得）。
+- **貼上**：Ctrl／Cmd+V 在輸入框的 tunnel 階段攔截：剪貼簿有圖片就加進上下文，沒有就呼叫 `TextBox.Paste()` 照常貼文字。剪貼簿給的是解碼後的點陣圖，統一存成 PNG。
+- **拖放**：整個輸入區接受；用 Avalonia 11.3 的新 API（`DragEventArgs.DataTransfer`，舊的 `Data` 已標為過時）；拖進來時外框變成琥珀色，回應中不接受。
+- **縮圖**：`PathToBitmapConverter` 只解碼成 40 px 寬；讀不到或解碼失敗回 null，chip 就不顯示圖（綁定看 `Source` 是否為 null，不留空白）。
+- **畫面確認**：Mac 上淺色與深色都看過（用暫時的環境變數塞示範資料，已移除）：資料夾 chip 琥珀淡底、一般檔案 chip、有問題的 chip 警告色、「已帶入」、移除說明、預估 token 與警告符號、使用者氣泡上方的 chip。**拖放與貼上截圖沒有在真實視窗實際操作過**（沒有輔助使用權限無法點擊或拖曳）：ViewModel 與渲染結構有測試，但 Avalonia 的拖放事件與剪貼簿圖片在 macOS／Windows 上的實際行為，要靠你的手動驗收（C5）。
+- **測試數**：Core 167、Tools 323、Infrastructure 84、Providers 120、App 316（新增上下文列 33、工作台整合 11、Headless 9）、Architecture 47、Platform 51（13 略過）。
+- **還沒做**：C5／B8 手動驗收；Windows 全部。
