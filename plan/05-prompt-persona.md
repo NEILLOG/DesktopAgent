@@ -1,6 +1,6 @@
 # 05 Prompt 分層與人設
 
-- 狀態：Q1～Q4 照建議確認（2026-10-21）；**5A、5B 程式完成**，5C 未開始
+- 狀態：Q1～Q4 照建議確認（2026-10-21）；**5A～5C 程式完成**，待手動驗收（C4，需要你的金鑰）
 - 對應里程碑：M5
 - 前置：M1 完成；實際上建在 M3（工具迴圈）與 M4（上下文快照）之上，M4 的手動驗收可以和 M5 並行
 
@@ -149,7 +149,7 @@ public sealed record ShowDetailsArgs(string Title, string Markdown);
 
 ### 開發用的模式切換（5C，暫時的）
 
-M7 之前沒有小精靈畫面，為了驗收 M5：`settings.json` 加 `DeveloperOptions.ShowSpriteModeToggle`（預設關），打開時工作台輸入區多一個「小精靈模式」切換，送出時帶 `ChatMode.Sprite`。M7 上線後移除。
+M7 之前沒有小精靈畫面，為了驗收 M5：設定 `Lumi:Developer:ShowSpriteModeToggle`（預設關）打開時，工作台輸入區多一個「小精靈模式（開發用）」切換，送出時帶 `ChatMode.Sprite`。M7 上線後移除。
 
 ---
 
@@ -174,9 +174,9 @@ M7 之前沒有小精靈畫面，為了驗收 M5：`settings.json` 加 `Develope
 
 ### 5C 設定頁與工作台
 
-- [ ] C1 設定 ›「人格與主動性」：個性（四選一）、積極度（三段）、自訂人設（多行文字、字數計數）；左側分類加這一項
-- [ ] C2 工作台顯示 `show_details` 內容卡
-- [ ] C3 開發用的「小精靈模式」切換（預設隱藏）
+- [x] C1 設定 ›「人格與主動性」：個性（四選一）、積極度（三段）、自訂人設（多行文字、字數計數）；左側分類加這一項
+- [x] C2 工作台顯示 `show_details` 內容卡
+- [x] C3 開發用的「小精靈模式」切換（預設隱藏）
 - [ ] C4 手動驗收（需要你的金鑰，見下方）
 
 ---
@@ -222,3 +222,20 @@ M7 之前沒有小精靈畫面，為了驗收 M5：`settings.json` 加 `Develope
 - **`show_details` 自己不檢查模式**：模式限制只有一處（對話迴圈，Q1），工具的測試只確認 `Modes == Sprite`；工作台呼叫回錯誤的行為由 5A 的 `ToolCalledInWrongMode_ReturnsError_WithoutRunningOrAsking` 涵蓋。
 - 工具回給模型的是固定一句「已放到工作台…請用一句話告訴使用者重點」，卡片摘要是字數（例如「1234 字」，不加千分位）。
 - **B3 沒有對真實 API 驗證快取是否命中**（測試不得呼叫真實 API）：命中與否在 5C 的手動驗收第 1、2 項看 `cache_read_input_tokens`。
+
+### 5C（2026-10-21）
+
+- **開發開關放在 appsettings／環境變數，不放 `settings.json`**（偏離上面的設計）：和 `EnableDemoTools` 同一個做法（`Lumi:Developer:ShowSpriteModeToggle`，環境變數是 `Lumi__Developer__ShowSpriteModeToggle=true`），不用為了一個暫時的開關改設定檔格式。`DeveloperOptions` 在 `Program.cs` 註冊。
+- **人設頁用草稿＋「儲存」**，不像主題那樣選了就生效：自訂人設是多行文字，邊打邊存沒有意義；而且個性、積極度、自訂人設應該一起生效。草稿有變更時關設定視窗會詢問（併進 `HasUnsavedChanges`）。另外有「還原預設」（只改草稿，仍要按儲存）與字數計數（`n / 2000`，以去掉前後空白的字數計）。目錄在外部被改動時，沒有編輯中的草稿會跟著更新，編輯中的不會被蓋掉。
+- **設定視窗左側分類變成三項**：連線與模型（0）、人格與主動性（1）、一般（2）；`SettingsSection` 加 `Persona`。ui-spec 第 7 節列的「語音、工具權限、小精靈」到各自的里程碑再加。
+- **內容卡只在成功時出現**：執行中、失敗（內容太長、工作台模式誤呼叫）、被拒絕仍是一般的工具卡片，看得到參數與錯誤。重開程式後從工具呼叫的輸入重建，不需要額外存檔。「複製」複製的是整份 Markdown，不是回給模型的那句確認。
+- **內容卡不算在群組卡的數量裡**（`ToolRunViewModel.IsGroup`）：它是給使用者看的內容，不是過程。已知的小缺口：同一輪有 3 個以上的一般呼叫又有內容卡時，內容卡會跟著收進群組卡，要展開才看得到；小精靈的回答預期不會連續呼叫那麼多工具，先不處理。
+- 開發切換在回應中不能切換（`CanChangeMode`、setter 也會拒絕，ui-spec 2.2）；重試、重新產生沿用目前的模式。
+- **測試**：`PersonaViewModelTests`、`WorkbenchDetailsAndModeTests`、headless 的 `DetailsAndPersonaRenderingTests`。headless 環境沒有 UI 的同步內容：非同步命令（儲存）的延續會落在背景執行緒，更新畫面屬性時丟 `Call from invalid thread`，所以渲染測試只驗證綁定與按鈕狀態，儲存流程由 ViewModel 測試涵蓋。
+- **既有的偶發失敗**（不是 M5 造成的）：`WorkbenchConversationsTests.NewConversation_WhileResponding_StopsFirst_ThenOpensBlankConversation` 整個專案並行跑時偶爾失敗（在 5B 的 commit 上 15 次裡 1 次），單獨跑都過；還沒查原因。
+
+### C4 手動驗收怎麼開始
+
+1. 用環境變數打開開發開關：`Lumi__Developer__ShowSpriteModeToggle=true`（或改 `src/Lumi.App/appsettings.json`），啟動後工作台輸入區左下角會有「小精靈模式（開發用）」。
+2. 工作台與小精靈要用**同一個模型**（設定 › 連線與模型，兩個預設選同一個），驗收項目 1、2 才成立。
+3. 照上面「驗收標準 › 手動」的 1～5 項做。每則助理訊息下方的用量會在命中快取時顯示「↑ 輸入 12K（快取 11K） · ↓ 輸出 …」，括號就是 `cache_read_input_tokens`；沒有括號＝沒命中（第一則、或對話太短達不到快取的最小長度）。這是 5C 為了驗收新加的顯示，沒有在原計畫裡。
