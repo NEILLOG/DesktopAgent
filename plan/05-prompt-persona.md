@@ -1,6 +1,6 @@
 # 05 Prompt 分層與人設
 
-- 狀態：Q1～Q4 照建議確認（2026-10-21）；**5A 程式完成**，5B、5C 未開始
+- 狀態：Q1～Q4 照建議確認（2026-10-21）；**5A、5B 程式完成**，5C 未開始
 - 對應里程碑：M5
 - 前置：M1 完成；實際上建在 M3（工具迴圈）與 M4（上下文快照）之上，M4 的手動驗收可以和 M5 並行
 
@@ -167,10 +167,10 @@ M7 之前沒有小精靈畫面，為了驗收 M5：`settings.json` 加 `Develope
 
 ### 5B Provider 與 `show_details`
 
-- [ ] B1 Anthropic：送 system、兩個快取斷點、`TurnSuffix` 在斷點之後；`max_tokens` 用請求的覆寫值
-- [ ] B2 OpenAI 相容：`system` 訊息、`TurnSuffix` 依 Q2 放置
-- [ ] B3 兩家的「前綴一致」fixture 測試（工作台 vs 小精靈；有工具結果在尾端與沒有兩種情況）
-- [ ] B4 `ShowDetailsTool` 與測試（標題、長度上限、在工作台模式呼叫回錯誤）
+- [x] B1 Anthropic：送 system、兩個快取斷點、`TurnSuffix` 在斷點之後；`max_tokens` 用請求的覆寫值
+- [x] B2 OpenAI 相容：`system` 訊息、`TurnSuffix` 依 Q2 放置
+- [x] B3 兩家的「前綴一致」fixture 測試（工作台 vs 小精靈；有工具結果在尾端與沒有兩種情況）
+- [x] B4 `ShowDetailsTool` 與測試（標題、長度上限、在工作台模式呼叫回錯誤）
 
 ### 5C 設定頁與工作台
 
@@ -212,4 +212,13 @@ M7 之前沒有小精靈畫面，為了驗收 M5：`settings.json` 加 `Develope
 - **`AppSettings.Persona` 是 init 屬性，不是建構式參數**：既有的 `new AppSettings(...)` 都不用改。設定檔多一個 `persona` 欄位，**版本號維持 1**（舊檔沒有這個欄位時用預設值；舊版程式讀到新檔會忽略它）。不認得的列舉值（手改設定檔）在 `PersonaSettings.Normalize()` 改回預設，不當成設定檔損毀。
 - **`IToolRegistry.GetTools(mode)` 改成 `GetAll()`**（Q1），模式檢查用 `ToolModes.Allows(mode)`。模式不符的呼叫回錯誤結果、不詢問權限，卡片摘要「目前模式不能用」。
 - `ChatRequest` 多了 `EffectiveMaxOutputTokens`（覆寫值或模型設定），給 5B 的 Provider 用。
-- **5A 到 5B 之間的狀態**：Core 已經組好 system 與模式指示，但兩家 Provider 還沒送出（5B 的 B1、B2），所以實際請求和 M4 一樣；行為上的差別只有「工具定義一律送聯集」與「小精靈模式改用小精靈的模型」。
+- **（已過時）5A 到 5B 之間的狀態**：Core 已經組好 system 與模式指示，但兩家 Provider 還沒送出（5B 的 B1、B2），所以實際請求和 M4 一樣；行為上的差別只有「工具定義一律送聯集」與「小精靈模式改用小精靈的模型」。
+
+### 5B（2026-10-21）
+
+- **Anthropic 的快取斷點用 2 個**（上限 4）：`system` 文字區塊（涵蓋前面的 tools）與歷史最後一個區塊（文字、圖片或 `tool_result`）；模式指示是斷點之後的另一個文字區塊。沒有 `System` 時不送 `system` 欄位，沒有指示時不加區塊，行為和 M4 相同（只多一個歷史斷點）。
+- **OpenAI 相容**：最後一則使用者訊息有圖片時，模式指示接在它的文字部分後面（沒有文字就新增文字部分）；`BuildBody` 取代原本的 `max_tokens = 模型設定` 改用 `EffectiveMaxOutputTokens`。
+- **「前綴一致」測試**：兩家各對「最後是使用者訊息」「最後是工具結果」兩種歷史，序列化後去掉模式指示與 `max_tokens`，比對整段 JSON 字串相同（`tests/Lumi.Providers.Tests/PromptRequestTests.cs`）。測試要看解析後的文字，不能搜 `<lumi_mode>` 字串：JSON 會把 `<` 轉義成 `\u003C`。
+- **`show_details` 自己不檢查模式**：模式限制只有一處（對話迴圈，Q1），工具的測試只確認 `Modes == Sprite`；工作台呼叫回錯誤的行為由 5A 的 `ToolCalledInWrongMode_ReturnsError_WithoutRunningOrAsking` 涵蓋。
+- 工具回給模型的是固定一句「已放到工作台…請用一句話告訴使用者重點」，卡片摘要是字數（例如「1234 字」，不加千分位）。
+- **B3 沒有對真實 API 驗證快取是否命中**（測試不得呼叫真實 API）：命中與否在 5C 的手動驗收第 1、2 項看 `cache_read_input_tokens`。

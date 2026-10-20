@@ -16,7 +16,7 @@
 | M2 | 模型管理、設定頁與工作台完整介面 | 🟨 2A～2E 程式完成，待手動驗收（`plan/02-models-settings-workbench.md`） | M1 |
 | M3 | Tool 框架與對話迴圈 | 🟨 3A～3C 程式完成，待手動驗收（`plan/03-tools-loop.md`） | M1 |
 | M4 | 檔案與資料夾上下文 | 🟨 4A～4C 程式完成，待手動驗收（`plan/04-files-context.md`） | M3 |
-| M5 | Prompt 分層與人設 | 🟨 5A 程式完成（`plan/05-prompt-persona.md`） | M1 |
+| M5 | Prompt 分層與人設 | 🟨 5A～5B 程式完成（`plan/05-prompt-persona.md`） | M1 |
 | M6 | 語音輸入（Whisper） | ⏸ 等待回應格式 | M2 |
 | M7 | 小精靈殼與光球角色 | ⬜ | M3、M5 |
 | M8 | 素材型角色 | ⬜ | M7 |
