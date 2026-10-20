@@ -110,6 +110,7 @@ Lumi.App ──► Lumi.Sprites.* ──► Lumi.Sprites.Abstractions
   - `Write`、`Network` 可以選「本次對話都允許」（只存在記憶體）；`Destructive` 每次都問，不提供記住選項。
   - 確認 UI 與拒絕、停止時的行為見 `docs/ui-spec.md` 第 5 節。
 - 必須宣告**可用模式**：工作台、小精靈，或兩者都可用。
+  - 請求**一律帶全部工具的定義**，不依模式過濾（工具清單改變會讓整個 prompt 快取失效，M5）；模式在執行時用 `ToolModes.Allows` 檢查，不符時回錯誤結果、不詢問權限。
 - 內建工具都放在 `Lumi.Tools`（`Lumi.Core` 只有介面與基底類別），架構測試會檢查。工具的例外細節只寫進日誌，回給模型的是固定的「工具執行失敗」，不洩漏路徑等內部資訊。
 - 權限記憶（`ToolPermissionMemory`）只存在記憶體，依對話分開，重開程式就清空；沒有畫面可以詢問時（`DenyAllToolApprovalService`）一律拒絕。
 - 檔案類工具只能存取 `ToolContext.Scope`（使用者加入的檔案與資料夾）。路徑要正規化並檢查，防止用 `..` 跳出範圍。
@@ -136,6 +137,8 @@ Lumi.App ──► Lumi.Sprites.* ──► Lumi.Sprites.Abstractions
 - 衝突時的優先順序：**基底 > 模式格式 > 人設 > 角色語氣**。
 - system 內容要保持穩定，**不要因為切換模式而改動 system**，否則 Anthropic 的 prompt 快取會失效。
 - 小精靈模式的限制：最多兩句、約 60 字、不用 Markdown；需要長篇時呼叫 `show_details` 工具；`max_tokens` 上限較低；氣泡也有字數上限並會截斷。
+- 模式指示（第 3、4 層）**只存在請求裡、不存檔**，包在 `<lumi_mode>` 裡放在請求最尾端、快取斷點之後（M5）。thinking 參數不因模式改變（改了訊息快取會失效）。
+- Prompt 文字放在 `Lumi.Core/Prompts/Text/*.md`（內嵌資源），不寫在 C# 字串裡。system 裡不放日期時間等會變動的值。
 
 ## 10. 模型與金鑰
 
