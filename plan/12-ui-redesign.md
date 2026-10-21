@@ -214,10 +214,10 @@ SettingsWindow（自訂標題列，同工作台）
 - [x] `Markdown.axaml` 程式碼區塊標題列樣式（語言、複製圖示）（UB-3）
 
 ### UC RWD
-- [ ] Compact：小精靈短標籤、工具列純圖示、Padding 24、訊息百分比寬度、Composer 純圖示、隱藏提示文字
-- [ ] Narrow：小精靈只剩 ✦、膠囊改成供應商字首加 model ID、Padding 16、隱藏時間、頭像 24、歷史抽屜 Overlay
+- [x] Compact：小精靈短標籤、工具列純圖示、Padding 24、訊息百分比寬度、Composer 純圖示、隱藏提示文字（UC-1）
+- [x] Narrow：小精靈只剩圖示、膠囊改成供應商字首加 model ID、Padding 16、隱藏時間、頭像 24、歷史抽屜 Overlay（UC-1）
 - [ ] 高度規則：`short`、`veryshort`
-- [ ] `MinWidth=500`
+- [x] `MinWidth=500`（UC-1）
 - [ ] 所有純圖示按鈕補上 `ToolTip.Tip` 與 `AutomationProperties.Name`
 
 ### UD 設定視窗
@@ -305,6 +305,14 @@ SettingsWindow（自訂標題列，同工作台）
 - [ ] UB-5：錯誤列「用其他模型重試」選單沒有「本對話」區塊且仍可選模型重送
 - [ ] UB-5：狀態列消失後，輸入區下緣與視窗底部的視覺自然（沒有多餘空白或貼邊）
 - [ ] UB-5：輸入區 chip 的 token 估算 Tooltip 新說法是否通順
+- [ ] UC-1：從 1200 拖到 500，過 1000、620 兩個斷點時版面切換自然、不抖動，沒有水平捲軸
+- [ ] UC-1：Compact 標題列小精靈按鈕「小精靈」、Narrow 只剩圖示（點擊範圍約 36×32）；工具列新對話與歷史對話 32×32 純圖示 Hover 與 Tooltip
+- [ ] UC-1：Narrow 模型膠囊：20px Soft 字首方塊（中文供應商取第一字、英文大寫）加 model ID，字首大小、字重、對比；長 model ID 省略
+- [ ] UC-1：Narrow 歷史抽屜 Overlay 蓋在訊息區上；點外面自動收起並與「歷史對話」按鈕狀態同步；抽屜開著時縮放跨過 620 是否順暢
+- [ ] UC-1：Compact／Narrow 訊息寬度（助理 92%、使用者 80%）與 Wide（助理 ≤820、使用者 72%）觀感；Narrow 隱藏時間與「你」後的對齊、頭像 24
+- [ ] UC-1：Composer 純圖示按鈕在 Compact／Narrow 的對齊與 Tooltip；回應中 `RespondingHint` 被省略是否可接受
+- [ ] UC-1：Narrow（500 寬）動作列是否擠版（含 👍👎 與 Caption「評價功能即將推出」、token 文字）；複製後僅圖示變打勾
+- [ ] UC-1：預設視窗寬 960 屬於 Compact，是否符合預期（UC-2 會改預設寬度）
 - [ ] UA-8：LumiIcon 在 16px 的線條粗細（1.75 縮放後約 1.17px）看起來順眼
 
 ## 實作紀錄
@@ -359,3 +367,9 @@ SettingsWindow（自訂標題列，同工作台）
 - 資料由 `WorkbenchViewModel.SyncSessionUsage()` 推給 `ModelSwitcher`（Flyout 內容不在工作台視覺樹，`$parent` 綁不到）；`RetrySwitcher` 不呼叫，`HasSession` 為 false，區塊自動隱藏。
 - `WorkbenchViewModel` 的 `StatusText`、`ContextUsed`、`ContextText`、`IsConnection*` 等屬性保留（既有測試與同步邏輯在用），XAML 已不再綁它們。
 - `Workbench_StatusFormat` 去掉尾端「 · 上下文」；`Context_TokensHint` 不再提到狀態列。測試：App 742，全綠。
+
+### UC-1（Compact／Narrow）
+- 訊息寬度用自訂 `FractionWidthLimiter`（Decorator，取內容區寬度 × `Fraction` 與 `MaxPixels` 的較小者），比例由根節點 class 的 Style 設定，不用 Converter。Wide：助理 min(820, 內容區)、使用者 72%；Compact／Narrow：助理 92%、使用者 80%。
+- 歷史抽屜 `DisplayMode` 由 Window.Styles 設定（預設 Inline，`Window.narrow SplitView` 為 Overlay）。`SendHint` 外包 `SendHintHost` 讓根節點樣式可隱藏（原本 IsVisible 綁了回應中互斥）。
+- 預設視窗寬度 960 屬於 Compact，使用者第一次開啟看到的不是完整桌面版；UC-2 改預設寬度。
+- 測試：App 796（新增 54），含 1200～500 尺寸矩陣與跨斷點 hysteresis、列表不重建。
