@@ -202,7 +202,7 @@ SettingsWindow（自訂標題列，同工作台）
 - [x] `Themes/Controls.axaml`：TextBox、ComboBox（含 Focus 光暈、error、disabled）、四種按鈕、卡片、分隔線、徽章（UA-8）
 - [x] `Themes/Icons.axaml`（Lucide 0.468.0 的 22 個圖示）＋`Controls/LumiIcon`；授權檔 `Assets/LICENSES/Lucide-LICENSE.txt`（UA-8）
 - [x] `WindowSizeClass`＋`ResponsiveClasses`（只用根節點 Classes），附邊界值單元測試（`ResponsiveRulesTests`）
-- [ ] `CustomTitleBar`（Windows／macOS 兩種排列），先套在工作台 — **未開始**，UB 處理（與工具列一起改）
+- [x] `CustomTitleBar`（Windows／macOS 兩種排列）已套在工作台；`TitleBarLayout` 純函式（UA-9）。小精靈按鈕的 Compact／Narrow 縮短留給 UC
 
 ### UB 工作台拆元件（Wide）
 - [ ] 拆出四個 UserControl，保留全部 x:Name；調整測試 helper，測試全綠
@@ -269,6 +269,13 @@ SettingsWindow（自訂標題列，同工作台）
 - [ ] UA-8：可編輯 ComboBox（設定頁模型 ID）沒有內層雙框或雙光暈
 - [ ] UA-8：密碼欄、多行輸入框（工作台 InputBox、PersonaCustomBox）高度與文字對齊正常
 - [ ] UA-8：**小精靈視窗輸入框**因全域 TextBox 樣式變成 40 高，確認外觀沒有跑版（計畫規定小精靈版面不動，若不要這個變化要加 class 排除）
+- [ ] UA-9：macOS 實機，紅綠燈不與品牌重疊（讓出 80px 是否剛好）、標題列高 40 時紅綠燈垂直置中
+- [ ] UA-9：macOS 拖曳標題列空白處可移動視窗，雙擊可縮放
+- [ ] UA-9：Windows（使用者回報）系統按鈕疊在右側，小精靈按鈕與分隔線在其左；保留寬度 146（常數，Avalonia 無 API）不重疊也不留太大縫隙；不同 DPI／Windows 版本都要看
+- [ ] UA-9：Windows 拖曳與雙擊最大化沒有和系統標題列處理衝突
+- [ ] UA-9：小精靈按鈕 Soft 底、圖示與文字對比、Hover 邊框、停用外觀；回應中滑過停用按鈕出現「回應中，暫時無法切換」
+- [ ] UA-9：標題列與工具列都是 Chrome 色，銜接自然（工具列下緣有 1px 邊線，標題列沒有）
+- [ ] UA-9：Lumi 標誌方塊在各主題（尤其 terracotta）上的「L」清楚
 - [ ] UA-8：LumiIcon 在 16px 的線條粗細（1.75 縮放後約 1.17px）看起來順眼
 
 ## 實作紀錄
@@ -287,5 +294,10 @@ SettingsWindow（自訂標題列，同工作台）
 - TextBox／ComboBox 重寫模板，Focus 光暈是模板內多一層透明外框（Margin -3），被會裁切的父層切到時看不到。
 - 全域 TextBox 樣式也套到 SpriteWindow 的輸入框（見人工驗收）。
 - 測試：App 662、其餘不變，全綠。
+
+### UA-9（CustomTitleBar）
+- Windows 系統按鈕寬度沒有 API，右側保留寬度用常數 138＋8 間距；`button.IsEffectivelyEnabled` 才反映命令 CanExecute。
+- 工具列暫時保留原樣（膠囊旁「回應中」文字、設定按鈕），UB 重做。
+- 測試：App 675，全綠。
 
 - 2026-10-22 補完三項（設定檔版本、只用 Classes、頁首主要動作隨分段切換），狀態改為進行中。
