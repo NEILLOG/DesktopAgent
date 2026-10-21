@@ -205,7 +205,7 @@ SettingsWindow（自訂標題列，同工作台）
 - [x] `CustomTitleBar`（Windows／macOS 兩種排列）已套在工作台；`TitleBarLayout` 純函式（UA-9）。小精靈按鈕的 Compact／Narrow 縮短留給 UC
 
 ### UB 工作台拆元件（Wide）
-- [ ] 拆出四個 UserControl，保留全部 x:Name；調整測試 helper，測試全綠
+- [x] 拆出 CustomTitleBar／ChatToolbar／ConversationView／ChatComposer，保留全部 x:Name；`WorkbenchStructureTests`（UB-1）
 - [ ] 工具列：新對話、歷史、模型膠囊（PathIcon 箭頭、供應商＋model ID）、「…」選單（設定、管理連線與模型）
 - [ ] 歡迎區；`MessageViewModel.TimeText`；助理頭像與淡底氣泡；動作列（👍👎 停用）
 - [ ] Composer 兩層；麥克風停用佔位；送出／停止改成圖示
@@ -276,6 +276,12 @@ SettingsWindow（自訂標題列，同工作台）
 - [ ] UA-9：小精靈按鈕 Soft 底、圖示與文字對比、Hover 邊框、停用外觀；回應中滑過停用按鈕出現「回應中，暫時無法切換」
 - [ ] UA-9：標題列與工具列都是 Chrome 色，銜接自然（工具列下緣有 1px 邊線，標題列沒有）
 - [ ] UA-9：Lumi 標誌方塊在各主題（尤其 terracotta）上的「L」清楚
+- [ ] UB-1：實機啟動工作台，外觀與拆分前一致（chrome 按鈕、膠囊、chip、送出與停止圓鈕）
+- [ ] UB-1：拖放檔案到輸入區出現 2px Accent dropping 邊框，放開後加入上下文
+- [ ] UB-1：Enter 送出、Shift+Enter 換行、Ctrl／Cmd+V 貼截圖
+- [ ] UB-1：訊息變多時在底部自動跟隨；往上捲不被拉回；捲回底部恢復跟隨
+- [ ] UB-1：「複製」「重新回答」實際有作用（單元測試只驗證指令綁定）
+- [ ] UB-1：錯誤列「用其他模型重試」與膠囊彈出選單，選了模型後自動收起
 - [ ] UA-8：LumiIcon 在 16px 的線條粗細（1.75 縮放後約 1.17px）看起來順眼
 
 ## 實作紀錄
@@ -299,5 +305,10 @@ SettingsWindow（自訂標題列，同工作台）
 - Windows 系統按鈕寬度沒有 API，右側保留寬度用常數 138＋8 間距；`button.IsEffectivelyEnabled` 才反映命令 CanExecute。
 - 工具列暫時保留原樣（膠囊旁「回應中」文字、設定按鈕），UB 重做。
 - 測試：App 675，全綠。
+
+### UB-1（拆元件）
+- 送出、停止鈕原本沒有 x:Name，已補 `SendButton`、`StopButton`。子控制項的 x:Name 欄位為 internal，WorkbenchWindow 與測試（InternalsVisibleTo）直接以 `Toolbar.CapsuleButton`、`Conversation.RetryOtherModelButton` 存取。
+- 模板內 `#Root` 綁定改為 `$parent[views:ConversationView]`／`$parent[views:ChatComposer]`。共用樣式放 `Themes/ChatStyles.axaml`（可 StyleInclude），沒有全域化，避免改到 SettingsWindow／SpriteBubbleView 既有的 `Button.small`、`TextBlock.muted`。
+- ViewOnlyBanner、歷史抽屜、狀態列仍在 WorkbenchWindow。測試：App 690，全綠。
 
 - 2026-10-22 補完三項（設定檔版本、只用 Classes、頁首主要動作隨分段切換），狀態改為進行中。
