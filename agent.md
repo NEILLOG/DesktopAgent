@@ -64,7 +64,7 @@ Lumi.App ──► Lumi.Sprites.* ──► Lumi.Sprites.Abstractions
 | `Lumi.Infrastructure` | SQLite、設定檔 | 實作 Core 的儲存介面 |
 | `Lumi.Platform` | 所有 P/Invoke（游標、點擊穿透、錄音）、金鑰安全儲存（DPAPI、Keychain） | **原生呼叫只能出現在這裡**；實作 Core 的平台介面 |
 | `Lumi.Sprites.Abstractions` | 角色介面、狀態、manifest、`SpriteLimits` | 帶版本號；改介面要升版並記錄 |
-| `Lumi.Sprites.*` | 各個角色 | 只畫自己，不碰視窗、平台、對話 |
+| `Lumi.Sprites.*` | 各個角色（程式型：`Orb`）與素材型角色的載入器與播放器（`Assets`） | 只畫自己，不碰視窗、平台、對話；`Assets` 只引用 Abstractions，檔案一律當作不可信的輸入 |
 | `Lumi.App` | Avalonia UI、工作台、小精靈殼、設定頁、DI 組裝 | 唯一的組裝點（composition root） |
 
 ## 6. 核心介面（名稱固定）
@@ -169,7 +169,8 @@ Lumi.App ──► Lumi.Sprites.* ──► Lumi.Sprites.Abstractions
 - **顏色一律引用主題 token**（Light／Dark 兩套，預設跟隨系統），不在元件裡寫死色碼。token 清單見 `docs/ui-spec.md` 第 1 節。
 - 回應中（含等待工具確認）停用模式切換與模型切換；小精靈回應中仍可「開啟工作台查看」，但工作台此時不能送出訊息（`docs/ui-spec.md` 2.2）。「查看中」就是「回應中，而且作用中的模式是小精靈」，不是另外的狀態。
 - 小精靈的「殼」與「角色」嚴格分離，詳見 `docs/sprite-dev-guide.md`。殼在 `Lumi.App/Sprites`：互動判定（`SpriteInteractionTracker`）、版面（`SpriteLayout`）、休眠（`SpriteSleepPolicy`）、對話事件→角色狀態（`SpriteStateMapper`）、氣泡（`SpriteBubbleViewModel`）都是不碰視窗的純邏輯，有單元測試；角色只會收到殼解析好的狀態。
-- 新增角色只需要 `services.AddSprite<T>()`，設定頁的角色清單、狀態預覽與尺寸檔位自動可用；`tests/Lumi.App.Tests/Sprites/ChangingTheSpriteTests.cs` 用一個最小的假角色驗證殼完全不需要改。
+- 素材型角色（M8）：圖片加 `manifest.json` 放進使用者資料夾的 `sprites/`，設定頁按「重新載入」就能選用，不用寫程式；`SpriteLibrary`（`IReloadableSpriteCatalog`）是內建角色加資料夾裡的素材型角色，整份快照替換、載入失敗與警告列在設定頁。語氣文字經 `SpriteVoiceValidator`（單行純文字、200 字、不含標籤字元與指令字眼），沒通過就只忽略語氣。
+- 新增程式型角色只需要 `services.AddSprite<T>()`，設定頁的角色清單、狀態預覽與尺寸檔位自動可用；`tests/Lumi.App.Tests/Sprites/ChangingTheSpriteTests.cs` 用一個最小的假角色驗證殼完全不需要改。
 
 ## 13. 繪製與效能（POC 實測得到的教訓）
 
