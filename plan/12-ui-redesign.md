@@ -230,7 +230,7 @@ SettingsWindow（自訂標題列，同工作台）
 
 ### UE 收尾
 - [x] `ToolCardView`、`ToolRunView`、`ConfirmDialog`、`ModelPicker`、歷史抽屜、`SpriteBubbleView` 換 token、圖示與按鈕層級；間距尺度與符號架構測試（UE-1）
-- [ ] 鍵盤 Tab 順序、Enter／Shift+Enter
+- [x] 鍵盤 Tab 順序、Enter／Shift+Enter：工作台（UC-2）與設定視窗（UE-2）都有測試
 - [ ] `docs/ui-spec.md`：改寫 1.2 色票（改成主題系統）、2.1 工具列、2.3 狀態列、3 訊息流、6 輸入區、7 設定視窗，新增 RWD 一節，並註明以 `ui-guide.html` 為準
 - [ ] `agent.md` 第 12 節：寫明設計原則以 `ui-guide.html` 為準；元件只能引用 token，不能寫死色碼與零散間距；圖示一律用 `Icons.axaml`；斷點規則
 - [ ] 更新 `00-master-plan.md` 的狀態
@@ -350,6 +350,12 @@ SettingsWindow（自訂標題列，同工作台）
 - [ ] UE-1：歷史抽屜選取 Soft 底＋OnSoft 文字、Hover 底、圓角 10、標題 Bold、時間 Caption、空狀態（五套主題淺深色）
 - [ ] UE-1：小精靈**實機**：氣泡按鈕（允許 primary、拒絕 tertiary、允許刪除 danger、重試 primary）外觀與大小；氣泡與輸入列位置、尺寸與改版前一致（已有測試鎖定：輸入列 300×48、輸入框 240×12 在 (17,18)、送出鈕 36×36 在 (257,6)）；送出鈕 Accent 底、停止鈕 Primary 底、圖示大小（18／14）；輸入列聚焦時沒有框線或光暈
 - [ ] UE-1：Markdown 標題、表格儲存格、chip（8,4）、錯誤列、設定 Menu 項目因間距收斂的微調（約 ±2px）沒有擠版或過鬆
+- [ ] UE-2：實機 Tab 走一遍設定視窗：「回到對話」→目前分類→頁首動作→分段切換→清單→欄位→刪除／測試／儲存，焦點框清楚，Tab 不逐項走四個分類
+- [ ] UE-2：分段切換 Tab 停在已選那段，方向鍵換段並回繞，焦點框（Accent 邊框）可見
+- [ ] UE-2：VoiceOver／Narrator 念出連線與模型卡片名稱（名稱、副標、狀態）、分類 Menu 與分段切換名稱、可編輯模型 ID 與兩個 NumericUpDown 的名稱
+- [ ] UE-2：標題列品牌方塊的「L」在 sage／teal／mist-blue 淺色上 3.85／4.07／4.28:1（低於 4.5:1，已視為品牌標誌）是否可接受
+- [ ] UE-2：Hover／Pressed 狀態、ComboBox 下拉彈出層、Expander 展開動畫的文字對比（自動測試未涵蓋）
+- [ ] UE-2：詳細卡片改 `Grid` 後，卡片內捲動與底部按鈕列貼底的外觀（尤其 stacked、小高度）
 - [ ] UA-8：LumiIcon 在 16px 的線條粗細（1.75 縮放後約 1.17px）看起來順眼
 
 ## 實作紀錄
@@ -442,3 +448,9 @@ SettingsWindow（自訂標題列，同工作台）
 - 保留的符號：`Workbench_UsageFormat` 的「↑ 輸入 · ↓ 輸出」（與文字相連，既有測試斷言）、`SpriteWindow.axaml.cs` 開發用右鍵選單的「✓」。
 - 小精靈輸入列尺寸已用提交 9745ab3 的 worktree 量測並以 `SpriteInputBarLayoutTests` 鎖定。測試：App 945（新增 21）、Architecture 63（新增 5）。
 - **待處理疑慮（UB-4、UE-1 兩位子 agent 都提到）**：Fluent 的 `Button:pointerover`／`:pressed`／`:disabled` 可能蓋掉 primary／secondary／danger／send 等按鈕的底色與字色，Hover 時變灰。排入 UE-3 處理。
+
+### UE-2（設定視窗可存取性與鍵盤）
+- **修掉的真實 bug**：連線／模型詳細卡片的刪除／測試／儲存在 Tab 順序上排在所有欄位之前（`DockPanel` 底部元素寫在前面），改 `Grid`（Auto,*,Auto）；分段切換的兩個 RadioButton 各自是 Tab 停靠點且方向鍵無效，改為單一停靠點加方向鍵（到頭回繞）。
+- 新增 `TestSupport/Wcag`、`RenderedContrast`（走訪視覺樹量每段可見文字的前景與實際背景）、`SettingsRig`；`SettingsContrastTests` 在五套主題 × 淺／深下量 15 個畫面狀態。
+- **已知例外**：標題列品牌方塊的「L」（OnAccent 在 Accent 上）sage 淺色 3.85、teal 4.07、mist-blue 4.28:1，視為品牌標誌，只放寬到 3:1。沒有為了通過而改色票。
+- 現況沒有任何 `IsDefault`／`IsCancel`，測試鎖定「若有只能是 primary 的 *SaveButton」；要不要讓 Enter 觸發「儲存」是產品決定，沒做。測試：App 1091（新增 146）。
