@@ -229,7 +229,7 @@ SettingsWindow（自訂標題列，同工作台）
 - [x] 寬度 < 900 時上下排（`stacked` class，含 ±8 hysteresis，只對設定視窗啟用）（UD-2）
 
 ### UE 收尾
-- [ ] `ToolCardView`、`ToolRunView`、`ConfirmDialog`、`SpriteBubbleView` 換 token、圖示與按鈕層級
+- [x] `ToolCardView`、`ToolRunView`、`ConfirmDialog`、`ModelPicker`、歷史抽屜、`SpriteBubbleView` 換 token、圖示與按鈕層級；間距尺度與符號架構測試（UE-1）
 - [ ] 鍵盤 Tab 順序、Enter／Shift+Enter
 - [ ] `docs/ui-spec.md`：改寫 1.2 色票（改成主題系統）、2.1 工具列、2.3 狀態列、3 訊息流、6 輸入區、7 設定視窗，新增 RWD 一節，並註明以 `ui-guide.html` 為準
 - [ ] `agent.md` 第 12 節：寫明設計原則以 `ui-guide.html` 為準；元件只能引用 token，不能寫死色碼與零散間距；圖示一律用 `Icons.axaml`；斷點規則
@@ -342,6 +342,14 @@ SettingsWindow（自訂標題列，同工作台）
 - [ ] UD-3：人格頁區段標題（20／700）、分隔線、右對齊字數計數、按鈕列的間距與閱讀密度；區段標題用字「說話個性」「主動程度」「補充內容」是否 OK；失敗訊息現在是紅字
 - [ ] UD-3：小精靈頁：預覽卡（左 240、Surface 底、圓角 14）、< 900 時移到上方是否怪異；縮圖或佔位圖示；「程式型／素材型」標籤加「使用中」徽章的卡片高度
 - [ ] UD-3：小精靈警告區：Danger／Warning 淡底、三角圖示顏色、文字標籤與內容同列，淺深色；狀態預覽清單間距（標籤欄 112）；Caption 11px 可讀
+- [ ] UE-1：工具卡片（執行中、成功、失敗、等待、已拒絕）圖示形狀與顏色；執行中 loader 持續轉圈（Headless 只驗證 `spin` class）、結束後停止
+- [ ] UE-1：卡片 Surface 底＋Border 邊框在頁面背景上的外觀；群組卡內再放工具卡片（第二層）觀感；awaiting／failed 的 Warning／Danger 淡底；deny 的 0.75 透明度
+- [ ] UE-1：權限確認區：一般等級（primary＋secondary＋tertiary）；Destructive「允許執行」紅框紅字＋「拒絕」secondary
+- [ ] UE-1：ConfirmDialog 實機：刪除連線、刪除模型、清除金鑰、放棄變更四種情境確認鈕為紅框紅字，取消 secondary，Enter／Esc 可用；寬度 420 下間距
+- [ ] UE-1：ModelPicker 目前模型 Soft 底＋check 圖示＋文字對比；Hover 與 Soft 底疊加；項目間距 4；「管理連線與模型…」tertiary 置中
+- [ ] UE-1：歷史抽屜選取 Soft 底＋OnSoft 文字、Hover 底、圓角 10、標題 Bold、時間 Caption、空狀態（五套主題淺深色）
+- [ ] UE-1：小精靈**實機**：氣泡按鈕（允許 primary、拒絕 tertiary、允許刪除 danger、重試 primary）外觀與大小；氣泡與輸入列位置、尺寸與改版前一致（已有測試鎖定：輸入列 300×48、輸入框 240×12 在 (17,18)、送出鈕 36×36 在 (257,6)）；送出鈕 Accent 底、停止鈕 Primary 底、圖示大小（18／14）；輸入列聚焦時沒有框線或光暈
+- [ ] UE-1：Markdown 標題、表格儲存格、chip（8,4）、錯誤列、設定 Menu 項目因間距收斂的微調（約 ±2px）沒有擠版或過鬆
 - [ ] UA-8：LumiIcon 在 16px 的線條粗細（1.75 縮放後約 1.17px）看起來順眼
 
 ## 實作紀錄
@@ -425,3 +433,12 @@ SettingsWindow（自訂標題列，同工作台）
 - `General_Theme` 文字由「外觀主題」改為「明暗」（現在是區段標題）；`SpriteIssueItem.Icon`（✕／⚠）換成 `KindText`（「載入失敗」「警告」）加三角圖示。
 - 小精靈預覽與清單的間距沿用 `master`／`detail` 版面類別（16，而非規格的 24）。人格頁失敗訊息改為紅字。
 - 子 agent 的測試教訓：Headless 的小精靈測試不要在 UI 執行緒上 `ReloadAsync().GetAwaiter().GetResult()`（會卡住），要 await 後再顯示視窗。測試：App 924（新增 31）。
+
+### UE-1（其餘 View）
+- 新增 `SpacingScaleRuleTests`（Margin／Padding／Spacing 只能是 0／4／8／12／16／24／32）與 `NoSymbolIconRuleTests`（axaml 與 Strings.resx 不得出現 ✓✕⚠■×▾⌄›→✦ 等符號）。**例外名單**：整個 `Sprites/` 目錄（氣泡 Padding 14,10、按鈕 12,5、Spacing 6 與 MaxWidth 280 共同決定氣泡與輸入列尺寸，計畫規定小精靈版面不改）、對話區 `64,24` 與 Composer `64,8,64,16`、Focus 光暈 `-3`、ComboBox 覆蓋層 `0,1,1,1`。
+- `IConfirmService` 新增預設介面方法 `ConfirmDestructiveAsync`（預設轉給 `ConfirmAsync`），刪除、清除、放棄變更共 9 處改用它；ConfirmDialog 的破壞性確認鈕為 danger。
+- 順手修的既有問題：歷史抽屜 `ListBoxItem:selected { Background }` 被 Fluent 模板的 ContentPresenter 蓋掉（Soft 底沒生效），改在 `/template/ ContentPresenter` 層覆寫。
+- 狀態圖示用文字等級的 `LumiSuccessBrush`／`LumiDangerBrush`／`LumiWarningIconBrush`，不用 Dot token（Dot 在白底只有 2.4～2.9:1）。小精靈送出鈕由 Primary 底改 Accent 底（與主 Composer 一致）。
+- 保留的符號：`Workbench_UsageFormat` 的「↑ 輸入 · ↓ 輸出」（與文字相連，既有測試斷言）、`SpriteWindow.axaml.cs` 開發用右鍵選單的「✓」。
+- 小精靈輸入列尺寸已用提交 9745ab3 的 worktree 量測並以 `SpriteInputBarLayoutTests` 鎖定。測試：App 945（新增 21）、Architecture 63（新增 5）。
+- **待處理疑慮（UB-4、UE-1 兩位子 agent 都提到）**：Fluent 的 `Button:pointerover`／`:pressed`／`:disabled` 可能蓋掉 primary／secondary／danger／send 等按鈕的底色與字色，Hover 時變灰。排入 UE-3 處理。
