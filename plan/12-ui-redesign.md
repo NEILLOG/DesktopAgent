@@ -216,9 +216,9 @@ SettingsWindow（自訂標題列，同工作台）
 ### UC RWD
 - [x] Compact：小精靈短標籤、工具列純圖示、Padding 24、訊息百分比寬度、Composer 純圖示、隱藏提示文字（UC-1）
 - [x] Narrow：小精靈只剩圖示、膠囊改成供應商字首加 model ID、Padding 16、隱藏時間、頭像 24、歷史抽屜 Overlay（UC-1）
-- [ ] 高度規則：`short`、`veryshort`
+- [x] 高度規則：`short`、`veryshort`（UC-2）
 - [x] `MinWidth=500`（UC-1）
-- [ ] 所有純圖示按鈕補上 `ToolTip.Tip` 與 `AutomationProperties.Name`
+- [x] 所有純圖示按鈕補上 `ToolTip.Tip` 與 `AutomationProperties.Name`：工作台範圍已有掃描測試（Wide／Compact／Narrow）；設定視窗與其他 View 留給 UD／UE
 
 ### UD 設定視窗
 - [ ] 自訂標題列；Menu（標題區、回到對話、白話分類名稱、兩個停用佔位）
@@ -312,7 +312,11 @@ SettingsWindow（自訂標題列，同工作台）
 - [ ] UC-1：Compact／Narrow 訊息寬度（助理 92%、使用者 80%）與 Wide（助理 ≤820、使用者 72%）觀感；Narrow 隱藏時間與「你」後的對齊、頭像 24
 - [ ] UC-1：Composer 純圖示按鈕在 Compact／Narrow 的對齊與 Tooltip；回應中 `RespondingHint` 被省略是否可接受
 - [ ] UC-1：Narrow（500 寬）動作列是否擠版（含 👍👎 與 Caption「評價功能即將推出」、token 文字）；複製後僅圖示變打勾
-- [ ] UC-1：預設視窗寬 960 屬於 Compact，是否符合預期（UC-2 會改預設寬度）
+- [x] UC-1：預設視窗寬 960 屬於 Compact → UC-2 已改為 1040（Wide）
+- [ ] UC-2：預設視窗 1040×760 開啟為完整桌面版，Height 760 在小螢幕不超出
+- [ ] UC-2：高 < 700（short）歡迎區留白縮小、訊息間距 16、輸入框兩行高（MinHeight 48，依字級推算未截圖確認）不擁擠；高 < 600（veryshort）歡迎區消失，工具列、對話區、輸入框完整；跨過 600／700 切換不跳動；最小高度 420 下輸入區完整、對話區仍看得到內容
+- [ ] UC-2：實機 Tab 走一遍，焦點框清楚、順序符合預期；歷史抽屜收起時 Tab 不會跑進去
+- [ ] UC-2：螢幕閱讀器（VoiceOver、Narrator）念出純圖示按鈕名稱（新對話、歷史、「…」、膠囊、送出、停止、複製、重新產生、檔案、資料夾、移除 chip）
 - [ ] UA-8：LumiIcon 在 16px 的線條粗細（1.75 縮放後約 1.17px）看起來順眼
 
 ## 實作紀錄
@@ -373,3 +377,8 @@ SettingsWindow（自訂標題列，同工作台）
 - 歷史抽屜 `DisplayMode` 由 Window.Styles 設定（預設 Inline，`Window.narrow SplitView` 為 Overlay）。`SendHint` 外包 `SendHintHost` 讓根節點樣式可隱藏（原本 IsVisible 綁了回應中互斥）。
 - 預設視窗寬度 960 屬於 Compact，使用者第一次開啟看到的不是完整桌面版；UC-2 改預設寬度。
 - 測試：App 796（新增 54），含 1200～500 尺寸矩陣與跨斷點 hysteresis、列表不重建。
+
+### UC-2（高度規則、預設寬度、可存取性）
+- 預設視窗改 1040×760。輸入框 MinHeight 64／short 48／veryshort 48，MaxHeight 160；歡迎區上 Margin 32／8／8，veryshort 隱藏（外包 `WelcomeHost`）；訊息間距 24／16／16。
+- 掃描發現真實的鍵盤 bug：歷史抽屜收起時裡面的 ListBoxItem 仍可被 Tab 聚焦，已改為收起時整個 Pane 隱藏。移除 `Controls.axaml` 的 `TextBox.composer { MinHeight 0 }`（會蓋掉 ChatComposer 的高度）。
+- 可存取性掃描沒有發現缺漏。測試：App 824（新增 28）。
