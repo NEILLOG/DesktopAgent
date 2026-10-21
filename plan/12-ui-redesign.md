@@ -221,8 +221,8 @@ SettingsWindow（自訂標題列，同工作台）
 - [x] 所有純圖示按鈕補上 `ToolTip.Tip` 與 `AutomationProperties.Name`：工作台範圍已有掃描測試（Wide／Compact／Narrow）；設定視窗與其他 View 留給 UD／UE
 
 ### UD 設定視窗
-- [ ] 自訂標題列；Menu（標題區、回到對話、白話分類名稱、兩個停用佔位）
-- [ ] 頁首元件（eyebrow、頁面標題、說明、主要動作）
+- [x] 自訂標題列；Menu（標題區、回到對話、白話分類名稱、兩個停用佔位）（UD-1）
+- [x] 頁首元件 `SettingsPageHeader`（eyebrow、頁面標題、說明、主要動作），已套用到四頁（UD-1）
 - [ ] AI 連線：清單＋詳細、狀態徽章、「進階」收合、按鈕層級；模型設定頁同樣做法加上費用說明；用分段切換取代 TabControl；頁首主要動作隨分段切換（新增連線／新增模型設定）
 - [ ] 外觀與操作：五張主題卡片＋明暗選擇
 - [ ] 人格與主動性、小精靈：頁首＋區段＋分隔線；角色清單用可選取卡片
@@ -317,6 +317,13 @@ SettingsWindow（自訂標題列，同工作台）
 - [ ] UC-2：高 < 700（short）歡迎區留白縮小、訊息間距 16、輸入框兩行高（MinHeight 48，依字級推算未截圖確認）不擁擠；高 < 600（veryshort）歡迎區消失，工具列、對話區、輸入框完整；跨過 600／700 切換不跳動；最小高度 420 下輸入區完整、對話區仍看得到內容
 - [ ] UC-2：實機 Tab 走一遍，焦點框清楚、順序符合預期；歷史抽屜收起時 Tab 不會跑進去
 - [ ] UC-2：螢幕閱讀器（VoiceOver、Narrator）念出純圖示按鈕名稱（新對話、歷史、「…」、膠囊、送出、停止、複製、重新產生、檔案、資料夾、移除 chip）
+- [ ] UD-1：設定視窗 macOS 實機標題列只有 L 標誌與「Lumi」，紅綠燈不重疊、可拖曳、雙擊縮放；Windows（使用者回報）系統按鈕保留寬度正確、無小精靈按鈕殘留
+- [ ] UD-1：Menu（寬 240、Chrome 底、右邊線）標題區對齊與間距在五套主題淺深色上；選取項 Soft 底與文字清楚；Hover 底（SurfaceAlt）與 Fluent 預設樣式沒有互相覆蓋
+- [ ] UD-1：停用的「設定首頁」「資料與隱私」淡色外觀、Caption「即將推出」可讀、Tooltip、點擊無反應、Tab 不會停在上面
+- [ ] UD-1：「回到對話」Hover；點擊後設定關閉、工作台被帶到前面（小精靈模式與回應中時的行為）；未儲存變更時跳出詢問、取消後留在設定
+- [ ] UD-1：視窗高度 480（MinHeight）時 Menu 中段可捲動，底部版本與金鑰說明仍可見
+- [ ] UD-1：四頁頁首（eyebrow、標題 28／700、說明）與 Padding 32 觀感；舊表單在新 Padding 下是否擠版（AI 連線的 TabControl、小精靈頁）
+- [ ] UD-1：「人格與主動性」圖示（Lucide user）在 18px 的線條與其他三個圖示一致；「人格」「小精靈」頁首說明文案（實作者新寫）請確認措辭
 - [ ] UA-8：LumiIcon 在 16px 的線條粗細（1.75 縮放後約 1.17px）看起來順眼
 
 ## 實作紀錄
@@ -382,3 +389,8 @@ SettingsWindow（自訂標題列，同工作台）
 - 預設視窗改 1040×760。輸入框 MinHeight 64／short 48／veryshort 48，MaxHeight 160；歡迎區上 Margin 32／8／8，veryshort 隱藏（外包 `WelcomeHost`）；訊息間距 24／16／16。
 - 掃描發現真實的鍵盤 bug：歷史抽屜收起時裡面的 ListBoxItem 仍可被 Tab 聚焦，已改為收起時整個 Pane 隱藏。移除 `Controls.axaml` 的 `TextBox.composer { MinHeight 0 }`（會蓋掉 ChatComposer 的高度）。
 - 可存取性掃描沒有發現缺漏。測試：App 824（新增 28）。
+
+### UD-1（設定視窗外殼）
+- `CustomTitleBar` 新增 `ShowSpriteButton`（設定視窗設 false）；`SettingsPageHeader.Actions` 不是內容屬性（UserControl 根元素就是 Content），UD-2 的「＋新增連線」要寫成 `<views:SettingsPageHeader.Actions>…</views:SettingsPageHeader.Actions>`。
+- `ISettingsWindowService.ReturnToWorkbench()`（先走未儲存變更詢問，取消回 false）；`SettingsViewModel.ReturnToChatCommand`、`VersionText`；`SettingsViewModel` 多注入 `ISettingsWindowService`（選用參數）。兩個停用項放在第二個 ListBox，`CategoryIndex` 仍是 0～3。
+- 外觀與操作頁原本是 Panel，改包 ScrollViewer。設定視窗內零散的 6、10、14 間距留給 UD-2、UD-3 收斂。測試：App 839（新增 15）。
