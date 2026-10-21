@@ -199,8 +199,8 @@ SettingsWindow（自訂標題列，同工作台）
 - [x] `ThemeService` 切換主題色票；`AppSettings.ThemeId`、`SetThemeIdAsync`；舊設定檔（缺欄位）與未知 ID 讀成 sage，版本號維持 1（附測試）
 - [x] 對比測試：五套主題 × 淺／深，所有文字組合 ≥ 4.5:1（`PaletteContrastTests`）
 - [x] `Typography.axaml` 新字級；`Metrics.axaml` 的 `LumiSpace*`／`LumiRadius*` token
-- [~] `Themes/Controls.axaml`：TextBox（圓角、聚焦 Accent 邊框）、四種按鈕、卡片、分隔線、徽章的樣式已完成；**Focus 光暈未做**（需自訂 TextBox 模板，UB 處理）；ComboBox 未做
-- [ ] `Themes/Icons.axaml`（Lucide 子集，授權檔放到 `Assets/LICENSES`）— **未開始**，UB 處理（需要取得路徑資料與授權檔）
+- [x] `Themes/Controls.axaml`：TextBox、ComboBox（含 Focus 光暈、error、disabled）、四種按鈕、卡片、分隔線、徽章（UA-8）
+- [x] `Themes/Icons.axaml`（Lucide 0.468.0 的 22 個圖示）＋`Controls/LumiIcon`；授權檔 `Assets/LICENSES/Lucide-LICENSE.txt`（UA-8）
 - [x] `WindowSizeClass`＋`ResponsiveClasses`（只用根節點 Classes），附邊界值單元測試（`ResponsiveRulesTests`）
 - [ ] `CustomTitleBar`（Windows／macOS 兩種排列），先套在工作台 — **未開始**，UB 處理（與工具列一起改）
 
@@ -263,6 +263,13 @@ SettingsWindow（自訂標題列，同工作台）
 - [ ] UA：切換五套主題色票（設定 › 一般），確認 Fluent 強調色（核取方塊、選取、進度條）跟著變
 - [ ] UA：五套主題的淺色與深色截圖，確認色票觀感、Caption 11px 的中文可讀性
 - [ ] UA：選取列（歷史抽屜、設定 Menu）的 Soft 底與文字在各主題上看得清楚
+- [ ] UA-8：深色模式的 TextBox／ComboBox 是主題的深灰 Surface，不是純黑
+- [ ] UA-8：Focus 的 3px Soft 光暈在五套主題的淺色與深色都看得出來（深色 Soft 偏暗，例如 sage `#2B312D`）
+- [ ] UA-8：ComboBox 的 chevron 線寬與位置（右側 12px）、點擊展開正常；下拉清單選取與 Hover 看得清楚
+- [ ] UA-8：可編輯 ComboBox（設定頁模型 ID）沒有內層雙框或雙光暈
+- [ ] UA-8：密碼欄、多行輸入框（工作台 InputBox、PersonaCustomBox）高度與文字對齊正常
+- [ ] UA-8：**小精靈視窗輸入框**因全域 TextBox 樣式變成 40 高，確認外觀沒有跑版（計畫規定小精靈版面不動，若不要這個變化要加 class 排除）
+- [ ] UA-8：LumiIcon 在 16px 的線條粗細（1.75 縮放後約 1.17px）看起來順眼
 
 ## 實作紀錄
 
@@ -274,5 +281,11 @@ SettingsWindow（自訂標題列，同工作台）
 - **Fluent 強調色**改成 `DynamicResource LumiAccentColor`，切換主題時跟著變（需實機確認）。
 - **未完成**：Icons、CustomTitleBar、TextBox 光暈、ComboBox 樣式。
 - 測試：全部專案通過（App 633、Core 229、Infrastructure 97、Architecture 58）。
+
+### UA-8（Icons、輸入框與下拉選單）
+- 圖示來自 Lucide（網路可用），線寬 1.75 縮放；`LumiIcon` 的 Foreground 與 TextBlock 共用繼承屬性，放在 Button 裡會跟著按鈕文字色。
+- TextBox／ComboBox 重寫模板，Focus 光暈是模板內多一層透明外框（Margin -3），被會裁切的父層切到時看不到。
+- 全域 TextBox 樣式也套到 SpriteWindow 的輸入框（見人工驗收）。
+- 測試：App 662、其餘不變，全綠。
 
 - 2026-10-22 補完三項（設定檔版本、只用 Classes、頁首主要動作隨分段切換），狀態改為進行中。
