@@ -206,11 +206,11 @@ SettingsWindow（自訂標題列，同工作台）
 
 ### UB 工作台拆元件（Wide）
 - [x] 拆出 CustomTitleBar／ChatToolbar／ConversationView／ChatComposer，保留全部 x:Name；`WorkbenchStructureTests`（UB-1）
-- [ ] 工具列：新對話、歷史、模型膠囊（PathIcon 箭頭、供應商＋model ID）、「…」選單（設定、管理連線與模型）
+- [x] 工具列：新對話、歷史（secondary＋圖示）、模型膠囊（供應商 · model ID、chevron 圖示）、「…」選單（設定、管理連線與模型）（UB-2）
 - [ ] 歡迎區；`MessageViewModel.TimeText`；助理頭像與淡底氣泡；動作列（👍👎 停用）
 - [ ] Composer 兩層；麥克風停用佔位；送出／停止改成圖示
 - [ ] 移除狀態列；`ModelPicker` 頂部加「本對話」區塊與費用說明；膠囊 Tooltip
-- [ ] 回應中改用停用時的 Tooltip，取代原本的提示文字
+- [~] 回應中改用停用時的 Tooltip：工具列膠囊與小精靈按鈕已完成（UB-1／UB-2）；輸入區旁的「回應結束後才能送出」等提示留給 UB-4
 - [ ] `Markdown.axaml` 程式碼區塊標題列樣式（語言、複製圖示）
 
 ### UC RWD
@@ -282,6 +282,11 @@ SettingsWindow（自訂標題列，同工作台）
 - [ ] UB-1：訊息變多時在底部自動跟隨；往上捲不被拉回；捲回底部恢復跟隨
 - [ ] UB-1：「複製」「重新回答」實際有作用（單元測試只驗證指令綁定）
 - [ ] UB-1：錯誤列「用其他模型重試」與膠囊彈出選單，選了模型後自動收起
+- [ ] UB-2：工具列在五套主題的淺色與深色上的外觀（secondary 按鈕＋圖示、32 高、對齊、Hover）
+- [ ] UB-2：膠囊「供應商 · model ID」、chevron、文字過長省略、MaxWidth 360 在 Wide／Compact 不擠掉左右按鈕
+- [ ] UB-2：回應中膠囊停用，滑過出現「回應中，暫時無法切換」；回應結束後 Tooltip 為「供應商 · model ID／連線狀態／費用說明」三行，換行與長度
+- [ ] UB-2：「…」MenuFlyout 靠右對齊，兩個項目實際開出設定視窗（Menu 項目樣式尚未套 token，UD 處理）
+- [ ] UB-2：淺色主題下 Success／Warning 的 8px 狀態點在 Surface／Chrome 上只有 2.35–2.85:1（不到 3:1），肉眼是否看得清楚；必要時設計端決定是否調深（色碼照 ui-guide）
 - [ ] UA-8：LumiIcon 在 16px 的線條粗細（1.75 縮放後約 1.17px）看起來順眼
 
 ## 實作紀錄
@@ -312,3 +317,10 @@ SettingsWindow（自訂標題列，同工作台）
 - ViewOnlyBanner、歷史抽屜、狀態列仍在 WorkbenchWindow。測試：App 690，全綠。
 
 - 2026-10-22 補完三項（設定檔版本、只用 Classes、頁首主要動作隨分段切換），狀態改為進行中。
+
+### UB-2（工具列與 BYOK 膠囊）
+- `ModelSwitcherViewModel` 新增 `ProviderName`、`ModelId`、`CapsuleText`（供應商 · model ID）、`StatusText`、`CapsuleTooltip`；膠囊不再顯示自訂 `DisplayName`。費用說明字串 `Workbench_CostNote` 可供 UB-5 重用。
+- 新增 `LumiSuccessDotBrush`／`LumiWarningDotBrush`／`LumiDangerDotBrush`（ui-guide 固定語意色）。狀態點對應：已連線＝Success、失敗＝Danger、尚未確認＝Warning（原本是灰色，這是實作時的判斷）。
+- 「管理連線與模型…」用既有的 `ModelSwitcher.ManageCommand`（`SettingsSection.Models`），「設定」開 `Connections`；UD 合併成 AI 連線頁後兩者要不要導向同一頁再決定。
+- 淺色主題 Success／Warning 狀態點對比不到 3:1，測試只守下限 2.3:1 並註明為已知例外；狀態另外用 Tooltip 文字表達。
+- 測試：App 704，全綠。
