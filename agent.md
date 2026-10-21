@@ -80,7 +80,9 @@ Lumi.App ──► Lumi.Sprites.* ──► Lumi.Sprites.Abstractions
 | `ISecretStore` | 金鑰與 Token（Windows DPAPI / macOS Keychain） |
 | `ISpeechToText` / `IAudioRecorder` | 語音轉文字 / 錄音 |
 | `ISpriteFactory` / `ISpriteView` | 小精靈角色 |
-| `IOverlayPlatform` | 游標輪詢、點擊穿透（POC 已驗證） |
+| `IOverlayPlatform` | 游標輪詢、點擊穿透。放在 Core、只吃原生視窗控制代碼（`Attach(nint)`），不認識 Avalonia；Windows／macOS 實作在 `Lumi.Platform`，每個視窗各一個實例 |
+| `IChatSession` | 目前的對話與回應流程：對話 id、模式、回應中、停止，並把每個 `ChatEvent` 發給所有觀察者。工作台與小精靈共用同一個，各自是觀察者（工作台更新訊息列表，小精靈更新氣泡與角色狀態） |
+| `IAppModeCoordinator` / `IWindowHost` | 兩種模式互斥的規則：哪個視窗顯示、查看中、暫時隱藏、關閉視窗；在 `Lumi.App`，視窗用介面包起來所以不開視窗也能測 |
 
 所有實作都用 DI 註冊，不要用靜態單例或 service locator。
 
@@ -165,8 +167,9 @@ Lumi.App ──► Lumi.Sprites.* ──► Lumi.Sprites.Abstractions
 - 介面文字使用繁體中文，集中放在資源檔。
 - **字型一律打包進 app**（IBM Plex Sans、Noto Sans TC、JetBrains Mono），元件只引用 `LumiUiFont`／`LumiMonoFont` 資源，不直接寫字型名稱，也不依賴系統字型。
 - **顏色一律引用主題 token**（Light／Dark 兩套，預設跟隨系統），不在元件裡寫死色碼。token 清單見 `docs/ui-spec.md` 第 1 節。
-- 回應中（含等待工具確認）停用模式切換與模型切換；小精靈回應中仍可「開啟工作台查看」，但工作台此時不能送出訊息（`docs/ui-spec.md` 2.2）。
-- 小精靈的「殼」與「角色」嚴格分離，詳見 `docs/sprite-dev-guide.md`。
+- 回應中（含等待工具確認）停用模式切換與模型切換；小精靈回應中仍可「開啟工作台查看」，但工作台此時不能送出訊息（`docs/ui-spec.md` 2.2）。「查看中」就是「回應中，而且作用中的模式是小精靈」，不是另外的狀態。
+- 小精靈的「殼」與「角色」嚴格分離，詳見 `docs/sprite-dev-guide.md`。殼在 `Lumi.App/Sprites`：互動判定（`SpriteInteractionTracker`）、版面（`SpriteLayout`）、休眠（`SpriteSleepPolicy`）、對話事件→角色狀態（`SpriteStateMapper`）、氣泡（`SpriteBubbleViewModel`）都是不碰視窗的純邏輯，有單元測試；角色只會收到殼解析好的狀態。
+- 新增角色只需要 `services.AddSprite<T>()`，設定頁的角色清單、狀態預覽與尺寸檔位自動可用；`tests/Lumi.App.Tests/Sprites/ChangingTheSpriteTests.cs` 用一個最小的假角色驗證殼完全不需要改。
 
 ## 13. 繪製與效能（POC 實測得到的教訓）
 

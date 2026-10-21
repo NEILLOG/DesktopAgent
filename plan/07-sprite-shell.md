@@ -1,6 +1,6 @@
 # 07 小精靈殼與光球角色
 
-- 狀態：進行中（Q1～Q3 已於 2026-10-21 照建議確認；7A、7B 完成；7C、7D 程式完成，待 C8 與 7D 的手動驗收，接著 7E）
+- 狀態：進行中（Q1～Q3 已於 2026-10-21 照建議確認；7A～7E 程式完成，待手動驗收 C8、7D、E6）
 - 對應里程碑：M7
 - 前置：M3、M5 程式完成（M5 的 C4 手動驗收可以並行，但 7D 的「兩句內」要靠它的結果）。M0 的 Windows 驗證已於 2026-10-21 由使用者回報通過（風險一節的第一項因此解除，7C 照 POC 的單一視窗做）
 
@@ -325,11 +325,11 @@ POC 的 `PerfMonitor` 與 HUD 搬進 `Lumi.App/Sprites/Diagnostics`，由 `Lumi:
 
 ### 7E 設定頁與收尾
 
-- [ ] E1 `SpriteSettings`、`IModelCatalog.SetSpriteAsync`、舊設定檔相容、測試
-- [ ] E2 設定 ›「小精靈」：角色清單、尺寸、語氣開關、狀態預覽（含退化說明）
-- [ ] E3 移除 M5 的開發用切換（`DeveloperOptions.ShowSpriteModeToggle` 與工作台那個 CheckBox）；M5 手動驗收改走真正的小精靈
-- [ ] E4 「換角色不改殼」自動測試：測試專案裡一個最小的假角色（只畫一個色塊、只支援 `Idle`），用 `AddSprite<T>()` 註冊並在設定選用，殼照常運作、不支援的狀態走退化
-- [ ] E5 更新 `docs/sprite-dev-guide.md`（介面實際簽章、`Lumi.Sprites.Orb` 當參考實作、版本紀錄）、`docs/ui-spec.md`（第 8 節拿掉草稿、補上查看中橫幅與托盤）、agent.md（`IOverlayPlatform` 的位置與參數、`ChatSession`）、主計畫狀態
+- [x] E1 `SpriteSettings`、`IModelCatalog.SetSpriteAsync`、舊設定檔相容、測試
+- [x] E2 設定 ›「小精靈」：角色清單、尺寸、語氣開關、狀態預覽（含退化說明）
+- [x] E3 移除 M5 的開發用切換（`DeveloperOptions.ShowSpriteModeToggle` 與工作台那個 CheckBox）；M5 手動驗收改走真正的小精靈
+- [x] E4 「換角色不改殼」自動測試：測試專案裡一個最小的假角色（只畫一個色塊、只支援 `Idle`），用 `AddSprite<T>()` 註冊並在設定選用，殼照常運作、不支援的狀態走退化
+- [x] E5 更新 `docs/sprite-dev-guide.md`（介面實際簽章、`Lumi.Sprites.Orb` 當參考實作、版本紀錄）、`docs/ui-spec.md`（第 8 節拿掉草稿、補上查看中橫幅與托盤）、agent.md（`IOverlayPlatform` 的位置與參數、`ChatSession`）、主計畫狀態
 - [ ] E6 手動驗收
 
 ---
@@ -426,3 +426,22 @@ POC 的 `PerfMonitor` 與 HUD 搬進 `Lumi.App/Sprites/Diagnostics`，由 `Lumi:
 - **開發用的模式切換（工作台的 `ShowSpriteModeToggle`）還在**，留到 7E 的 E3 移除並把那些測試改成直接用會話；有協調者時在工作台送出本來就會切回工作台模式，所以它在正式流程裡已經沒有意義。
 
 **7D 的手動驗收（要你的金鑰）**：照計畫驗收標準的第 2～7 項：小精靈問 15 題（沿用 M5 清單，每則在氣泡內兩句內、需要長內容時出現「在工作台開啟完整內容 →」並點開看得到展開的內容卡）；狀態 Thinking → Tool → Streaming → Done → 3 秒 Idle、60 秒 Sleep；寫入類工具在氣泡確認（Attention、警示色外框），在氣泡與工作台回答都同步，`Destructive` 只有「允許刪除」「拒絕」；模式切換與查看中；兩個視窗是同一則對話；托盤與關閉行為；錯誤與缺金鑰。
+
+### 7E 設定頁與收尾（2026-10-22）
+
+結果：全部測試通過（App 553，其餘不變；全部約 1,540 個）。偏離或補充原設計的地方：
+
+- **設定視窗的分類順序是「連線與模型、人格與主動性、一般、小精靈」**（小精靈放在最後，索引 3），沒有插在「一般」前面：這樣既有的索引（人格 1、一般 2）和測試都不用動。`SettingsSection.Sprite` 導向它；右鍵選單的「切換角色…」開啟它（7D 先留下的缺口在這裡補上）。
+- **小精靈分頁選了立即生效，沒有「儲存」鈕**（`SpriteSettingsViewModel`，和「一般」同樣做法）：角色、尺寸、語氣開關選了就寫進設定；存不起來（例如設定檔版本太新）時顯示錯誤並回到實際生效的值；設定在別處變了畫面也跟著變。所以它沒有未儲存的變更，不影響關視窗前的詢問。
+- **小精靈視窗聽設定變更**：`SpriteWindow` 訂閱 `IModelCatalog.Changed`，角色 id 或尺寸和已經建好的不同才重建，位置以角色中心為準不跳動；設定的其他變更（主題、人設、語氣…）不會動到角色。`SetSizeAsync` 因此也只是寫設定再呼叫同一個「有變才重建」。
+- **預覽區用殼的規則播放**：`SpritePreviewHost`（`FrameDriver`、`SpriteLimits.Fit`、`SpriteStateResolver`）放在 `Lumi.App/Sprites`，設定視窗的 code-behind 依 `PreviewFactory`／`PreviewState` 更新；只在「小精靈」分頁可見時才驅動畫面。狀態清單十列，沒有專屬表現的狀態標示退化成哪個（同一個解析器，所以預覽與實際行為一致）。預覽固定用「中」檔尺寸。
+- **E3 移除開發用切換**：`ShowSpriteModeToggle`、工作台的 CheckBox、`IsSpriteMode`、`CanChangeMode` 與兩條相關字串都拿掉，`DeveloperOptions` 只剩 `ShowSpriteHud`。相關測試改成直接用會話的 `TrySetMode`（原本驗證小精靈 prompt 的測試內容不變）。
+- **E4「換角色不改殼」**：`BlockSpriteFactory`（測試專案，只畫色塊、只支援 `Idle`）用 `AddSprite<T>()` 註冊並在設定選用；測試涵蓋殼的視窗與版面、狀態退化（角色只收到 `Idle`）、氣泡與輸入列、尺寸檔位、設定即時換角色（中心不動）、設定頁的預覽與退化說明。整個過程沒有改到殼的任何程式。
+- **文件**：`docs/sprite-dev-guide.md` 新增第 9 節「驗證你的角色」（版本紀錄順延為第 11 節）、`docs/ui-spec.md` 第 7 節補上「小精靈」分頁、`agent.md` 補上 `IOverlayPlatform`（放 Core、只吃控制代碼）、`IChatSession`、`IAppModeCoordinator` 與殼的純邏輯說明。
+
+**E6 手動驗收（要你操作）**：
+1. 設定 ›「小精靈」：換尺寸三檔立即生效且光球位置不跳動；語氣開關；點十個狀態，預覽區即時播放；關掉設定視窗預覽就停。
+2. 右鍵 ›「切換角色…」開啟設定的小精靈分頁。
+3. 重開程式回到上次的模式與位置；拔掉外接螢幕後重開光球落在主螢幕右下角。
+4. 7C 的 C8（POC 清單 1a～9 在正式的殼上重跑，Win、Mac 兩欄）與 7D 的對話驗收（見上面 7D 的清單）。
+5. 耗能：用 HUD 量 Windows 的待機與休眠數字（Mac 的數字見 7C 的紀錄）。
