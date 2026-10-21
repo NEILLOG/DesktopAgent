@@ -208,9 +208,9 @@ SettingsWindow（自訂標題列，同工作台）
 - [x] 拆出 CustomTitleBar／ChatToolbar／ConversationView／ChatComposer，保留全部 x:Name；`WorkbenchStructureTests`（UB-1）
 - [x] 工具列：新對話、歷史（secondary＋圖示）、模型膠囊（供應商 · model ID、chevron 圖示）、「…」選單（設定、管理連線與模型）（UB-2）
 - [x] 歡迎區；`MessageViewModel.TimeText`；助理頭像與淡底氣泡；動作列（👍👎 停用）（UB-3）
-- [ ] Composer 兩層；麥克風停用佔位；送出／停止改成圖示
+- [x] Composer 兩層；麥克風停用佔位；送出／停止改成圖示（UB-4）
 - [ ] 移除狀態列；`ModelPicker` 頂部加「本對話」區塊與費用說明；膠囊 Tooltip
-- [~] 回應中改用停用時的 Tooltip：工具列膠囊與小精靈按鈕已完成（UB-1／UB-2）；輸入區旁的「回應結束後才能送出」等提示留給 UB-4
+- [x] 回應中改用停用時的 Tooltip：工具列膠囊、小精靈按鈕（UB-1／UB-2）、加入檔案／資料夾（UB-4）；輸入區的回應中說明合併為一句 Caption，與 SendHint 同位置互斥
 - [x] `Markdown.axaml` 程式碼區塊標題列樣式（語言、複製圖示）（UB-3）
 
 ### UC RWD
@@ -293,6 +293,13 @@ SettingsWindow（自訂標題列，同工作台）
 - [ ] UB-3：程式碼區塊標題列外觀、複製鈕 Hover、超長程式碼水平捲動時標題列與複製鈕不動、12／13 等寬字可讀、淡底氣泡內疊深色區塊的對比
 - [ ] UB-3：頭像 32 圓與時間 Caption 11px 的中文可讀性
 - [ ] UB-3：串流中逐字更新時 Markdown 增量渲染與自動捲到底沒有退化（單元測試只驗證結構）
+- [ ] UB-4：Composer 外框（圓角 16、Border 色邊框）在五套主題淺深色上，輸入框無雙框，焦點時只有外框變 Accent 邊框；拖放時 2px Accent 邊框（輸入框有焦點時也是）
+- [ ] UB-4：下層 tertiary 按鈕（檔案／資料夾／語音輸入）對齊與 Hover；麥克風停用外觀與 Caption「語音輸入即將推出」是否擠版
+- [ ] UB-4：送出圓鈕（Accent 底；terracotta 上為深色圖示）Hover／停用外觀——Fluent 預設的 Button:pointerover／:disabled 可能蓋掉 Accent 底，確認 Hover 時不會變灰
+- [ ] UB-4：停止鈕（Primary 底）與回應中切換沒有跳動；回應中提示 Caption 長度與省略；加入按鈕停用時 Tooltip「回應中，暫時無法加入」
+- [ ] UB-4：chip 的 X 移除鈕（20×20、Hover）與超過上限的警告三角圖示對齊與顏色
+- [ ] UB-4：MinHeight 64／MaxHeight 160 實際外觀；多行超過 160 改為捲動
+- [ ] UB-4：Enter 送出、Shift+Enter 換行、Ctrl／Cmd+V 貼截圖在新版面仍正常（單元測試只驗證 Enter 與 Shift+Enter）
 - [ ] UA-8：LumiIcon 在 16px 的線條粗細（1.75 縮放後約 1.17px）看起來順眼
 
 ## 實作紀錄
@@ -336,3 +343,9 @@ SettingsWindow（自訂標題列，同工作台）
 - 助理頭像「L」用 `LumiAccentTextBrush`（文字，4.5:1），歡迎區 sparkle 圖示用 `LumiAccentBrush`（非文字）。動作列按鈕是 `tertiary small message-action`；👍👎 只有圖示，停用，旁邊共用一個 Caption「評價功能即將推出」。
 - 新增 `MessageViewModel.TimeText`／`ShowBubble`、`WorkbenchViewModel.ShowWelcome`／`IsLoadingMessages`、`LumiCodeHeaderBrush`。歡迎區副標改為「輸入問題，也可以加入檔案或資料夾。」（不提語音，M6 尚未做）。
 - 測試：App 724，全綠。
+
+### UB-4（Composer）
+- 外框 `Border.composer-area`（Margin 64,8,64,16）是 UC 的覆寫點，例如 `Window.compact Border.composer-area { Margin = 24,8,24,16 }`；Compact 要隱藏 `MicCaption`、`SendHint`（`RespondingHint` 由 UC 決定）。
+- 回應中的兩段提示合併成一句「回應結束後才能送出，期間不能更改上下文」（`Composer_RespondingHint`），與 `SendHint` 互斥顯示；刪除 `Workbench_WaitingHint`、`Context_LockedHint`。
+- 焦點外框由 code-behind 依 `IsKeyboardFocusWithin` 切換 `focused` class（純視覺）；新增 `LumiIconAlertTriangle`。
+- 狀態列仍在；其 Tooltip 與 `Context_TokensHint` 提到「下方狀態列」，UB-5 移除狀態列時一併改。測試：App 737，全綠。
