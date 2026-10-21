@@ -18,7 +18,7 @@
 | M4 | 檔案與資料夾上下文 | 🟨 4A～4C 程式完成，待手動驗收（`plan/04-files-context.md`） | M3 |
 | M5 | Prompt 分層與人設 | 🟨 5A～5C 程式完成，待手動驗收（`plan/05-prompt-persona.md`） | M1 |
 | M6 | 語音輸入（Whisper） | ⏸ 等待回應格式 | M2 |
-| M7 | 小精靈殼與光球角色 | 🟨 進行中：7A、7B 完成，接著 7C（`plan/07-sprite-shell.md`） | M3、M5 |
+| M7 | 小精靈殼與光球角色 | 🟨 進行中：7A～7D 程式完成，待手動驗收；接著 7E（`plan/07-sprite-shell.md`） | M3、M5 |
 | M8 | 素材型角色 | ⬜ | M7 |
 | M9 | 歷史對話與完成度 | ⬜ | M2 |
 | M10 | WPF 小工具的工具移植 | ⬜ 細節暫不展開 | M3 |

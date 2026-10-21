@@ -1,6 +1,6 @@
 # 07 小精靈殼與光球角色
 
-- 狀態：進行中（Q1～Q3 已於 2026-10-21 照建議確認；7A、7B 程式完成，接著 7C）
+- 狀態：進行中（Q1～Q3 已於 2026-10-21 照建議確認；7A、7B 完成；7C、7D 程式完成，待 C8 與 7D 的手動驗收，接著 7E）
 - 對應里程碑：M7
 - 前置：M3、M5 程式完成（M5 的 C4 手動驗收可以並行，但 7D 的「兩句內」要靠它的結果）。M0 的 Windows 驗證已於 2026-10-21 由使用者回報通過（風險一節的第一項因此解除，7C 照 POC 的單一視窗做）
 
@@ -302,26 +302,26 @@ POC 的 `PerfMonitor` 與 HUD 搬進 `Lumi.App/Sprites/Diagnostics`，由 `Lumi:
 
 ### 7C 殼：視窗與平台
 
-- [ ] C1 `IOverlayPlatform`（Core）、`NullOverlay`；`WindowsOverlay`、`MacOverlay` 搬進 `Lumi.Platform`
-- [ ] C2 `FrameDriver`、`SpriteShellOptions`
-- [ ] C3 `SpriteInteractionTracker`（純邏輯）＋ 單元測試（靠近、戳、拖曳、戳後不變拖曳）
-- [ ] C4 `SpriteWindow`：透明置頂、視窗尺寸計算、點擊穿透與可互動區、靠近偵測、浮現與收起動畫
-- [ ] C5 位置記憶與夾回螢幕（含多螢幕、DPI）、尺寸檔位、自動休眠與喚醒
-- [ ] C6 托盤圖示、`ShutdownMode.OnExplicitShutdown`、程式畫的圖示
-- [ ] C7 診斷 HUD；暫時用假狀態驅動殼（像 POC 的示範流程，開發選項）
+- [x] C1 `IOverlayPlatform`（Core）、`NullOverlay`；`WindowsOverlay`、`MacOverlay` 搬進 `Lumi.Platform`
+- [x] C2 `FrameDriver`、`SpriteShellOptions`
+- [x] C3 `SpriteInteractionTracker`（純邏輯）＋ 單元測試（靠近、戳、拖曳、戳後不變拖曳）
+- [x] C4 `SpriteWindow`：透明置頂、視窗尺寸計算、點擊穿透與可互動區、靠近偵測、浮現與收起動畫
+- [x] C5 位置記憶與夾回螢幕（含多螢幕、DPI）、尺寸檔位、自動休眠與喚醒
+- [x] C6 托盤圖示、`ShutdownMode.OnExplicitShutdown`、程式畫的圖示
+- [x] C7 診斷 HUD；暫時用假狀態驅動殼（像 POC 的示範流程，開發選項）
 - [ ] C8 手動驗收（Mac；Windows 見風險）
 
 ### 7D 對話整合
 
-- [ ] D1 `SpriteStateMapper` ＋ 測試（上面表格的每一列；一輪有多個 `Completed`）
-- [ ] D2 `SpriteBubbleViewModel` ＋ 測試（字數截斷在字形叢集邊界、完整內容條件、淡出與暫停、確認與錯誤不淡出）
-- [ ] D3 氣泡畫面：狀態一行、串流、完成、確認（精簡與展開、`Destructive`）、錯誤；`EmojiTextBlock`
-- [ ] D4 精簡輸入列：浮現、送出、停止、草稿、輸入法 Enter
-- [ ] D5 `AppModeCoordinator` ＋ `IWindowHost` ＋ 測試（上面表格每一列，包含隱藏中需要確認）
-- [ ] D6 工作台：「小精靈模式」按鈕啟用、「查看中」唯讀旗標與橫幅、「在工作台檢視」捲到指定卡片
-- [ ] D7 右鍵選單與暫時隱藏
-- [ ] D8 錯誤與缺金鑰流程（重試、開啟設定後自動重試）
-- [ ] D9 `ISpriteVoiceProvider` 接上目前角色（設定開關 7E 才有，這裡先讀 manifest）
+- [x] D1 `SpriteStateMapper` ＋ 測試（上面表格的每一列；一輪有多個 `Completed`）
+- [x] D2 `SpriteBubbleViewModel` ＋ 測試（字數截斷在字形叢集邊界、完整內容條件、淡出與暫停、確認與錯誤不淡出）
+- [x] D3 氣泡畫面：狀態一行、串流、完成、確認（精簡與展開、`Destructive`）、錯誤；`EmojiTextBlock`
+- [x] D4 精簡輸入列：浮現、送出、停止、草稿、輸入法 Enter
+- [x] D5 `AppModeCoordinator` ＋ `IWindowHost` ＋ 測試（上面表格每一列，包含隱藏中需要確認）
+- [x] D6 工作台：「小精靈模式」按鈕啟用、「查看中」唯讀旗標與橫幅、「在工作台檢視」捲到指定卡片
+- [x] D7 右鍵選單與暫時隱藏
+- [x] D8 錯誤與缺金鑰流程（重試、開啟設定後自動重試）
+- [x] D9 `ISpriteVoiceProvider` 接上目前角色（設定開關 7E 才有，這裡先讀 manifest）
 
 ### 7E 設定頁與收尾
 
@@ -390,3 +390,39 @@ POC 的 `PerfMonitor` 與 HUD 搬進 `Lumi.App/Sprites/Diagnostics`，由 `Lumi:
 - **`OrbControl` 改成 internal**，對外只有 `OrbSpriteFactory`；`EyeMode`（POC 的右鍵選項）移除，固定「偶爾」。`PreferredFps`：互動中（按住、回彈、拖曳）60、待機 30（有人靠近 60，眼睛跟著游標）、休眠 12、串流／需要確認／錯誤 60、其餘 30。
 - 測試專案需要 `Avalonia.Skia`（加進 `Directory.Packages.props`），因為要真的繪製才能檢查點陣圖；`Lumi.App.Tests` 仍用 `UseHeadlessDrawing`，不受影響。
 - 架構測試：角色專案不引用任何 Lumi 專案（Orb 只引用 Abstractions），Core 與各函式庫不引用角色專案，角色原始碼（非註解行）不出現 `DispatcherTimer`、`DllImport`、`LibraryImport`、`Stopwatch`、`Window`、`Application`、`Dispatcher`；另外檢查 `docs/sprite-dev-guide.md` 的版本紀錄有目前的 Abstractions 版本。
+
+### 7C 殼：視窗與平台（2026-10-21）
+
+結果：全部 1,415 個測試通過（App 426、Tools 329、Core 229、Providers 136、Infrastructure 93、Sprites 78、Platform 67〔13 個在非對應平台跳過，Mac 上實際執行 54〕、Architecture 57）。在 Mac 上用 Release 版實際啟動過：視窗透明置頂、光球正常繪製、HUD 顯示 `macOS (AppKit via objc_msgSend)`、游標座標與「穿透中」狀態會更新。開啟方式：環境變數（或 appsettings）`Lumi__Developer__ShowSpriteShell=true`，加 `Lumi__Developer__ShowSpriteHud=true` 顯示 HUD（F1 切換）。Windows 與 Mac 的 C8 手動驗收要使用者操作。
+
+偏離或補充原設計的地方：
+
+- **`IOverlayPlatform` 多了 `Name` 與 `ClickThroughActive`**（HUD 要顯示）；`IsSupported` 在 `Attach` 成功後才是 true，`Attach` 失敗不丟例外。放在 `Lumi.Core/Platform`；`NullOverlay` 在 Core。實作與 `OverlayOptions`（`Layered`，`Lumi:Developer:OverlayLayered`）在 `Lumi.Platform`，P/Invoke 改用 `LibraryImport`（和既有的 Keychain 一致）。每個視窗各用一個實例（Transient）。
+- **macOS 的控制代碼判斷**：`Attach` 只拿到 `nint`，沒有 POC 用的 `HandleDescriptor`，所以改問 `respondsToSelector:(setIgnoresMouseEvents:)`——能收就是 NSWindow，不能就從 NSView 取 `-window`（對 NSWindow 呼叫 `-window` 會丟 unrecognized selector）。
+- **拖曳用「手動設定 Position」**：POC 的 5b（手動 vs 系統 `BeginMoveDrag`）沒有記錄結果；POC 預設是手動，使用者在 Windows 與 Mac 都用它驗證過，所以沿用，不提供系統拖曳。
+- **`SpriteSettings` 與 `IModelCatalog.SetSpriteAsync` 提前到 7C 做**（原本在 7E 的 E1），因為位置記憶與尺寸檔位要存。位置存成螢幕像素整數（`SpritePlacement(int CenterX, int CenterY)`，虛擬桌面座標），不是 DIP：不同縮放的螢幕上像素座標才穩定。7E 只剩設定頁。
+- **殼的純邏輯都抽出來並有單元測試**：`SpriteInteractionTracker`（靠近、離開延遲、長按戳、拖曳門檻）、`SpriteLayout`／`SpritePlacementRules`（版面、夾回螢幕、拔掉螢幕後退回主螢幕右下角）、`SpriteSleepPolicy`（自動休眠，疊在要求的狀態上，不是對話要求的）。長按用輪詢（33 ms）的時間判定，不另開計時器。
+- **`SpriteWindow` 的對外介面**（7D 用）：`SetState`（要求的狀態；殼負責解析退化與疊上休眠）、`ShowBubble(text)`、`InputSubmitted`、`SpriteClicked`、`SetSizeAsync`。氣泡文字經 `EmojiTextBlock`。氣泡與輸入列在 7C 只是外殼（文字與單行輸入）；串流、確認、錯誤是 7D。
+- **視窗配色用主題 token**；陰影是 `Tokens.axaml` 裡的固定資源 `LumiSpriteShadow`（架構測試只允許 Tokens.axaml 寫色碼）。
+- **托盤與生命週期**：`TrayService`（顯示小精靈、開啟工作台、結束 Lumi）；`ShutdownMode.OnExplicitShutdown`，工作台關閉時結束程式。7C 階段托盤只在開發開關 `ShowSpriteShell` 打開時才建立，避免正式版出現一個還沒接上對話的小精靈；7D 之後托盤常駐，並依模式區分「關工作台＝結束」與「只關視窗」。
+- **7A 補一個競態修正**：`ToolApprovalService.Resolve` 改成先發 `Resolved` 事件、再放行等待中的對話迴圈。原本的順序（先放行再通知）在測試（沒有同步內容、事件在執行緒池上）偶爾讓晚到的通知把已完成的卡片蓋回「執行中」；正式程式因為都在 UI 執行緒所以不會發生，但新順序更安全。
+- **POC 已無法單獨建置**：根目錄的 `Directory.Packages.props`（中央套件管理）要求 `PackageReference` 不帶版本，POC 的 csproj 還帶版本。POC 的功能已全部搬進正式專案，不修；要跑舊 POC 用 `bin/Release` 裡既有的建置。
+
+**耗能實測（Mac，Release，單核 %，工作台視窗同時開著；用 `ps` 的 CPU 時間差，20 秒）**：只有工作台 2.6%；殼待機（30 fps，沒人靠近）12.7%（殼約 10%）；殼休眠（>60 秒，12 fps）6.2%（殼約 3.6%）；POC 同機待機 12.0%。POC 清單 4a 的目標是待機 < 3%、4b 休眠 < 1%，**目前都沒達標，而且 POC 本身也一樣**（所以不是移植造成的退步）。可能的方向，留待確認是否值得做：休眠時降低輪詢頻率、快取每個畫面都重建的柔邊漸層筆刷（`Soft()` 一幀建好幾個 17 色標的筆刷）、待機幀率降到 20。Windows 的數字要使用者用 HUD 量。
+
+### 7D 對話整合（2026-10-22）
+
+結果：全部 1,523 個測試通過（App 534、Tools 329、Core 229、Providers 136、Infrastructure 93、Sprites 78、Platform 67、Architecture 57）。在 Mac 上用設定檔記著「上次是小精靈模式」啟動：只出現光球與 HUD，沒有工作台視窗。**還沒有用真的模型跑過**（需要使用者的金鑰），手動驗收見下方。偏離或補充原設計的地方：
+
+- **「查看中」是推導出來的，不是協調者設的旗標**：`WorkbenchViewModel.IsViewOnly` ＝ 回應中、而且作用中的模式是小精靈（沒有協調者時永遠是 false，舊的開發用切換因此不受影響）。回應結束它自然消失，不需要誰去解除。工作台頂端的橫幅與輸入框停用都綁它；模型膠囊與模式按鈕本來就綁「回應中」。
+- **新增 `SpriteConversationController`**（`Lumi.App/Sprites`）：把會話事件餵給 `SpriteStateMapper` 與 `SpriteBubbleViewModel`、處理輸入列的送出與停止、氣泡的重試與「開啟設定」。只處理小精靈模式的回應；工作台模式發起的回應（小精靈是隱藏的）不碰氣泡。角色仍然只從殼收到狀態。
+- **缺金鑰的流程**：氣泡的錯誤帶「開啟設定」，按下去呼叫 `IApiKeyPrompt`，存好後自動重試（和工作台相同）；沒有金鑰問題的失敗（例如沒有可用的模型）只開設定視窗。小精靈發起的失敗，工作台只在錯誤列顯示，不會自己跳金鑰視窗（由發起的那一邊處理，7A 已經這樣做）。
+- **啟動流程改了**：`App` 不再把工作台設成 `MainWindow`（小精靈模式下它不該出現）；啟動時先載入目前的對話（`WorkbenchViewModel.InitializeAsync` 現在只會執行一次，視窗第一次開啟時不會再載入），接上控制器與托盤，再由 `AppModeCoordinator.Start()` 顯示上次的模式。`WindowHost` 延遲取得真的視窗，所以協調者、工作台、小精靈之間沒有建構時的循環相依。
+- **工作台視窗的關閉**：`WorkbenchWindow` 在 `Closing` 問協調者；工作台模式＝結束程式，小精靈模式＝取消關閉並隱藏（視窗還在，之後可以再開）。系統關機或程式結束時的關閉不攔。
+- **托盤改成常駐**（7C 只在開發開關打開時才有）；7C 的開發開關 `ShowSpriteShell` 與假的示範驅動 `SpriteDemoDriver` 都移除了，現在是真的模式切換。`ShowSpriteHud` 保留，同時打開右鍵選單裡的開發項目（狀態預覽、尺寸、HUD、點擊穿透）。
+- **右鍵選單**：開啟工作台、新對話（回應中停用）、設定…、暫時隱藏 30 分鐘、結束 Lumi。**「切換角色…」留到 7E**（設定頁有角色清單才有意義）。
+- **氣泡版面**：預留高度從 180 加到 260，放得下展開的權限確認；氣泡有按鈕（確認、錯誤、完整內容連結）時才吃滑鼠，點擊穿透的可互動區包含氣泡；沒有按鈕的氣泡維持穿透。視窗隱藏時（暫時隱藏、工作台模式）暫停輪詢與繪圖。
+- **新增測試輔助 `ManualTimeProvider`**：連 `Task.Delay(…, TimeProvider)` 的計時器也跟著假時間走（`FakeTimeProvider` 只有時鐘，計時器仍是真的），測「暫時隱藏 30 分鐘」用。
+- **開發用的模式切換（工作台的 `ShowSpriteModeToggle`）還在**，留到 7E 的 E3 移除並把那些測試改成直接用會話；有協調者時在工作台送出本來就會切回工作台模式，所以它在正式流程裡已經沒有意義。
+
+**7D 的手動驗收（要你的金鑰）**：照計畫驗收標準的第 2～7 項：小精靈問 15 題（沿用 M5 清單，每則在氣泡內兩句內、需要長內容時出現「在工作台開啟完整內容 →」並點開看得到展開的內容卡）；狀態 Thinking → Tool → Streaming → Done → 3 秒 Idle、60 秒 Sleep；寫入類工具在氣泡確認（Attention、警示色外框），在氣泡與工作台回答都同步，`Destructive` 只有「允許刪除」「拒絕」；模式切換與查看中；兩個視窗是同一則對話；托盤與關閉行為；錯誤與缺金鑰。
