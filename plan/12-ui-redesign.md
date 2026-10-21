@@ -207,11 +207,11 @@ SettingsWindow（自訂標題列，同工作台）
 ### UB 工作台拆元件（Wide）
 - [x] 拆出 CustomTitleBar／ChatToolbar／ConversationView／ChatComposer，保留全部 x:Name；`WorkbenchStructureTests`（UB-1）
 - [x] 工具列：新對話、歷史（secondary＋圖示）、模型膠囊（供應商 · model ID、chevron 圖示）、「…」選單（設定、管理連線與模型）（UB-2）
-- [ ] 歡迎區；`MessageViewModel.TimeText`；助理頭像與淡底氣泡；動作列（👍👎 停用）
+- [x] 歡迎區；`MessageViewModel.TimeText`；助理頭像與淡底氣泡；動作列（👍👎 停用）（UB-3）
 - [ ] Composer 兩層；麥克風停用佔位；送出／停止改成圖示
 - [ ] 移除狀態列；`ModelPicker` 頂部加「本對話」區塊與費用說明；膠囊 Tooltip
 - [~] 回應中改用停用時的 Tooltip：工具列膠囊與小精靈按鈕已完成（UB-1／UB-2）；輸入區旁的「回應結束後才能送出」等提示留給 UB-4
-- [ ] `Markdown.axaml` 程式碼區塊標題列樣式（語言、複製圖示）
+- [x] `Markdown.axaml` 程式碼區塊標題列樣式（語言、複製圖示）（UB-3）
 
 ### UC RWD
 - [ ] Compact：小精靈短標籤、工具列純圖示、Padding 24、訊息百分比寬度、Composer 純圖示、隱藏提示文字
@@ -287,6 +287,12 @@ SettingsWindow（自訂標題列，同工作台）
 - [ ] UB-2：回應中膠囊停用，滑過出現「回應中，暫時無法切換」；回應結束後 Tooltip 為「供應商 · model ID／連線狀態／費用說明」三行，換行與長度
 - [ ] UB-2：「…」MenuFlyout 靠右對齊，兩個項目實際開出設定視窗（Menu 項目樣式尚未套 token，UD 處理）
 - [ ] UB-2：淺色主題下 Success／Warning 的 8px 狀態點在 Surface／Chrome 上只有 2.35–2.85:1（不到 3:1），肉眼是否看得清楚；必要時設計端決定是否調深（色碼照 ui-guide）
+- [ ] UB-3：歡迎區（Soft 方塊 sparkle、標題 20／700、Caption 副標）在五套主題淺深色上的位置與間距；發送第一則訊息後消失、新對話再出現、啟動載入既有對話時不閃現
+- [ ] UB-3：使用者訊息與助理訊息（頭像「L」、名稱、時間、淡底氣泡）的對齊與色差；助理淡底氣泡與背景的區隔；Wide 左右 Padding 64 的觀感；氣泡內思考區塊、Markdown、工具卡片疊放自然
+- [ ] UB-3：動作列（複製、重新產生）圖示＋文字對齊與 Hover；複製後變打勾與「已複製」；👍👎 灰階停用、滑過出現「評價功能即將推出」，旁邊 Caption 不擠版
+- [ ] UB-3：程式碼區塊標題列外觀、複製鈕 Hover、超長程式碼水平捲動時標題列與複製鈕不動、12／13 等寬字可讀、淡底氣泡內疊深色區塊的對比
+- [ ] UB-3：頭像 32 圓與時間 Caption 11px 的中文可讀性
+- [ ] UB-3：串流中逐字更新時 Markdown 增量渲染與自動捲到底沒有退化（單元測試只驗證結構）
 - [ ] UA-8：LumiIcon 在 16px 的線條粗細（1.75 縮放後約 1.17px）看起來順眼
 
 ## 實作紀錄
@@ -324,3 +330,9 @@ SettingsWindow（自訂標題列，同工作台）
 - 「管理連線與模型…」用既有的 `ModelSwitcher.ManageCommand`（`SettingsSection.Models`），「設定」開 `Connections`；UD 合併成 AI 連線頁後兩者要不要導向同一頁再決定。
 - 淺色主題 Success／Warning 狀態點對比不到 3:1，測試只守下限 2.3:1 並註明為已知例外；狀態另外用 Tooltip 文字表達。
 - 測試：App 704，全綠。
+
+### UB-3（歡迎區、訊息、程式碼區塊）
+- 版面常數集中在 `Border#ConversationPage.conversation-page`（Padding 64,24）與 `StackPanel.conversation-stack`（Spacing 24），UC 用根節點 class 覆寫即可。
+- 助理頭像「L」用 `LumiAccentTextBrush`（文字，4.5:1），歡迎區 sparkle 圖示用 `LumiAccentBrush`（非文字）。動作列按鈕是 `tertiary small message-action`；👍👎 只有圖示，停用，旁邊共用一個 Caption「評價功能即將推出」。
+- 新增 `MessageViewModel.TimeText`／`ShowBubble`、`WorkbenchViewModel.ShowWelcome`／`IsLoadingMessages`、`LumiCodeHeaderBrush`。歡迎區副標改為「輸入問題，也可以加入檔案或資料夾。」（不提語音，M6 尚未做）。
+- 測試：App 724，全綠。
