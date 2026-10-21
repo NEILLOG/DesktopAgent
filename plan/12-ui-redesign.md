@@ -223,10 +223,10 @@ SettingsWindow（自訂標題列，同工作台）
 ### UD 設定視窗
 - [x] 自訂標題列；Menu（標題區、回到對話、白話分類名稱、兩個停用佔位）（UD-1）
 - [x] 頁首元件 `SettingsPageHeader`（eyebrow、頁面標題、說明、主要動作），已套用到四頁（UD-1）
-- [ ] AI 連線：清單＋詳細、狀態徽章、「進階」收合、按鈕層級；模型設定頁同樣做法加上費用說明；用分段切換取代 TabControl；頁首主要動作隨分段切換（新增連線／新增模型設定）
+- [x] AI 連線：清單＋詳細、狀態徽章、「進階」收合、按鈕層級；模型設定頁同樣做法加上費用說明；用分段切換取代 TabControl；頁首主要動作隨分段切換（UD-2）
 - [ ] 外觀與操作：五張主題卡片＋明暗選擇
 - [ ] 人格與主動性、小精靈：頁首＋區段＋分隔線；角色清單用可選取卡片
-- [ ] 寬度 < 900 時上下排
+- [x] 寬度 < 900 時上下排（`stacked` class，含 ±8 hysteresis，只對設定視窗啟用）（UD-2）
 
 ### UE 收尾
 - [ ] `ToolCardView`、`ToolRunView`、`ConfirmDialog`、`SpriteBubbleView` 換 token、圖示與按鈕層級
@@ -324,6 +324,19 @@ SettingsWindow（自訂標題列，同工作台）
 - [ ] UD-1：視窗高度 480（MinHeight）時 Menu 中段可捲動，底部版本與金鑰說明仍可見
 - [ ] UD-1：四頁頁首（eyebrow、標題 28／700、說明）與 Padding 32 觀感；舊表單在新 Padding 下是否擠版（AI 連線的 TabControl、小精靈頁）
 - [ ] UD-1：「人格與主動性」圖示（Lucide user）在 18px 的線條與其他三個圖示一致；「人格」「小精靈」頁首說明文案（實作者新寫）請確認措辭
+- [ ] UD-2：AI 連線頁在 1040×760 與 720～899 寬：清單 260＋詳細，及上下排時整頁捲動、清單在上；跨過 900 切換不抖動
+- [ ] UD-2：模型設定分段在 760 高時預設模型區加清單後詳細卡片偏矮，要在卡片內捲動才看到下方欄位，是否可接受
+- [ ] UD-2：分段切換（Soft 底選取、Hover、Tab／方向鍵、螢幕閱讀器念成「單選」）在五套主題淺深色的外觀
+- [ ] UD-2：清單卡片 Hover 陰影、選取 Soft 底＋邊框、窄欄（260）時名稱／副標省略（Tooltip 有完整文字）
+- [ ] UD-2：狀態點與文字（連線正常／失敗／尚未確認）在 Soft 選取卡片與徽章上的對比；淺色 Success／Warning 點 < 3:1，狀態另有文字
+- [ ] UD-2：虛線「＋新增」入口的粗細、Hover（Soft 底＋Accent 虛線）、停用外觀（無連線時旁邊 Caption 說明）
+- [ ] UD-2：「進階」Expander chevron 旋轉、焦點框、展開後間距；錯誤時自動展開是否自然
+- [ ] UD-2：金鑰列（已設定·結尾 xxxx、更換／清除／取消更換、「顯示」ToggleButton）與缺金鑰流程聚焦 KeyBox
+- [ ] UD-2：測試連線結果區（成功 Soft 底＋勾；失敗 Danger 淡底＋三角圖示＋訊息）與「測試中…／取消」
+- [ ] UD-2：可編輯 ComboBox（模型 ID）加「重新整理」鈕的高度對齊（40）與下拉選單
+- [ ] UD-2：**實機**確認「測試連線」後表單與清單選取不會消失、狀態更新；儲存按鈕隨欄位有效／無效啟用與停用，儲存後清單與標頭更新
+- [ ] UD-2：深色模式下卡片、徽章、測試結果區、虛線入口的顏色與對比
+- [ ] UD-2：Caption 11px 中文說明與「必填／選填」可讀性；新增文案（欄位說明、`Form_FixErrors`）措辭
 - [ ] UA-8：LumiIcon 在 16px 的線條粗細（1.75 縮放後約 1.17px）看起來順眼
 
 ## 實作紀錄
@@ -394,3 +407,10 @@ SettingsWindow（自訂標題列，同工作台）
 - `CustomTitleBar` 新增 `ShowSpriteButton`（設定視窗設 false）；`SettingsPageHeader.Actions` 不是內容屬性（UserControl 根元素就是 Content），UD-2 的「＋新增連線」要寫成 `<views:SettingsPageHeader.Actions>…</views:SettingsPageHeader.Actions>`。
 - `ISettingsWindowService.ReturnToWorkbench()`（先走未儲存變更詢問，取消回 false）；`SettingsViewModel.ReturnToChatCommand`、`VersionText`；`SettingsViewModel` 多注入 `ISettingsWindowService`（選用參數）。兩個停用項放在第二個 ListBox，`CategoryIndex` 仍是 0～3。
 - 外觀與操作頁原本是 Panel，改包 ScrollViewer。設定視窗內零散的 6、10、14 間距留給 UD-2、UD-3 收斂。測試：App 839（新增 15）。
+
+### UD-2（AI 連線頁）
+- 新增 `FormField`、`ConnectionsPanel`、`ModelsPanel`、`ProviderMark`、`StatusIndicator`、`TabIndexConverter`；分段切換用 `Border.segmented` 包 RadioButton（沒有獨立 SegmentedControl）；`ResponsiveClasses.Track(window, trackStacked: true)` 讓設定視窗在寬 < 900 時加 `stacked` class。
+- **偏離**：設定視窗預設尺寸 900×640 改 1040×760（900 寬時詳細區只剩約 340px 且正好落在 stacked 邊界）；x:Name 移入 UserControl 的 name scope，測試用 `FindByName`。
+- **順手修的既有 bug**：`SaveCommand` 沒有跟著 `CanSave` 通知（儲存按鈕永遠停用）；測試連線後狀態變動重建清單，ListBox 把選取寫成 null 使表單與測試結果消失（改為重建期間忽略 null、模型清單就地更新 Status）；目錄變動時模型的連線下拉被清成 null。`ModelListItem` 由 record 改成可通知變更的 class。
+- 儲存停用時加一行 Caption（`Form_FixErrors`），因為錯誤可能在收合的「進階」裡。
+- **觀察**：子 agent 回報第一次 build 後立刻跑 test 時 App.Tests 有 1 個失敗，之後多次（單獨 7 次、整個方案 8 次，協調者再跑 3 次）都通過，未能重現，可能是偶發的時序測試；若之後再出現請記下測試名稱。測試：App 893（新增 54）。
