@@ -356,6 +356,12 @@ SettingsWindow（自訂標題列，同工作台）
 - [ ] UE-2：標題列品牌方塊的「L」在 sage／teal／mist-blue 淺色上 3.85／4.07／4.28:1（低於 4.5:1，已視為品牌標誌）是否可接受
 - [ ] UE-2：Hover／Pressed 狀態、ComboBox 下拉彈出層、Expander 展開動畫的文字對比（自動測試未涵蓋）
 - [ ] UE-2：詳細卡片改 `Grid` 後，卡片內捲動與底部按鈕列貼底的外觀（尤其 stacked、小高度）
+- [ ] UE-3：五套主題淺深色 primary（儲存、允許）Hover／Pressed 深淺是否明顯又不突兀，尤其深色模式（Hover 比原色暗一點）
+- [ ] UE-3：送出圓鈕 Hover／Pressed 為 AccentHover，輸入為空是 Soft 底＋灰圖示，terracotta 上深色圖示對比；停止鈕 Hover 與 primary 一致，回應中切換沒有跳動；小精靈輸入列的送出與停止同樣確認
+- [ ] UE-3：secondary Hover（SurfaceAlt 底）／Pressed（Soft 底）／Disabled（透明底＋淺框＋Muted 字）；danger Hover 淡紅底、Pressed 紅框；ConfirmDialog 紅框鈕在 Hover 與 Enter 時的外觀
+- [ ] UE-3：tertiary 的 Hover／Pressed（工具列、輸入區下層工具、訊息動作列）；Disabled 的 0.6 透明度是否看得出來（麥克風、👍👎 停用佔位）
+- [ ] UE-3：鍵盤 Tab 時所有按鈕的焦點框是 Accent 2px 圓角（膠囊、圓鈕、chip X 鈕貼合），不是黑白雙框；dashed、分段切換、進階區段標題只有一個 Accent 框；滑鼠點擊後不出現焦點框；chip 的 20×20 X 鈕上焦點框（畫在邊緣內側）是否蓋住圖示
+- [ ] UE-3：工具卡片標題與群組標題 Hover／Pressed 不換底也不變黑字；程式碼區塊「複製」Hover；小精靈氣泡「查看詳細」連結 Hover
 - [ ] UA-8：LumiIcon 在 16px 的線條粗細（1.75 縮放後約 1.17px）看起來順眼
 
 ## 實作紀錄
@@ -454,3 +460,10 @@ SettingsWindow（自訂標題列，同工作台）
 - 新增 `TestSupport/Wcag`、`RenderedContrast`（走訪視覺樹量每段可見文字的前景與實際背景）、`SettingsRig`；`SettingsContrastTests` 在五套主題 × 淺／深下量 15 個畫面狀態。
 - **已知例外**：標題列品牌方塊的「L」（OnAccent 在 Accent 上）sage 淺色 3.85、teal 4.07、mist-blue 4.28:1，視為品牌標誌，只放寬到 3:1。沒有為了通過而改色票。
 - 現況沒有任何 `IsDefault`／`IsCancel`，測試鎖定「若有只能是 primary 的 *SaveButton」；要不要讓 Enter 觸發「儲存」是產品決定，沒做。測試：App 1091（新增 146）。
+
+### UE-3（按鈕互動狀態）
+- **疑慮已證實**：修之前 62 個「class × 淺深」狀態案例有 58 個失敗。Fluent 把 Hover 蓋成 `Black@0.1` 底加純黑字、Pressed 蓋成 `#66000000`、Disabled 蓋成 `#33000000`；受影響包含 primary／secondary／tertiary／danger／ToggleButton.secondary／chrome／md-copy／round send／round stop／composer-tool／chip-remove／toolbar／capsule／iconOnly／message-action／confirm／cardheader／groupheader／link 與分段切換。深色模式下 primary 與 send 在 Hover 時是黑字加近乎透明的底，最明顯。Normal 狀態都正確。
+- 修法：在 `/template/ ContentPresenter#PART_ContentPresenter` 層明確設定各狀態；新增 `LumiPrimaryButtonHoverBrush`／`LumiPrimaryButtonPressedBrush`（PrimaryButton 與 Background 以 0.12／0.24 混合，五套 × 淺深共 10 組，並有對比測試）。`round／send／stop` 從 ChatComposer 搬到 `Controls.axaml`，小精靈送出鈕改吃全域樣式（仍 36×36）。
+- 焦點框：Fluent 預設是黑色 2px＋白色 1px 直角雙框，疊在圓角按鈕上，整個換成 Accent 2px 圓角、畫在按鈕邊緣內側（間距尺度測試不允許 -2 Margin）；dashed、分段切換、Expander 標題自己畫焦點，`FocusAdorner` 設 null 避免雙框。
+- primary 淺色的 Pressed 無法「再深」（底色已近黑），改用 Hover 往 Background 靠 12%、Pressed 靠 24%。tertiary／chrome／分段切換／dashed 的 Disabled 另加 Opacity 0.6。
+- **未涵蓋**：ConversationView 的三顆沒有 class 的按鈕（關閉提示、重試、用其他模型重試）與 ConfirmDialog 的 ConfirmButton 初始沒有 class（程式碼才加），仍是 Fluent 灰預設外觀 → UE-4。`ListBoxItem`、`MenuItem`、`ComboBox` 的狀態不在範圍。測試：App 1158（新增 67）。
