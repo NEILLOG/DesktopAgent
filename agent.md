@@ -9,7 +9,7 @@
 
 Lumi 是一個跨平台（Windows / macOS）的桌面 AI 助理，使用者自帶 API 金鑰（BYOK）。
 
-- **工作台模式**：一般的對話視窗。可以加入檔案或資料夾當上下文、切換模型、語音輸入，下方顯示 token 與回合數。
+- **工作台模式**：一般的對話視窗。可以加入檔案或資料夾當上下文、切換模型、語音輸入，模型選單裡顯示本對話的 token 與回合數。
 - **小精靈模式**：透明無框的桌面角色（第一個角色是光球）。游標靠近才浮出精簡輸入列，用簡短氣泡回答，並用動畫表現思考、呼叫工具等過程。
 - 兩種模式**共用同一則對話**，只是外觀與回答長度不同。
 
@@ -166,8 +166,19 @@ Lumi.App ──► Lumi.Sprites.* ──► Lumi.Sprites.Abstractions
 - **所有顯示對話內容的地方都要經過 `EmojiText`**（切成字形叢集、emoji 叢集指定 emoji 字型）。不要直接設定 `TextBlock.Text`，否則 ❤️‍🔥 這類組合 emoji 會被拆開。
 - 介面文字使用繁體中文，集中放在資源檔。
 - **字型一律打包進 app**（IBM Plex Sans、Noto Sans TC、JetBrains Mono），元件只引用 `LumiUiFont`／`LumiMonoFont` 資源，不直接寫字型名稱，也不依賴系統字型。
-- **顏色一律引用主題 token**（Light／Dark 兩套，預設跟隨系統），不在元件裡寫死色碼。token 清單見 `docs/ui-spec.md` 第 1 節。
-- 回應中（含等待工具確認）停用模式切換與模型切換；小精靈回應中仍可「開啟工作台查看」，但工作台此時不能送出訊息（`docs/ui-spec.md` 2.2）。「查看中」就是「回應中，而且作用中的模式是小精靈」，不是另外的狀態。
+- **設計原則以 `plan/ui-guide/ui-guide.html` 為準**，優先於圖片設計稿與 `RWD原則.md`；各元件的具體規格以 `docs/ui-spec.md` 為準。**設計有變更時，要同步更新 `docs/ui-spec.md`**。
+- **元件只引用 token，不寫死色碼。**色碼只能放在 `Lumi.App/Themes/` 資料夾（`Tokens.axaml`、`Palettes/*.axaml`），架構測試（`ThemeTokenRuleTests`）強制；元件一律用 `{DynamicResource LumiXxxBrush}`。token 清單見 `docs/ui-spec.md` 1.2。
+- **主題**：五套（`sage` 預設、`teal`、`mist-blue`、`indigo`、`terracotta`）× 淺／深，色票在 `Themes/Palettes/{id}.axaml`。設定只存主題 ID（`AppSettings.ThemeId`），不存個別顏色；明暗另外設定（跟隨系統／淺色／深色，預設跟隨系統）。切換主題只換顏色，不改版面與尺寸。光球與程式碼區塊的顏色不隨主題變。
+- **文字對比 ≥ 4.5:1**（五套 × 淺深，`PaletteContrastTests`）。主題的 Muted、AccentText 已在同色相調深，文字用 `LumiTextMutedBrush`、`LumiAccentTextBrush`、`LumiTextOnSoftBrush`；`LumiOnAccentBrush` 只用於 Accent 底上的圖示（3:1）；狀態點用 `Lumi*DotBrush`，不當文字色。
+- **間距只用 4／8／12／16／24／32**（`SpacingScaleRuleTests`；例外名單寫在測試裡，包含整個 `Sprites/` 目錄）。圓角：輸入框 10、卡片 14、頁面區域 16。
+- **圖示一律用 `Themes/Icons.axaml` 加 `LumiIcon`，不使用 Unicode 符號當圖示或按鈕文字**（✓ ✕ ⚠ ▾ → ✦ 等，`NoSymbolIconRuleTests`）。
+- **響應式只用根節點 Classes**（`wide`／`compact`／`narrow`、`short`／`veryshort`，設定視窗另有 `stacked`，由 `ResponsiveClasses` 設定）。不用 Container Query，不在各控制項寫 Converter，不經 ViewModel。斷點：寬度 Wide ≥ 1000、Compact 620–999、Narrow < 620（±8 緩衝）；高度 < 700、< 600；視窗 `MinWidth` 500。細節見 `docs/ui-spec.md` 第 9 節。
+- **按鈕**：新增按鈕必須屬於已 token 化的層級（`primary`／`secondary`／`tertiary`／`danger` 或 `ButtonCoverageTests` 列出的專用樣式），**每個動作區最多一個 primary**；`danger` 只用在破壞性動作。**純圖示按鈕必須有 `ToolTip.Tip` 與 `AutomationProperties.Name`**；停用的按鈕要寫出原因（Tooltip 加 `ShowOnDisabled`，或旁邊的 Caption）；錯誤一定要有文字，不能只改顏色；卡片不巢狀超過一層，不把表單欄位包成卡片。
+- **BYOK 顯示規則**：模型膠囊顯示**供應商與確切的 model ID**（「供應商 · model ID」），不顯示使用者自訂的顯示名稱，任何寬度都看得到；連線狀態要有文字，不能只靠圓點；模型選單與設定的模型設定頁要寫費用說明（費用由使用者的帳號支付）。
+- **Avalonia 樣式陷阱**（細節見 `docs/ui-spec.md` 10.5）：
+  1. Fluent 的 Hover／Pressed／Disabled 規則設在 `ContentPresenter#PART_ContentPresenter`，直接在 Button 上設定 Background 會被蓋掉；每個狀態都要在 `/template/ ContentPresenter#PART_ContentPresenter` 層覆寫。
+  2. 帶偽類別條件（`:unchecked`、`:pointerover`…）的 setter 優先權高於不帶條件的 setter，也高於模板內的 TemplateBinding；在模板零件上寫「正常」狀態時要寫成完整的狀態組合。
+- 回應中（含等待工具確認）停用模式切換與模型切換（原因用停用時的 Tooltip 說明，不佔版面）；小精靈回應中仍可「開啟工作台查看」，但工作台此時不能送出訊息（`docs/ui-spec.md` 2.2）。「查看中」就是「回應中，而且作用中的模式是小精靈」，不是另外的狀態。
 - 小精靈的「殼」與「角色」嚴格分離，詳見 `docs/sprite-dev-guide.md`。殼在 `Lumi.App/Sprites`：互動判定（`SpriteInteractionTracker`）、版面（`SpriteLayout`）、休眠（`SpriteSleepPolicy`）、對話事件→角色狀態（`SpriteStateMapper`）、氣泡（`SpriteBubbleViewModel`）都是不碰視窗的純邏輯，有單元測試；角色只會收到殼解析好的狀態。
 - 素材型角色（M8）：圖片加 `manifest.json` 放進使用者資料夾的 `sprites/`，設定頁按「重新載入」就能選用，不用寫程式；`SpriteLibrary`（`IReloadableSpriteCatalog`）是內建角色加資料夾裡的素材型角色，整份快照替換、載入失敗與警告列在設定頁。語氣文字經 `SpriteVoiceValidator`（單行純文字、200 字、不含標籤字元與指令字眼），沒通過就只忽略語氣。
 - 新增程式型角色只需要 `services.AddSprite<T>()`，設定頁的角色清單、狀態預覽與尺寸檔位自動可用；`tests/Lumi.App.Tests/Sprites/ChangingTheSpriteTests.cs` 用一個最小的假角色驗證殼完全不需要改。

@@ -1,5 +1,5 @@
 # 12 UI 重新設計（設計系統、五套主題、對話視窗 RWD、設定視窗新版面）
-- 狀態：進行中（UA 開工）
+- 狀態：程式完成，待人工驗收（見「人工驗收」與「待決定」）
 - 對應里程碑：M12（排在 M9 之前）
 
 ## 依據（優先順序由高到低）
@@ -231,9 +231,9 @@ SettingsWindow（自訂標題列，同工作台）
 ### UE 收尾
 - [x] `ToolCardView`、`ToolRunView`、`ConfirmDialog`、`ModelPicker`、歷史抽屜、`SpriteBubbleView` 換 token、圖示與按鈕層級；間距尺度與符號架構測試（UE-1）
 - [x] 鍵盤 Tab 順序、Enter／Shift+Enter：工作台（UC-2）與設定視窗（UE-2）都有測試
-- [ ] `docs/ui-spec.md`：改寫 1.2 色票（改成主題系統）、2.1 工具列、2.3 狀態列、3 訊息流、6 輸入區、7 設定視窗，新增 RWD 一節，並註明以 `ui-guide.html` 為準
-- [ ] `agent.md` 第 12 節：寫明設計原則以 `ui-guide.html` 為準；元件只能引用 token，不能寫死色碼與零散間距；圖示一律用 `Icons.axaml`；斷點規則
-- [ ] 更新 `00-master-plan.md` 的狀態
+- [x] `docs/ui-spec.md`：整份依實作重寫（1.2 主題系統、2 工具列與「本對話」、3～7、新增 9 RWD 與 10 共用元件與互動狀態），開頭註明以 `ui-guide.html` 為準（UE-5）
+- [x] `agent.md` 第 12 節：設計原則、色碼只放 Themes/、間距、圖示、RWD、按鈕層級、BYOK、兩個 Avalonia 陷阱（UE-5）
+- [x] 更新 `00-master-plan.md` 的狀態：M12 🟨 程式完成，待人工驗收（UE-5）
 
 ## 驗收標準
 
@@ -255,6 +255,20 @@ SettingsWindow（自訂標題列，同工作台）
 ## 待人工處理
 
 （同一任務修 3 次仍過不了的項目記在這裡：任務編號、卡住的原因、已嘗試的做法。）
+
+目前沒有。所有任務（UA～UE-5）都在第一輪完成；UE-3 曾因工作階段用量上限中斷，續跑後完成。
+
+## 待決定
+
+需要設計／產品判斷，實作者未擅自決定：
+
+1. **模型膠囊的「供應商」其實是連線名稱**（使用者自訂，例如「我的 OpenAI」），名稱為空才退回「Anthropic 原生」「OpenAI 相容」。ui-guide 要求 BYOK 顯示供應商——要不要改成永遠顯示供應商格式（或「連線名稱（供應商）」）？
+2. **NumericUpDown 高度仍是 Fluent 的 32**，與旁邊 40 高的 TextBox 不一致（模型設定「進階」的最大輸出、上下文上限）。要不要統一成 40？
+3. **Caption 11px** 的中文可讀性（ui-guide 規定）：若實機偏小，是否在不違反 ui-guide 的前提下調到 12？
+4. **淺色主題 Success／Warning 狀態點**對比只有 2.35–2.85:1（ui-guide 固定色），目前靠文字補充；是否接受？
+5. **標題列品牌方塊的「L」**在 sage／teal／mist-blue 淺色上 3.85／4.07／4.28:1，視為品牌標誌；是否接受？
+6. **Enter 是否觸發設定頁的「儲存」**（現況沒有任何 IsDefault 按鈕）。
+7. **歷史抽屜的搜尋與依日期分組**舊規格有，實作沒有，已改寫為留給 M9。
 
 ## 人工驗收
 
@@ -367,7 +381,7 @@ SettingsWindow（自訂標題列，同工作台）
 - [ ] UE-4：歷史抽屜、設定 Menu、卡片清單、色票卡、ModelPicker、小精靈狀態預覽的 Hover（SurfaceAlt）、Selected（Soft＋OnSoft 字）、鍵盤焦點框（卡片清單只有卡片邊框變 Accent，不是雙框）
 - [ ] UE-4：工具列「…」MenuFlyout 實機：Surface 底、Border 框、圓角 12、項目 Hover／Pressed／停用、內距與圓角協調；系統提供的浮起陰影是否看得出來（專案內沒有 Flyout 陰影慣例）
 - [ ] UE-4：模型選單 Flyout 外框改為 Surface 底＋Border 框＋圓角 12、文字 Text 色（原本是 Fluent 灰底黑字），深色模式尤其要看
-- [ ] UE-4：設定「進階」裡的核取方塊（顯示思考過程、啟用工具）與小精靈語氣開關：Accent 方塊與勾勾（terracotta 上勾勾為深色）、Hover、停用、Tab 焦點框；非分段的 RadioButton 目前沒有使用處，只有測試覆蓋
+- [ ] UE-4：設定「模型設定」頁的核取方塊（顯示思考過程、啟用工具；實作在「進階」外面）與小精靈語氣開關：Accent 方塊與勾勾（terracotta 上勾勾為深色）、Hover、停用、Tab 焦點框；非分段的 RadioButton 目前沒有使用處，只有測試覆蓋
 - [ ] UE-4：下拉清單（ComboBoxItem）選取、Hover、鍵盤移動時的 Accent 焦點框
 - [ ] UE-4：捲軸 thumb 在淺色背景（BorderStrong 約 1.9:1）是否太淡、Hover 變 Muted 是否明顯；展開時的箭頭仍是 Fluent 黑白
 - [ ] UE-4：**NumericUpDown 高度仍是 Fluent 的 32，與旁邊 40 高的 TextBox 不一致**（最大輸出、上下文上限）；要不要統一高度請設計決定
@@ -375,6 +389,7 @@ SettingsWindow（自訂標題列，同工作台）
 - [ ] UE-4：ProgressBar（模型選單「本對話」上下文用量）進度 Accent、軌道 Border，淺深色是否看得出來
 - [ ] UE-4：小精靈狀態預覽清單原本的 Fluent 灰底改透明，與上方區段銜接是否自然
 - [ ] UE-4：ToolTip 仍是 Fluent 預設樣式（不在視覺樹裡，掃描不到），確認在各主題淺深色的可讀性
+- [ ] 整體驗收（驗收標準第 2、3、8 條）：依測試矩陣 1200×800、900×700、700×650、620×650、520×650、800×560 實機截圖（sage 淺深各一次，另外四套主題在 1200×800 各一張），逐項對照 `RWD原則.md` 第 7 節；從 1200 拖到 500 確認無水平捲軸、619/620 與 999/1000 不抖動；125%／150%／200% DPI 沒有裁切；Windows、macOS 字型替代沒有造成控制項高度異常（子 agent 無法啟動真實 App 與截圖，只做了 Headless 結構與數值驗證）
 - [ ] UA-8：LumiIcon 在 16px 的線條粗細（1.75 縮放後約 1.17px）看起來順眼
 
 ## 實作紀錄
@@ -487,3 +502,12 @@ SettingsWindow（自訂標題列，同工作台）
 - **新發現的 Avalonia 規則**：帶偽類別條件（`:unchecked`、`:pointerover`…）的 setter 優先權高於不帶條件的 setter，也高於模板內的 TemplateBinding；所以 CheckBox／RadioButton 每個狀態都寫成「選取狀態＋互動狀態」完整組合，NumericUpDown 箭頭正常狀態用 `RepeatButton:not(:disabled)`，ScrollBar 用 `:vertical`／`:horizontal`。之後在模板零件上寫「正常」狀態都要注意。
 - 全域色彩殘留掃描（五套 × 淺深、約 44,000 個元素）0 種殘留；例外三條：捲軸展開時的箭頭、視窗模板的 `PART_TransparencyFallback`、色票卡的色塊。掃描順手修掉：小精靈狀態預覽清單灰底、NumericUpDown 半透明白底與黑框、思考過程 Expander 灰底、浮出層黑字、ProgressBar 強調色。
 - 新增 `LumiRadiusFlyout`（12）。測試：App 1199（新增 41）。
+
+### UE-5（文件同步）
+- `docs/ui-spec.md` 整份依實作重寫（章節 1～8 編號不變，因為程式註解引用 2.2、6.1、8.1 等；新增 9 RWD、10 共用元件與互動狀態）；`agent.md` 第 12 節換成新規則；`README.md` 兩處更新；`docs/sprite-dev-guide.md` 沒改（提到的「琥珀色」是光球 Tool 狀態的固定色）。
+- 文件與實作的差異已以實作為準：歷史抽屜只有標題加時間（搜尋與分組留給 M9）；確認區沒有「提供檢視內容」；Windows 標題列保留寬度是常數 138＋8 間距＝146。
+
+## 完成摘要（2026-10-22）
+- 任務 UA、UA-8、UA-9、UB-1～UB-5、UC-1、UC-2、UD-1～UD-3、UE-1～UE-5 全部完成並各自提交於分支 `m12-ui-redesign`。
+- 測試：Core 229、Infrastructure 97、Architecture 63、Tools 329、Platform 54（略過 13，非 Windows）、Sprites 424、Providers 136、App 1199，全綠；build 0 警告 0 錯誤。
+- 過程中順手修掉的既有 bug：設定頁儲存鈕永遠停用、測試連線後表單消失、歷史抽屜收起時 Tab 仍會進入、連線／模型詳細卡片 Tab 順序、分段切換 Tab 與方向鍵、歷史抽屜選取底色被 Fluent 蓋掉、按鈕 Hover／Pressed／Disabled 被 Fluent 蓋成黑色半透明。

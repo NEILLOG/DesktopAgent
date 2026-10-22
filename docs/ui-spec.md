@@ -1,7 +1,11 @@
 # 工作台 UI 規格
 
-這份文件記錄工作台各個操作元件的**已確認**樣式與行為，實作 M1、M2、M3 的介面時以這裡為準。
+這份文件記錄工作台與設定視窗各個操作元件的**已確認**樣式與行為，實作介面時以這裡為準。
 規則性的東西（必須遵守的）同時寫在 `agent.md` 第 12 節；這裡放細節。
+
+**設計原則以 `plan/ui-guide/ui-guide.html`（Lumi Design System）為準**，優先於 `plan/ui-guide/` 裡的圖片設計稿與 `RWD原則.md`；各元件的具體規格（尺寸、狀態、行為）以本文件為準。設計有變更時，兩邊要同步更新。
+
+ui-guide.html 的三項核心原則：一般使用者優先，技術資訊按需要呈現；BYOK 一定要清楚顯示供應商、模型與費用歸屬；溫和但不幼稚，專業但不做成管理控制台。
 
 ---
 
@@ -25,135 +29,220 @@
 - 中文與等寬字型各放 400／500／700 三個靜態檔；不做子集化（模型輸出是任意文字）。三套合計約 22 MB，可接受。
 - **不使用可變字型**：Avalonia 11.3（Skia）不會套用 `wght` 軸，500／700 會停在 400（2026-10-17 在 macOS 實測）。靜態檔由可變字型用 fonttools 切出，來源與做法見 `Assets/Fonts/LICENSES/README.md`。
 - Emoji 仍由 `EmojiText` 依字形叢集指定 emoji 字型，與上面的備援鏈並存。
-- 字級：內文 15、工具卡片 14、輔助文字 12–13（Avalonia 單位）。
+- 字級（`Themes/Typography.axaml`，依 ui-guide.html 第 2 節）：
+
+  | Token | 大小 | 用途 |
+  |---|---|---|
+  | `LumiFontSizeDisplay` | 28／700 | 頁面標題（每頁只出現一次） |
+  | `LumiFontSizeTitle` | 20／700 | 區段標題、歡迎區標題 |
+  | `LumiFontSizeBody` | 14／400 | 內文；項目標題同為 14，字重 700 |
+  | `LumiFontSizeCard` | 14 | 工具卡片、氣泡內的文字 |
+  | `LumiFontSizeCaption` | 11／400 | 輔助說明、時間、停用原因；只補充資訊，不承載主要操作要求 |
+
 - 驗收：
   - 在未安裝額外字型的乾淨 Windows 11 上，中英文與程式碼區塊都是指定字型，沒有出現細明體或正黑體。
   - 1920×1080 在縮放 100% 與 125% 下各確認一次清晰度（Skia 繪字，不走 ClearType）。
   - Windows 與 macOS 同一畫面的換行位置一致。
 
-### 1.2 深淺色系
+### 1.2 主題系統
 
-- 預設跟隨系統（`ThemeVariant.Default`）；設定 › 一般 可固定為淺色或深色。系統切換時即時生效，不需重啟。
-- 顏色以語意 token 定義在 `ThemeDictionaries`（Light／Dark 各一套）。元件只引用 token，不寫死色碼。
-- 琥珀強調色 `#F2B544`（與光球同色）兩套共用，是唯一的品牌強調色。
-- 深色模式的主要按鈕改為淺底深字。程式碼區塊在兩套色系下都維持深底。
-- 文字對比在兩套色系下都要達 4.5:1。
+**五套主題 × 淺／深。** 主題只換顏色，不改版面與元件尺寸（ui-guide.html 明文規定），切換後立即生效、不需重啟。
 
-| Token | 淺色 | 深色 |
-|---|---|---|
-| Background（視窗底） | `#EEF0F3` | `#15171B` |
-| Surface（卡片、輸入框） | `#FFFFFF` | `#1E2127` |
-| Chrome（頂端列、狀態列、側欄） | `#F7F8FA` | `#1A1D22` |
-| SurfaceAlt（程式碼預覽、停用） | `#F4F5F7` | `#262A31` |
-| Border | `#DCDFE5` | `#343943` |
-| BorderStrong（輸入框、次要按鈕） | `#C9CDD4` | `#4A505B` |
-| Text | `#1B1D22` | `#E6E8EC` |
-| TextMuted | `#5B616E` | `#A2A8B3` |
-| UserBubble / UserBubbleText | `#DDE7F8` / `#14213D` | `#233656` / `#DCE6F7` |
-| PrimaryButton / PrimaryButtonText | `#1B1D22` / `#FFFFFF` | `#E6E8EC` / `#15171B` |
-| Accent / OnAccent | `#F2B544` / `#1B1D22` | `#F2B544` / `#1B1D22` |
-| AccentSoft / AccentBorder / AccentText（小精靈按鈕、資料夾 chip） | `#FDF3DC` / `#EBCB86` / `#7A5208` | `#2A2416` / `#6B5320` / `#F5C66B` |
-| Info（執行中、連結） | `#2F6FDB` | `#6FA0F0` |
-| Success | `#1F7A52` | `#4CC28A` |
-| Danger（文字 / 底 / 框；底與框用在失敗的工具卡片） | `#A1360B` / `#FDF2EE` / `#E3A58C` | `#F08A5D` / `#2D1A14` / `#7A3B25` |
-| Warning（圖示 / 文字 / 底 / 框） | `#B26B00` / `#8A5A0B` / `#FFFBF2` / `#E9B85A` | `#F2B544` / `#F5C66B` / `#2A2416` / `#6B5320` |
-| CodeBackground / CodeText | `#1A1D22` / `#D7DCE3` | 同左 |
+| 主題 ID | 名稱 | 說明 | Accent | Hover | Soft | Text | Background | Border |
+|---|---|---|---|---|---|---|---|---|
+| `sage`（預設） | 鼠尾草綠 | 柔和、生活化、低刺激 | `#6D927A` | `#5B8068` | `#EAF2EC` | `#29312D` | `#F6F7F4` | `#E3E8E4` |
+| `teal` | 清透藍綠 | 清爽、友善、識別度高 | `#238B8E` | `#19777A` | `#E6F4F3` | `#253033` | `#F5F7F7` | `#E2E8E8` |
+| `mist-blue` | 霧藍色 | 穩定、熟悉、生產力工具感 | `#5578C8` | `#4568B7` | `#EAF0FC` | `#252B36` | `#F5F7FA` | `#E2E6ED` |
+| `indigo` | 清亮靛藍 | 現代、鮮明、AI 科技感 | `#6269D8` | `#5259C6` | `#EEEDFD` | `#292A35` | `#F6F7FA` | `#E5E5EC` |
+| `terracotta` | 陶土色 | 溫暖、人文感 | `#EF8354` | `#DC7045` | `#FFF0E8` | `#27272B` | `#F6F5F2` | `#E8E6E1` |
+
+上表是淺色的原則色碼；深色由同一色相推導。完整色值以 `Themes/Palettes/{id}.axaml` 為準。
+
+- **設定**：只存主題 ID（`AppSettings.ThemeId`，ID 清單與預設在 `ThemePalettes`），不存個別顏色。舊設定檔沒有這個欄位、或 ID 不認得時一律讀成 `sage`，設定檔版本號不變。
+- **明暗**是另一個設定（`AppSettings.Theme`：跟隨系統／淺色／深色，預設跟隨系統），由 `RequestedThemeVariant` 控制，系統切換時即時生效。設定 › 外觀與操作 可以選主題色票（五張卡片）與明暗（下拉選單）。
+- **檔案位置**：每套主題一份 `Lumi.App/Themes/Palettes/{id}.axaml`，內含 Light／Dark 兩個 `ThemeDictionaries`。語意色與程式碼色在 `Themes/Tokens.axaml`，不隨主題變。`ThemeService.ApplyPalette` 換掉 `App.axaml` 合併資源裡的那一份色票；元件一律用 `DynamicResource`，所以即時生效。Fluent 的強調色（核取方塊、選取、進度條）跟著目前主題的 Accent。
+- **色碼只能出現在 `Themes/` 資料夾**（`ThemeTokenRuleTests` 強制）；元件只引用 token。
+- 光球（`OrbControl`）維持自己的固定色，不隨主題變。程式碼區塊在兩種明暗下都維持深底。
+
+**主題 token**（每份色票檔都要有；名稱為 `Lumi{名稱}Color`／`Lumi{名稱}Brush`）
+
+| 類別 | Token |
+|---|---|
+| 底色 | `Background`（視窗底）、`Surface`（卡片、輸入框）、`Chrome`（標題列、工具列、側欄）、`SurfaceAlt`（Hover、停用、chip） |
+| 邊框 | `Border`、`BorderStrong`（輸入框、次要按鈕） |
+| 文字 | `Text`、`TextMuted`、`TextOnSoft`（Soft 底上的文字：選取項目、徽章） |
+| 強調 | `Accent`、`AccentHover`、`AccentSoft`、`AccentBorder`、`AccentText`（Accent 色的文字：頭像「L」、eyebrow）、`OnAccent`（Accent 底上的圖示） |
+| 訊息 | `UserBubble`／`UserBubbleText`、`AssistantBubble` |
+| 主要按鈕 | `PrimaryButton`／`PrimaryButtonText`、`PrimaryButtonHover`、`PrimaryButtonPressed` |
+
+**語意 token**（`Tokens.axaml`，不隨主題變，淺／深各一組）
+
+| 類別 | Token |
+|---|---|
+| 狀態文字與圖示 | `Info`（執行中、連結）、`Success`、`Danger`、`WarningIcon`、`WarningText` |
+| 淡底與框 | `DangerBackground`／`DangerBorder`、`WarningBackground`／`WarningBorder`（失敗與等待的工具卡片、錯誤列、警告） |
+| 狀態點 | `SuccessDot` `#55A981`、`WarningDot` `#D99A3E`、`DangerDot` `#BD5335`（ui-guide.html 的固定語意色，淺深相同，只用在圓點，不當文字用） |
+| 程式碼 | `CodeBackground`、`CodeText`、`CodeHeader`（兩種明暗相同） |
+| 陰影 | `LumiSpriteShadow`（小精靈氣泡與輸入列）、`LumiCardHoverShadow`（可點擊卡片 Hover）。陰影只用在浮起與 Hover，不拿來分隔內容 |
+
+**文字對比 ≥ 4.5:1**（五套 × 淺／深，所有文字組合，`PaletteContrastTests`、`SettingsContrastTests` 驗證）
+
+- 原則的 Muted 色碼在五套都不到 4.5:1，所以文字用的 `TextMuted`、`AccentText` 在同一色相下調深（深色則調亮），直到對 Background、Surface、Soft 都達標；原則的 Muted 色碼不當文字用。
+- `OnAccent`（Accent 底上的送出鈕圖示、標題列品牌方塊的「L」）取白色或 Text 色中對比較高的一個，屬於圖示／標誌，門檻 3:1（terracotta 的 Accent 疊白字只有 2.61，所以圖示用深色）。
+- `TextOnSoft` 用在選取項目與徽章，在 Soft 底上達 4.5:1。
+- 語意色：Success、Warning 的原色在白底只有 2.85、2.43，所以文字用較深的 `Success`／`WarningText`，原色（Dot）只用在圓點；狀態一律另外有文字，不只靠顏色。
+- **已知例外**：標題列品牌方塊的「L」（`OnAccent` 在 `Accent` 上）在 sage、teal、mist-blue 淺色是 3.85／4.07／4.28:1，視為品牌標誌，只要求 3:1，沒有為了通過而改色票。淺色的 Success／Warning 狀態點在 Surface 上只有 2.35–2.85:1，測試只守下限 2.3:1，狀態另有文字說明。
+
+### 1.3 間距、圓角與圖示
+
+- **間距只用 4／8／12／16／24／32**（`LumiSpace4`…`LumiSpace32`，`Themes/Metrics.axaml`；0 不算間距）。`SpacingScaleRuleTests` 掃描所有 axaml 的 Margin／Padding／Spacing。例外名單（寫在測試裡，各有原因）：整個 `Sprites/` 目錄（氣泡與輸入列的內距決定尺寸，小精靈版面不改）、對話區 `64,24` 與 Composer `64,8,64,16`、Focus 光暈的 `-3`、ComboBox 下拉覆蓋層的 `0,1,1,1`。
+- **圓角**：輸入框與下拉 10（`LumiRadiusInput`）、卡片 14（`LumiRadiusCard`）、頁面區域與 Composer 外框 16（`LumiRadiusPanel`）、浮出層（Flyout、MenuFlyout）12（`LumiRadiusFlyout`）。選取的 Menu 項目 10。
+- **控制項高度**：輸入框、下拉選單 40（`LumiControlHeight`）；工具列與輸入區下層的按鈕 32；送出／停止圓鈕 36。
+- **頁面 Padding**：設定頁 32；工作台對話區 Wide 64、Compact 24、Narrow 16；訊息間距 24（`short` 起 16）。
+- **圖示**：一律用 `Themes/Icons.axaml`（Lucide 0.468.0，授權檔 `Assets/LICENSES/Lucide-LICENSE.txt`）加 `Controls/LumiIcon`（線寬 1.75，顏色與前景色共用繼承，放在按鈕裡會跟著按鈕文字色）。不用 Unicode 符號當圖示或按鈕文字（`NoSymbolIconRuleTests`）；例外只有純裝飾的「·」、省略號「…」與用量說明「↑ 輸入 · ↓ 輸出」的方向箭頭（跟著文字念）。
 
 ## 2. 工作台主視窗
 
-由上而下：頂端工具列、訊息流、上下文列＋輸入區、底部狀態列。
+由上而下：自訂標題列、工具列、訊息流、輸入區（Composer）。底部沒有狀態列。
 
-### 2.1 頂端工具列
+### 2.1 頂端區：自訂標題列＋工具列
+
+**標題列**（`CustomTitleBar`，高 40，Chrome 底；`ExtendClientAreaToDecorationsHint=True`）
 
 | 位置 | 內容 |
 |---|---|
-| 左 | 歷史對話（開左側抽屜）、新對話、Lumi 標誌（小光球＋字） |
-| 中 | 模型切換膠囊：狀態點、模型名稱、連線名稱、下拉箭頭 |
-| 右 | 「小精靈模式」按鈕（琥珀淡底）、設定（開獨立視窗） |
+| 左 | Lumi 標誌（24 的 Accent 方塊，白或深色「L」）加「Lumi」 |
+| 右 | 「小精靈模式」按鈕（Soft 底，圖示加文字；回應中停用） |
 
-- 模型選單依「連線」分組列出模型設定，有搜尋框，最下方是「管理連線與模型…」（開設定視窗）。
-- 歷史對話抽屜：搜尋、依日期分組（今天、本週…）。
+- Windows：系統按鈕在最右（由系統繪製，保留寬度 138＋8，Avalonia 沒有取得寬度的 API，用常數），小精靈按鈕緊鄰其左，中間 12 間距加 1px 分隔線。
+- macOS：紅綠燈在左，品牌往右讓出 80；小精靈按鈕放最右，沒有分隔線。排列由 `TitleBarLayout` 純函式決定，有單元測試。
+- 整條標題列是拖曳面（`BeginMoveDrag`），按鈕自己處理點擊；雙擊空白處最大化／還原。
+- 小精靈按鈕位置固定，只切換文字（Wide「小精靈模式」、Compact「小精靈」、Narrow 只剩圖示，最小點擊範圍 36×32），Tooltip 與可存取名稱不變。
+- 設定視窗用同一個標題列，但沒有小精靈按鈕（`ShowSpriteButton=False`）。
+
+**工具列**（`ChatToolbar`，Chrome 底，下緣 1px 邊線）
+
+| 位置 | 內容 |
+|---|---|
+| 左 | 「新對話」「歷史對話」（secondary，高 32，圖示加文字；Compact 起 32×32 純圖示加 Tooltip） |
+| 中 | 模型膠囊：狀態點、「供應商 · model ID」、chevron 圖示 |
+| 右 | 「…」（tertiary 圖示按鈕，開 MenuFlyout）：設定、管理連線與模型… |
+
+- 「設定」開獨立的設定視窗；「管理連線與模型…」也開設定視窗（`ModelSwitcher.ManageCommand`）。
+- **BYOK 顯示規則**（ui-guide.html 核心原則）：
+  - 膠囊顯示**確切的 model ID** 與供應商，不顯示使用者自訂的顯示名稱（顯示名稱只在模型選單與設定清單當次要文字，不改寫真實模型名稱）。供應商名稱取連線的名稱，連線沒有名稱時退回供應商格式名稱（「Anthropic 原生」「OpenAI 相容」）。
+  - Wide／Compact 顯示「供應商 · model ID」；Narrow 改為狀態點加供應商字首方塊（20，Soft 底，英文大寫、中文取第一字）加 model ID，完整名稱在 Tooltip。文字過長以省略號截斷（`MinWidth 120`、`MaxWidth 360`），不推走其他按鈕。
+  - Tooltip 三行：「供應商 · model ID」、「連線狀態：已連線／連線失敗／尚未確認」、費用說明。連線狀態不能只靠圓點。狀態點：已連線＝Success、失敗＝Danger、尚未確認＝Warning（Dot token）。
+  - **費用說明**固定一句：「實際費用由供應商依模型與 token 用量計算，費用由你的帳號支付。」出現在膠囊 Tooltip、模型選單的「本對話」區塊、設定的模型設定頁。
+  - 還沒有任何模型時膠囊顯示「未設定模型，點此開啟設定」。
+- **模型選單**（`ModelPicker`，Flyout，寬 320，Surface 底、Border 框、圓角 12）：頂部「本對話」區塊（見 2.3）、搜尋框、依「連線」分組列出模型設定（目前使用的模型＝Soft 底加打勾圖示加文字）、最下方 tertiary「管理連線與模型…」（開設定視窗）。選了模型就改工作台預設模型並自動收起。
+- **歷史對話抽屜**：寬 260、Chrome 底；Wide／Compact 內嵌（把訊息區往右推），Narrow 蓋在訊息區上方（Overlay）。清單列出對話標題與時間，選取＝Soft 底加 `TextOnSoft` 文字；收起時整個隱藏（裡面的項目不會被 Tab 聚焦）。搜尋與依日期分組留給 M9。
 - 對話可以有多個；工作台與小精靈永遠顯示同一則「目前的對話」。
 
 ### 2.2 回應中（從送出到 `Completed`／`Failed`／停止，含等待工具確認）
 
-- 「小精靈模式」按鈕與模型切換膠囊停用，旁邊顯示「回應中，暫時無法切換」。
-- 語音按鈕停用；輸入框仍可打草稿，送出鈕換成「停止」，旁邊提示「回應結束後才能送出」。
+- 「小精靈模式」按鈕與模型切換膠囊停用。**原因不佔版面，改用停用時的 Tooltip**（`ToolTip.ShowOnDisabled`）：「回應中，暫時無法切換」。
+- 輸入區的「加入檔案」「加入資料夾」停用，Tooltip「回應中，暫時無法加入」；語音輸入一直是停用佔位（見 6.2）。
+- 輸入框仍可打草稿，送出鈕換成「停止」圓鈕，提示文字區改顯示「回應結束後才能送出，期間不能更改上下文」。
 - 歷史對話抽屜仍可瀏覽；切換到其他對話前會先停止目前的回應。
 
 **「切換模式」與「開啟查看」是兩件事。** 回應中不能切換模式，也就是不能把作用中的模式從小精靈換成工作台，反過來也一樣；但小精靈回應中，**可以開啟工作台查看**：
 
-- 工作台以「查看中」狀態開啟，頂端顯示「小精靈回應中，結束後可在這裡繼續」。工作台的輸入框、模型切換、模式切換都停用。
+- 工作台以「查看中」狀態開啟，工具列下方顯示橫幅（Soft 底）「小精靈回應中，結束後可在這裡繼續」。工作台的輸入框、模型切換、模式切換都停用。
 - 可以捲動、展開工具卡片、複製內容。
 - 等待中的權限確認可以在**任一邊**回答。一邊回答後，另一邊同步更新成「已允許」或「你已拒絕」。
 - 回應結束後，工作台自動解除「查看中」。此時才能在工作台送出訊息；在工作台送出就等於切換到工作台模式。
 - 「新對話」同上：先停止目前的回應。
 
-### 2.3 底部狀態列
+### 2.3 本對話（取代已移除的底部狀態列）
 
-`輸入 N · 輸出 N · 回合 N · 上下文 [進度條] 14K / 200K · ● 已連線`
+底部狀態列**已移除**。原本的用量、上下文與連線狀態，移到模型選單頂部的「本對話」區塊（`ModelPicker` 的 `SessionSection`）：
 
-- token 以供應商回傳的 `usage` 為準；上下文上限取自目前模型設定。
-- 右側顯示目前連線的狀態（已連線／連線失敗）。
+- 標題「本對話」。
+- 用量：`輸入 N · 輸出 N · 回合 N`。token 以供應商回傳的 `usage` 為準。
+- 上下文進度條（Accent 進度、Border 軌道）與文字「上下文 14K / 200K」；上限取自目前模型設定。
+- 連線狀態：狀態點加文字（已連線／連線失敗／尚未確認）。
+- 費用說明（見 2.1），下面一條分隔線。
+- 資料由 `WorkbenchViewModel.SyncSessionUsage()` 推給 `ModelSwitcher`。錯誤列的「換模型重試」選單沒有本對話資料，這個區塊自動隱藏。
 
 ## 3. 訊息流
 
-- 使用者訊息靠右、UserBubble 底色；送出時帶的檔案、資料夾、圖片以小 chip 顯示在泡泡上方（重開程式後仍在，來自訊息裡存的快照）。
-- 助理訊息左側有小光球頭像，內容不加底，直接排版。
-- 串流中的 Markdown 邊收邊渲染；程式碼區塊有語言標籤與「複製」鈕。
-- **思考過程**（`ThinkingDelta`）：預設收合，標題為「思考過程 · N 秒」。
-- 每則助理訊息下方：複製、重新產生，以及這一輪的 `↑ 輸入 · ↓ 輸出 tokens`。
+- **歡迎區**：對話沒有任何訊息（且不在載入既有對話中）時顯示：Soft 底的圖示方塊（64，圓角 16，sparkle 圖示）、區段標題（20／700）「今天想請 Lumi 幫什麼忙？」、Caption 副標「輸入問題，也可以加入檔案或資料夾。」。Narrow 隱藏副標；高度 < 600 整個隱藏。
+- **使用者訊息**靠右：上方是「你」（14／700）與時間（Caption），送出時帶的檔案、資料夾、圖片以小 chip 顯示在氣泡上方（重開程式後仍在，來自訊息裡存的快照），下方是 UserBubble 底色的氣泡（圓角 14，內距 16,12）。
+- **助理訊息**靠左：左側 32 的圓形頭像（Soft 底，`AccentText` 色的「L」），右側是名稱「Lumi」與時間、**淡底氣泡**（`AssistantBubble`，圓角 14，內距 16,12）、動作列。氣泡是對話內容，不算卡片；裡面的程式碼區塊、工具卡片算第一層。
+- 串流中的 Markdown 邊收邊渲染。**思考過程**（`ThinkingDelta`）在氣泡內，預設收合（進階區段樣式：無框、Muted 標題加 chevron），標題為「思考過程 · N 秒」。
+- **程式碼區塊**：深底（兩種明暗相同）、圓角 12。標題列（`CodeHeader` 底）左側是語言標籤、右側是「複製」圖示按鈕，固定在上方，**不隨程式碼水平捲動**；內層水平捲動、不折行，等寬字 13。
+- **動作列**（助理訊息下方，全部 tertiary）：複製（圖示加文字，按了變打勾與「已複製」）、重新產生（只有最後一則）、👍👎（圖示按鈕，**停用**，Tooltip 與旁邊共用的一句 Caption 說明「評價功能即將推出」）、這一輪的 `↑ 輸入 · ↓ 輸出 tokens`。Compact 起文字隱藏，只剩圖示。
+- **訊息寬度**（`FractionWidthLimiter`，取對話區內容寬度的比例與像素上限中較小者；不用 Converter）：Wide 助理 ≤ 820 且 ≤ 內容區、使用者 ≤ 72%；Compact／Narrow 助理 92%、使用者 80%。使用者靠右、助理靠左，窄版也不改成滿版。Narrow 隱藏時間與「你」、頭像縮到 24（助理名稱保留）。
 - 使用者按停止後，在訊息尾端顯示「你已停止這次回應」。
-- API 失敗：在最後一則訊息下顯示錯誤列（原因＋「對話內容已保留」），提供「重試」與「換模型重試」。
+- API 失敗：在最後一則訊息下顯示錯誤列（Warning 淡底：原因加「對話內容已保留。」），按鈕「重試」（primary，該區唯一）與「換模型重試」（secondary，開模型選單）。一次性提示（例如設定檔損毀已改用預設）同樣用 Warning 淡底，只有一顆 tertiary「知道了」。
 
 ## 4. 工具呼叫卡片
 
-- **預設收合**，但標題必須明確，不展開也看得懂做了什麼。標題格式固定為：
+- 卡片＝`card` 樣式（Surface 底、Border 框、圓角 14）；**預設收合**，但標題必須明確，不展開也看得懂做了什麼。標題整列是一顆按鈕（Hover／Pressed 不換底），格式固定為：
 
-  `狀態圖示  動作 · 對象 · 結果摘要  …  耗時  ›`
+  `狀態圖示  動作 · 對象 · 結果摘要  …  耗時  chevron`
 
   例：「讀取檔案 `plan/00-overview.md` · 182 行」、「執行 `dotnet build` · 失敗（exit 1）· 3 個編譯錯誤」。
   動作名稱由工具的 `Descriptor` 提供顯示名稱（繁中）；結果摘要由工具回傳，不由 UI 猜。
-- 狀態：執行中（Info 轉圈）、成功（Success 勾）、失敗（Danger 叉，卡片底色轉紅）、等待允許（Warning 三角，卡片底色轉黃）、已拒絕（灰色禁止符號）。
+- **狀態圖示**（Lucide，形狀各不相同，不只靠顏色；顏色用文字等級的 token，不用 Dot）：
+
+  | 狀態 | 圖示 | 顏色 | 卡片 |
+  |---|---|---|---|
+  | 執行中 | loader，持續轉圈（只有執行中才有動畫） | `Info` | 一般 |
+  | 成功 | check | `Success` | 一般 |
+  | 失敗 | x | `Danger` | `DangerBackground` 底與框 |
+  | 等待允許 | alert-triangle | `WarningIcon` | `WarningBackground` 底與框 |
+  | 已拒絕 | ban | `TextMuted` | 透明度 0.75 |
+
+  chevron：收合 chevron-right、展開 chevron-down。
 - 執行中與等待允許的卡片**強制展開、不能收合**。
-- 展開後顯示參數與結果；結果超過 6 行只顯示前段，提供「顯示完整輸出」與「複製」。
-- 同一輪連續 3 個以上的工具呼叫合併成一張群組卡，標題例：「3 個工具呼叫 · 讀取 2 個檔案、搜尋 1 次，全部成功」。任一失敗時群組標題改為失敗色並寫出失敗項目。
+- 展開後顯示參數與結果（小標籤用 Caption／600／Muted，內容用等寬字）；結果超過 6 行只顯示前段，提供「顯示完整輸出」與「複製」（tertiary small）。
+- 同一輪連續 3 個以上的工具呼叫合併成一張群組卡，標題例：「3 個工具呼叫 · 讀取 2 個檔案、搜尋 1 次，全部成功」。任一失敗時群組標題改為失敗色並寫出失敗項目。群組卡裡的工具卡片是第二層（卡片巢狀最多一層）。
 
 ## 5. 工具權限確認
 
-確認區**嵌在工具卡片內**，不跳 modal；對話迴圈暫停直到使用者選擇。按鈕依工具的權限等級（`agent.md` 第 8 節）決定：
+確認區**嵌在工具卡片內**，不跳 modal；對話迴圈暫停直到使用者選擇。按鈕依工具的權限等級（`agent.md` 第 8 節）決定，並遵守按鈕層級（10.1）：**每個確認區最多一個 primary（或 danger）**。
 
-| 權限等級 | 是否詢問 | 按鈕 |
+| 權限等級 | 是否詢問 | 按鈕（層級） |
 |---|---|---|
 | `ReadOnly` | 不詢問 | — |
-| `Write` | 詢問 | 允許一次／本次對話都允許（此等級）／拒絕 |
-| `Network` | 詢問 | 允許一次／本次對話都允許（此等級）／拒絕 |
-| `Destructive` | 每次詢問，不提供記住選項 | 允許執行／拒絕 |
+| `Write` | 詢問 | 允許一次（primary）／本次對話都允許（secondary，此等級）／拒絕（tertiary） |
+| `Network` | 詢問 | 允許一次（primary）／本次對話都允許（secondary，此等級）／拒絕（tertiary） |
+| `Destructive` | 每次詢問，不提供記住選項 | 允許執行（danger，紅框紅字）／拒絕（secondary）；沒有 primary |
 
 - 「本次對話都允許」只存在記憶體，不寫入設定檔；重開程式或開新對話後失效。
-- 確認區顯示這次會做什麼：寫入檔案顯示路徑與增減行數，`Destructive` 顯示完整內容與工作目錄，並提供「檢視內容」。
+- 確認區顯示這次會做什麼：寫入檔案顯示路徑與增減行數，`Destructive` 顯示完整內容與工作目錄，並標上「無法復原」（Danger 色）。
 - 拒絕：回傳 `ToolResult.Error("使用者拒絕執行")` 給模型，由模型決定改做法或說明。
 - 按停止：取消等待中的確認，結束這一輪回應。
 - 每次的選擇都記錄在對話裡，卡片顯示「已允許」或「你已拒絕」。
 - 小精靈模式下的確認方式：見第 8.3 節（在氣泡內完成，兩邊的回答會同步）。
+- 刪除連線／模型、清除金鑰、放棄變更等確認對話框（`ConfirmDialog`，寬 420）：取消是 secondary；一般確認是 primary，**破壞性確認是 danger**（紅框紅字），Enter 觸發確認、Esc 取消。
 
 ## 6. 輸入區
 
+輸入區（`ChatComposer`，`InputArea`）是**一個圓角 16 的外框**（Surface 底、1px Border；輸入框取得焦點時外框變 Accent 邊框，拖放檔案進來時 2px Accent 邊框），外框左右 Margin Wide 64／Compact 24／Narrow 16，與對話區的左右 Padding 對齊。輸入框自己沒有外框。版面分**兩層**：
+
+- **上層**：上下文列（有項目才出現，見 6.1）與輸入框（`MinHeight` 64，`short` 起 48 即兩行高；`MaxHeight` 160，超過改捲動）。
+- **下層**：左側「加入檔案」「加入資料夾」「語音輸入」（tertiary，高 32，圖示加文字；Compact 起純圖示加 Tooltip）；右側是提示文字區與送出／停止圓鈕。輸入區永遠完整可見，附件 chip 換行也不會推走送出鈕。
+
 ### 6.1 上下文列（輸入框上方）
 
-- 標題「此對話的上下文」，加入的檔案與資料夾以 chip 常駐顯示，每個都可移除；右側顯示預估 token（`≈ 18.2K tokens`）。
-  - 上下文列只在有項目時出現；預估 = 對話歷史＋待送出的項目＋輸入框的草稿，超過模型的上下文上限時顯示警告符號（提示文字說明這是估算，實際用量看狀態列）。
-  - chip：名稱＋一小段說明（資料夾的項目數、檔案大小，或問題：找不到、不是文字檔、太大由模型按需讀取、不支援的圖片格式、圖片太大）；已經帶進過訊息的標「已帶入」；有問題的 chip 用警告色。圖片 chip 顯示縮圖。
+- 標題「此對話的上下文」，加入的檔案與資料夾以 chip 常駐顯示，每個都可移除（chip 右側 20×20 的 tertiary X 圖示按鈕）；右側顯示預估 token（`≈ 18.2K tokens`）。
+  - 上下文列只在有項目時出現；預估 = 對話歷史＋待送出的項目＋輸入框的草稿，超過模型的上下文上限時顯示警告圖示（Tooltip 說明這是估算，實際用量看模型選單的「本對話」）。
+  - chip：名稱＋一小段說明（資料夾的項目數、檔案大小，或問題：找不到、不是文字檔、太大由模型按需讀取、不支援的圖片格式、圖片太大）；已經帶進過訊息的標「已帶入」；有問題的 chip 用 Warning 淡底。圖片 chip 顯示縮圖。
   - 移除已帶入的項目時顯示一次性的說明：模型之前看過的內容仍在這則對話裡（範圍縮小了，但已送出的內容收不回來）。
-  - **回應中不能加入或移除**（範圍不能在工具執行到一半時改變），按鈕停用並顯示提示。
+  - **回應中不能加入或移除**（範圍不能在工具執行到一半時改變），按鈕停用並以 Tooltip 說明原因。
 - 上下文屬於整則對話，不會因為送出訊息而消失（M4）。
-- 檔案：文字直接放入；圖片用圖片格式送出。資料夾 chip 顯示檔案數，用琥珀淡底與檔案區分；只送檔案樹，內容由範圍限定的工具讀取。
-- 加入方式：輸入框的「加入檔案」「加入資料夾」按鈕、拖放（整個輸入區，拖進來時外框變色）、貼上截圖（Ctrl／Cmd+V，剪貼簿有圖片時加成圖片項目，否則照一般貼上文字）。種類由內容判斷：資料夾、圖片（檔案開頭的位元組）、其他檔案。
+- 檔案：文字直接放入；圖片用圖片格式送出。資料夾 chip 顯示檔案數，用 Soft 底加 Accent 邊框與檔案區分；只送檔案樹，內容由範圍限定的工具讀取。
+- 加入方式：輸入區的「加入檔案」「加入資料夾」按鈕、拖放（整個輸入區，拖進來時外框變 Accent）、貼上截圖（Ctrl／Cmd+V，剪貼簿有圖片時加成圖片項目，否則照一般貼上文字）。種類由內容判斷：資料夾、圖片（檔案開頭的位元組）、其他檔案。
 
-### 6.2 輸入框
+### 6.2 輸入框與按鈕
 
-- Enter 送出、Shift+Enter 換行；高度隨內容增加，最多 8 行後改捲動。
-- 左下：加入檔案、加入資料夾；右下：語音（圓形外框）、送出（琥珀圓形）。
+- Enter 送出、Shift+Enter 換行；高度隨內容增加，最高 160 後改捲動。
+- **語音輸入**：麥克風按鈕是**停用佔位**（沒有後端，M6 才做），旁邊用 Caption 寫出原因「語音輸入即將推出」（Compact 起隱藏 Caption，Tooltip 仍在）。
+- **送出**：36×36 圓鈕，Accent 底、arrow-up 圖示（`OnAccent`）；Hover／Pressed 換 `AccentHover`；輸入為空時停用（Soft 底加 Muted 圖示）。它是圖示按鈕，不算 primary 文字按鈕。**停止**：同尺寸，Primary 底、square 圖示；回應中取代送出鈕，兩者位置相同、不跳動。
+- **提示文字區**（下層中間偏右，同一位置互斥顯示）：平時是操作提示「Enter 傳送 · Shift + Enter 換行」（Compact 起隱藏）；回應中改顯示「回應結束後才能送出，期間不能更改上下文」（過長以省略號截斷）。
 
 ### 6.3 語音輸入（M6）
 
@@ -168,27 +257,48 @@ Whisper 回應格式未確認前，不顯示即時轉寫文字。
 
 ## 7. 設定視窗
 
-- 獨立視窗，左側分類：連線與模型、語音（Whisper）、人格與主動性、工具權限、小精靈、一般。（目前已有：連線與模型、人格與主動性、一般、小精靈；語音與工具權限隨各自的里程碑加入。）
-- 「連線與模型」分兩個分頁，對應主計畫的兩層設定：
+- 獨立視窗（預設 1040×760，最小 720×480），自訂標題列（L 標誌加「Lumi」，沒有小精靈按鈕，規則同 2.1）。分類放在左側 Menu，內容在右側；之後隨各自的里程碑加入「語音（Whisper）」「工具權限」。
+- **Menu**（寬 240，Chrome 底，右側 1px 邊線），由上而下：
+  - 標題區：32 的 Soft 底「L」方塊、「Lumi 設定」（14／700）、Caption「個人偏好與 AI 連線」。
+  - 「回到對話」（tertiary，arrow-left 圖示）：關閉設定、啟用並帶出工作台；有未儲存的變更時先詢問，取消則留在設定。
+  - 分隔線，然後四個分類（圖示 18、主項目 14／600、副標 Caption）：
 
-**連線**（一組供應商、Base URL、金鑰）
-- 左側清單：每筆顯示名稱、狀態點、供應商格式、底下有幾個模型設定。
-- 表單：連線名稱、供應商格式（Anthropic 原生／OpenAI 相容）、Base URL、API 金鑰（遮罩，可切換顯示；Ollama 可留空）。
-- 「測試連線」顯示成功與可用模型數，或失敗原因。
-- 刪除連線時提示會一併刪除底下的模型設定。
+    | 分類 | 副標 |
+    |---|---|
+    | AI 連線 | 供應商、金鑰與模型 |
+    | 人格與主動性 | 回答風格與主動程度 |
+    | 外觀與操作 | 主題、色票與明暗 |
+    | 小精靈 | 角色、尺寸與語氣 |
 
-**模型設定**（掛在某個連線底下）
-- 上方：工作台預設模型、小精靈預設模型兩個下拉選單。
-- 左側清單依連線分組，預設的項目標上「工作台預設」「小精靈預設」。
-- 表單：使用的連線、模型（從連線列出可用模型，取不到時可手動輸入 ID）、顯示名稱、最大輸出 tokens、上下文上限、顯示思考過程。
-
+  - 分隔線，然後兩個**停用項**「設定首頁」「資料與隱私」：淡色，副標 Caption「即將推出」，Tooltip 同文，不可被 Tab 聚焦（它們沒有後端）。
+  - 底部 Caption：版本（`Lumi {版本}`）與「金鑰只儲存在這台裝置」。
+  - 選取項目＝Soft 底加 `TextOnSoft` 文字、圓角 10；Hover＝`SurfaceAlt`；不只靠圖示或顏色辨識。Tab 只停在目前分類，用方向鍵換分類。
+- **頁首**（`SettingsPageHeader`，四頁共用）：eyebrow（Caption／700／`AccentText`，寫分類名）、頁面標題（28／700）、說明（14／Muted），右側是**該頁唯一的主要動作**（沒有時不佔位）；下方留 24。頁面 Padding 32。欄位不包卡片，用區段標題（20／700）與分隔線分組。
 - 金鑰只存在 `ISecretStore`（Windows DPAPI／macOS Keychain），不寫進設定檔或 log。
 
-**小精靈**（選了立即生效，沒有「儲存」鈕）
-- 左邊是預覽區，用同一個角色即時播放右邊所選的狀態。
-- 角色清單：縮圖（素材型角色的 `preview.png`）、名稱、作者與版本、「程式型／素材型」；換角色立即生效，小精靈視窗的位置不動。
-- 清單下面：「重新載入」（載入中顯示「載入中…」並停用）、「開啟角色資料夾」、角色資料夾的路徑（Windows `%APPDATA%\Lumi\sprites`、macOS `~/Library/Application Support/Lumi/sprites`）。
-- 「載入失敗與警告」：目錄掃描的結果加上素材型角色解碼時才發現的問題，每項一行（✕ 失敗、⚠ 警告），寫出資料夾、欄位與原因。失敗的角色不在清單裡；有警告的照常可用。選用的角色被移走時，清單顯示第一個，設定裡的選擇不變，角色回來、重新載入就自動換回去。
+**AI 連線**（兩層設定：連線、模型設定）
+
+- 頁首右側的主要動作隨分段切換：連線頁是「新增連線」，模型設定頁是「新增模型設定」（一次只顯示一個 primary）。
+- **分段切換**（「連線」「模型設定」，取代 TabControl）：`SurfaceAlt` 外框、選取＝Soft 底加 `TextOnSoft`；Tab 只停在已選的那一段，左右方向鍵換段並回繞。
+- 兩頁都是**清單＋詳細**：清單寬 260，詳細占剩餘寬度；視窗寬 < 900 時改上下排（清單在上），整頁捲動（見 9.4）。
+  - 清單：每筆是可選取的卡片——供應商字首方塊（40，Soft 底）、名稱、副標（連線：供應商格式；模型：`model · 預設`）、狀態文字加狀態點；選取＝Soft 底加 Accent 邊框；最後一列是虛線「新增」入口。
+  - 詳細：標頭（供應商字首方塊 48、名稱 20／700、供應商、狀態徽章）→ 欄位（`FormField`：標籤在上、右側「必填／選填」、說明 Caption 在下、錯誤文字在說明下方）→ **「進階」區段**（預設收合，有錯誤時自動展開）→ 分隔線 → 底部按鈕列：刪除（danger）靠左，測試連線（secondary）、儲存（primary）靠右。儲存因欄位無效而停用時，旁邊用一行 Caption 說明原因，因為錯誤可能在收合的「進階」裡。
+  - 連線欄位：連線名稱（必填）、API 金鑰（遮罩，可切換顯示；已設定時顯示「已設定 · 結尾 xxxx」與更換／清除；Ollama 可留空）；進階：供應商格式（Anthropic 原生／OpenAI 相容）、API 位置（Base URL）。「測試連線」顯示成功與可用模型數（Success 淡底加打勾），或失敗原因（Danger 淡底加三角圖示加文字）。刪除連線時提示會一併刪除底下的模型設定。
+  - 模型設定：頁面上方是工作台預設模型、小精靈預設模型兩個下拉選單（改了立即生效）與費用說明；清單依連線分組，預設的項目標上「工作台預設」「小精靈預設」。欄位：使用的連線、模型（從連線列出可用模型，旁邊有重新整理；取不到時可手動輸入 ID）、顯示名稱、顯示思考過程、啟用工具；進階：最大輸出 tokens、上下文上限。
+- 連線與模型的狀態一律是「徽章／文字加圓點」，不只靠顏色。
+
+**人格與主動性**：區段標題（說話個性、主動程度、補充內容）加分隔線；個性四選一、積極度三段、自訂人設（2,000 字，右下顯示字數）；底部「還原預設」（secondary）與「儲存」（primary）。
+
+**外觀與操作**
+
+- 「主題色票」區段：**五張可選取的色票卡片**（`ListBox.cards`，每張寬 200），每張顯示名稱、說明、四個色塊（該色票自己的 Accent／Hover／Soft／Text 的淺色變體，不是目前主題的 token）；選取的卡片＝Soft 底加 Accent 邊框加「使用中」文字徽章。點選立即套用，只改顏色不改版面；可用 Tab、方向鍵、空白鍵或 Enter 操作。
+- 分隔線，然後「明暗」區段：「顯示模式」下拉選單（跟隨系統／淺色／深色）。
+
+**小精靈**（選了立即生效，沒有「儲存」鈕，所以沒有 primary）
+- 左邊是預覽卡（240×240），用同一個角色即時播放右邊所選的狀態；寬 < 900 時移到上方。
+- 角色清單（可選取卡片）：縮圖（素材型角色的 `preview.png`）、名稱、作者與版本、「程式型／素材型」標籤、「使用中」徽章；換角色立即生效，小精靈視窗的位置不動。
+- 清單下面：「重新載入」（載入中顯示「載入中…」並停用）、「開啟角色資料夾」（兩者都是 secondary）、角色資料夾的路徑（Windows `%APPDATA%\Lumi\sprites`、macOS `~/Library/Application Support/Lumi/sprites`）。
+- 「載入失敗與警告」：目錄掃描的結果加上素材型角色解碼時才發現的問題，每項一行（失敗用 Danger 淡底、警告用 Warning 淡底，各有三角圖示與「載入失敗」「警告」文字），寫出資料夾、欄位與原因。失敗的角色不在清單裡；有警告的照常可用。選用的角色被移走時，清單顯示第一個，設定裡的選擇不變，角色回來、重新載入就自動換回去。
 - 尺寸：小 64／中 80（預設）／大 104，切換時角色中心不跳動。
 - 角色語氣開關（光球沒有語氣，說明文字會告訴使用者）；語氣只影響說話風格，和人設衝突時以人設為準。
 - 狀態預覽：十個狀態各一列；角色沒有專屬表現的狀態標示「沒有專屬表現，改用「待機」」這類退化說明（規則和小精靈視窗用的 `SpriteStateResolver` 相同）。
@@ -196,6 +306,8 @@ Whisper 回應格式未確認前，不顯示即時轉寫文字。
 ## 8. 小精靈模式的對話
 
 角色本身的狀態與動畫見 `docs/sprite-dev-guide.md`；這一節只管殼的對話介面：氣泡、輸入列、權限確認、語音。
+
+**版面不變，只換 token、圖示與按鈕層級**（M12）：氣泡與輸入列的尺寸、位置都沒有改，輸入列尺寸由 `SpriteInputBarLayoutTests` 鎖定（輸入列 300×48、輸入框 240×12 在 (17,18)、送出鈕 36×36 在 (257,6)）。因此 `Sprites/` 目錄是間距規則的例外（1.3）。
 
 ### 8.1 氣泡
 
@@ -205,23 +317,23 @@ Whisper 回應格式未確認前，不顯示即時轉寫文字。
 - 回覆以串流方式寫進氣泡。
 - 完成後停留 8 秒淡出；滑鼠停在氣泡上時暫停計時。
 - 等待確認、錯誤這兩種氣泡不會自動淡出。
-- 有完整內容時（呼叫了 `show_details`，或回答被截斷），氣泡底下顯示「在工作台開啟完整內容 →」，由使用者自己點，不自動打開。
-- 錯誤：一句說明，加上「重試」「在工作台查看」。
-- 顏色跟隨系統深淺色，與工作台共用 token。另外加細框線和陰影，確保在任何桌面背景上都看得清楚。
+- 有完整內容時（呼叫了 `show_details`，或回答被截斷），氣泡底下顯示「在工作台開啟完整內容」連結，由使用者自己點，不自動打開。
+- 錯誤：一句說明，加上「重試」（primary）「在工作台查看」（連結）；金鑰問題帶「開啟設定」（secondary）。
+- 顏色與工作台共用 token（含主題色票，跟隨明暗）。另外加細框線和陰影（`LumiSpriteShadow`），確保在任何桌面背景上都看得清楚。
 
 ### 8.2 輸入列
 
-- 滑鼠靠近才浮現：「問小精靈…」、麥克風、送出。
-- 回應中：可以打草稿，麥克風停用，送出鈕換成停止。
+- 滑鼠靠近才浮現：「問小精靈…」輸入框、送出（語音的麥克風隨 M6 加入）。
+- 送出鈕與工作台相同（Accent 底圓鈕）；回應中可以打草稿，送出鈕換成停止（Primary 底）。
 
 ### 8.3 工具權限確認
 
 - **在氣泡內就能完成**，不需要切回工作台。光球進入 `Attention` 狀態，氣泡加上警示色外框。
-- 預設精簡版：一句說明、對象（路徑或網址，等寬字）、「允許」「拒絕」，再加一個「更多選項」連結。
+- 預設精簡版：一句說明、對象（路徑或網址，等寬字）、「允許」（primary）「拒絕」（tertiary），再加一個「更多選項」連結。
   - 精簡版的「允許」等於「允許一次」。
-- 「更多選項」在氣泡內展開，提供：允許一次／這則對話都允許／拒絕／在工作台檢視。
+- 「更多選項」在氣泡內展開，提供：允許一次（primary）／這則對話都允許（secondary）／拒絕（tertiary）／在工作台檢視（連結）。
 - 「在工作台檢視」會以查看中狀態開啟工作台（見 2.2），並捲到那張工具卡片；在哪一邊回答確認都可以。
-- `Destructive`：標上「無法復原」，完整列出所有對象，只有「允許刪除」「拒絕」，沒有更多選項。
+- `Destructive`：標上「無法復原」，完整列出所有對象，只有「允許刪除」（danger）「拒絕」（secondary），沒有更多選項。
 - 允許後：氣泡回到工具執行狀態（「已允許 · 寫入檔案中…」）。
 - 拒絕後：模型接著回答，一樣限制在兩句內。
 
@@ -246,3 +358,104 @@ Whisper 回應格式未確認前，不顯示即時轉寫文字。
 - 小精靈模式下可以從右鍵選單、氣泡連結或托盤「開啟工作台」：沒在回應時兩個視窗同時開著；小精靈回應中則是唯讀的「查看中」（2.2），回應結束自動解除。**在工作台送出訊息才算切換到工作台模式**（小精靈隱藏）。
 - 工作台模式下關閉工作台視窗＝結束程式；小精靈模式下只是關掉（隱藏）工作台。
 - 托盤圖示（Windows 通知區域、macOS 選單列）：顯示小精靈、開啟工作台、結束 Lumi。「暫時隱藏」期間可以從這裡提前顯示；暫時隱藏時如果需要權限確認，小精靈會自動顯示。
+
+## 9. RWD（響應式）
+
+依據 `plan/ui-guide/RWD原則.md`（和 ui-guide.html 衝突時以 ui-guide.html 為準）。原則：重新排列而不是整頁縮放；輸入框與送出鈕永遠完整可見（工作台主版面固定 `Auto／Auto／*` 三列，只有訊息區伸縮與捲動）；模型資訊不消失；小精靈入口位置固定；漸進式精簡（先隱藏次要文字，再縮短標籤，最後才改純圖示）；程式碼不強制折行。小精靈視窗不在範圍內。
+
+### 9.1 斷點
+
+| 類別 | 分段 | 條件（進入／離開各有 ±8 緩衝） |
+|---|---|---|
+| 寬度 | Wide | ≥ 1000（離開要 < 992） |
+| | Compact | 620–999（從 Narrow 升上來要 ≥ 628；降到 Narrow 要 < 612） |
+| | Narrow | < 620 |
+| 高度 | Short | < 700（回復要 ≥ 708） |
+| | VeryShort | < 600（回復要 ≥ 608） |
+| 設定視窗 | `stacked`（清單＋詳細改上下排） | < 900（回復要 ≥ 908） |
+
+緩衝是為了視窗停在 619/620、999/1000、899/900 附近時不反覆切換。
+
+### 9.2 機制
+
+- 分段判定是純函式 `ResponsiveRules`（`ClassifyWidth`、`ClassifyHeight`、`ClassifyStacked`，吃目前值與上一個分段），邊界由 `ResponsiveRulesTests` 驗證。
+- `ResponsiveClasses.Track(window, trackStacked)` 掛在 Window 根節點，監聽 `Bounds`，**只在跨越斷點時**更新根節點的 Classes：`wide`／`compact`／`narrow`，加上 `short`／`veryshort`；設定視窗另外有 `stacked`。不經 ViewModel（純視覺），拖曳視窗時不重建對話列表。
+- 各元件在自己的 `Styles` 裡用根節點 class 寫選擇器（例如 `Window.compact TextBlock.collapsible-label`），**RWD 樣式要放在該區的最後**才蓋得過預設值。**只用根節點 Classes**，不用 Container Query、`OnFormFactor` 或在各控制項寫 Converter，避免兩套機制並存。
+
+### 9.3 視窗尺寸
+
+- 工作台預設 1040×760（Wide），`MinWidth` 500、`MinHeight` 420。設定視窗預設 1040×760，最小 720×480。
+- 從 1200 縮到 500 不出現水平捲動；測試矩陣至少含 1200×800、900×700、700×650、620×650、520×650、800×560。
+
+### 9.4 各區塊在三段的行為
+
+| 區塊 | Wide（≥ 1000） | Compact（620–999） | Narrow（< 620） |
+|---|---|---|---|
+| 標題列小精靈按鈕 | 圖示＋「小精靈模式」 | 圖示＋「小精靈」 | 只剩圖示（寬 36） |
+| 工具列新對話、歷史對話 | 圖示＋文字 | 32×32 純圖示＋Tooltip | 同 Compact |
+| 模型膠囊 | 狀態點＋「供應商 · model ID」＋chevron | 同 Wide | 狀態點＋供應商字首方塊＋model ID |
+| 歷史抽屜 | 內嵌 | 內嵌 | Overlay |
+| 對話區左右 Padding | 64 | 24 | 16 |
+| 助理訊息寬度 | ≤ 820 且 ≤ 內容區 | 92% | 92% |
+| 使用者訊息寬度 | 72% | 80% | 80% |
+| 時間、「你」、頭像 | 顯示、32 | 顯示、32 | 隱藏時間與「你」、頭像 24 |
+| 歡迎區副標 | 顯示 | 顯示 | 隱藏 |
+| 訊息動作列 | 圖示＋文字 | 只剩圖示 | 只剩圖示 |
+| Composer 外框左右 Margin | 64 | 24 | 16 |
+| Composer 下層按鈕 | 圖示＋文字 | 純圖示＋Tooltip | 同 Compact |
+| 麥克風 Caption、操作提示 | 顯示 | 隱藏 | 隱藏 |
+
+高度規則：
+
+| 條件 | 行為 |
+|---|---|
+| Short（< 700） | 輸入框 `MinHeight` 64 → 48（兩行）；訊息間距 24 → 16；歡迎區上 Margin 32 → 8 |
+| VeryShort（< 600） | 同 Short，並隱藏歡迎區；工具列、對話區、輸入區仍完整 |
+
+設定視窗 `stacked`（寬 < 900）：連線／模型設定的清單＋詳細改上下排（清單在上、詳細在下），整頁捲動；小精靈頁的預覽移到上方。並排時各自捲動。
+
+## 10. 共用元件與互動狀態
+
+樣式在 `Themes/Controls.axaml`（共用）與 `Themes/ChatStyles.axaml`（對話視窗共用，各 UserControl 以 `StyleInclude` 載入）。元件只引用 token。
+
+### 10.1 按鈕
+
+每個**動作區最多一個 primary**；「測試連線」與「儲存」不能同時是 primary。所有按鈕都必須屬於下列已 token 化的層級（`ButtonCoverageTests` 走訪畫面檢查），新增按鈕時先選層級。
+
+| 層級 | 用途 | 平常 | Hover | Pressed | Disabled |
+|---|---|---|---|---|---|
+| `primary` | 完成主要任務（儲存、允許、重試） | `PrimaryButton` 底、`PrimaryButtonText` 字（深色模式淺底深字） | `PrimaryButtonHover` 底 | `PrimaryButtonPressed` 底 | `SurfaceAlt` 底、Muted 字 |
+| `secondary` | 可逆的輔助操作（測試連線、新對話） | Surface 底、`BorderStrong` 框、Text 字 | `SurfaceAlt` 底 | Soft 底 | 透明底、Border 框、Muted 字 |
+| `tertiary` | 低優先動作、圖示按鈕（複製、檔案、「…」） | 無框、Muted 字 | `SurfaceAlt` 底 | Soft 底 | Muted 字、透明度 0.6 |
+| `danger` | 只用在破壞性動作（刪除、允許執行） | Surface 底、`DangerBorder` 框、Danger 字 | `DangerBackground` 底 | 同 Hover，框換 Danger | 透明底、Border 框、Muted 字 |
+
+- `PrimaryButtonHover`／`PrimaryButtonPressed` 是 `PrimaryButton` 往 `Background` 混合 12%／24%（primary 淺色底已近黑，無法「再深」）；五套 × 淺深各有一組並有對比測試。
+- 其他經過 token 化的專用樣式：送出圓鈕 `round send`（Accent 底、Hover／Pressed `AccentHover`、Disabled Soft 底）、停止圓鈕 `round stop`（同 primary 狀態）、標題列「小精靈模式」`spriteMode`（Soft 底）、虛線「新增」入口 `dashed`、`chrome`、`link`（小精靈氣泡）、`cardheader`／`groupheader`（整列標題，Hover 不換底）、`md-copy`、`ToggleButton.secondary`、分段切換。
+- 尺寸用的輔助 class（`toolbar`、`small`、`iconOnly`、`collapsible`、`composer-tool`、`capsule`、`confirm`、`message-action`、`chip-remove`、`round`）只管尺寸，必須和層級 class 並用。
+- **純圖示按鈕必須有 `ToolTip.Tip` 與 `AutomationProperties.Name`**。停用的按鈕要用 `ToolTip.ShowOnDisabled="True"` 並在旁邊或 Tooltip 寫出原因；錯誤一定有文字，不能只改顏色。
+
+### 10.2 焦點框
+
+鍵盤（Tab、方向鍵）才出現，滑鼠點擊不出現：**Accent 2px 圓角**，畫在按鈕自己的外緣內側（圓角同按鈕：一般 10、圓鈕 18、膠囊 16），取代 Fluent 預設的黑白雙框。自己畫焦點外觀的元件（`dashed` 的虛線框、分段切換、進階區段標題、卡片清單項目）把 `FocusAdorner` 設為 null，只有一個 Accent 框。
+
+### 10.3 輸入框與下拉選單
+
+- **TextBox／ComboBox**：高 40（多行輸入框的高度由使用處設定）、圓角 10、邊框 1 `BorderStrong`、Surface 底、Padding 12,8（深色模式是主題的深灰 Surface，不是純黑）。
+- Hover：邊框換 `AccentBorder`。**Focus**：Accent 邊框加外圈 3px 的 Soft 光暈（TextBox／ComboBox 沒有 `BoxShadow`，模板內多一層透明外框 `PART_FocusGlow`，Margin -3，Focus 時顯示）。錯誤：加 `error` class，Danger 邊框，**一定要同時顯示錯誤文字**。停用：`SurfaceAlt` 底、Muted 文字，並另外寫出停用原因。
+- 欄位用 `FormField`：標籤（14／700）永遠在輸入框上方，右側「必填／選填」，說明 Caption 在下方，錯誤文字（Danger）在說明下方；Placeholder 不取代標籤。
+- `embedded` 樣式（沒有框與光暈）用在小精靈輸入列與 Composer 的輸入框，外框由外層元件負責。NumericUpDown 的外框同一套 token，但高度仍是 Fluent 的 32，與 40 高的 TextBox 不一致（已知）。
+
+### 10.4 卡片、分隔線、徽章、清單項目
+
+- **卡片**（`card`）：Surface 底、1px Border、圓角 14、Padding 16。只用來代表**一個物件**（連線、模型設定、角色、工具卡片、色票、資訊卡）；巢狀最多一層；只有可點擊的卡片才有 Hover（陰影 `LumiCardHoverShadow`）；選取＝Soft 底加 `AccentBorder` 邊框，並保留文字狀態（「使用中」）。**不要把整份表單或每個欄位包成卡片。**
+- **分隔線**（`divider`）：1px Border 色，上下間距 16；用來區分群組，不是每個欄位下面都畫一條。
+- **狀態徽章**（`badge`）：Soft 底、圓角 12、Caption 的 `TextOnSoft` 文字（例如「連線正常」「使用中」）；不能只用顏色或圓點表達狀態。
+- **清單項目**（`ListBoxItem`、`ComboBoxItem`）：Hover＝`SurfaceAlt` 底；選取＝Soft 底加 `TextOnSoft` 文字（圓角 10）；停用＝Muted。`ListBox` 本身不畫底色。
+- 其他：`MenuFlyout`／`Flyout` 外框 Surface 底、Border 框、圓角 12，MenuItem 的 Hover／Pressed／停用同上；CheckBox／RadioButton 用 Accent；ScrollBar thumb `BorderStrong`（Hover 變 Muted）；ProgressBar 進度 Accent、軌道 Border；進階區段（`Expander.advanced`）無框、Muted 標題加 chevron。ToolTip 目前仍是 Fluent 預設樣式。
+
+### 10.5 Avalonia 陷阱（寫樣式前必讀）
+
+1. **Fluent 把 Hover／Pressed／Disabled 的底色與字色設在模板內的 `ContentPresenter#PART_ContentPresenter`**，優先於直接設在 Button 上的 Background／Foreground／BorderBrush（那只是 TemplateBinding）。所以只在 Button 上寫 Background，平常看起來對，一 Hover 就變成 Fluent 的半透明黑底加黑字（深色模式尤其明顯）。**每個狀態都必須用 `/template/ ContentPresenter#PART_ContentPresenter` 選擇器覆寫**；前景色設在 ContentPresenter 上，內容裡的 TextBlock 與 `LumiIcon` 會繼承。Pressed 時 `:pointerover` 也成立，所以 Pressed 要寫在 Hover 後面，Disabled 放最後。`ListBoxItem:selected` 的底色同理（畫在模板的 ContentPresenter，不是 ListBoxItem）。
+2. **帶偽類別條件（`:unchecked`、`:pointerover`、`:disabled`…）的 setter，優先權高於不帶條件的 setter，也高於模板內的 TemplateBinding。** 所以在模板零件上寫「正常」狀態時要小心：CheckBox／RadioButton 每個狀態都寫成「選取狀態＋互動狀態」的完整組合；NumericUpDown 箭頭的正常狀態用 `RepeatButton:not(:disabled)`；ScrollBar 要分 `:vertical`／`:horizontal`。
+
+新增或調整樣式後，跑 `ButtonStateStyleTests`、`InteractiveStateStyleTests`、`FluentColorResidueTests`（掃描五套主題 × 淺深所有元素，不能殘留 Fluent 預設色）確認沒有被蓋掉。
