@@ -14,7 +14,7 @@ Lumi 是一個跨平台（Windows / macOS）的桌面 AI 助理。使用者自�
 - **BYOK、多模型**：可以新增多組連線與模型，工作台和小精靈可以各自用不同的模型
 - **工具呼叫**：內建工具採用統一的 `ITool` 介面，以 DI 注入；寫入類工具會先詢問使用者
 - **檔案與資料夾上下文**：資料夾不會整包塞進 prompt，而是讓模型透過「限定範圍」的工具按需讀取
-- **語音輸入**：透過 Whisper 服務轉成文字（以 `ISpeechToText` 注入，可替換）
+- **語音輸入**：工作台與小精靈都能錄音，透過 Whisper 服務轉成文字（以 `ISpeechToText` 注入，可替換）；服務端點與 Token 在設定 › 語音輸入，Token 只存在這台裝置的安全儲存
 - **人設**：可設定個性、積極度與自訂人設；小精靈模式會自動用更短的方式回答
 - **可擴充的小精靈角色**：殼與角色分離，支援程式繪製的角色，以及「美術素材 + JSON」的角色
 - **全部程式繪製**：光球不使用任何圖片，閒置時自動降低幀率以節省電力
@@ -40,13 +40,15 @@ src/
   Lumi.Core/                資料模型、核心介面、對話迴圈（不依賴 UI）
   Lumi.Providers/           Anthropic（官方 SDK）、OpenAI 相容（M2）
   Lumi.Infrastructure/      SQLite（對話與訊息）
-  Lumi.Platform/            原生 API、金鑰安全儲存（DPAPI、Keychain）
+  Lumi.Platform/            原生 API、金鑰安全儲存（DPAPI、Keychain）、麥克風錄音（waveIn、AudioQueue）
+  Lumi.Speech/              Whisper 代理客戶端（上傳、回應解析、錯誤對應、測試連線）
   Lumi.Tools/               內建工具（目前時間、計算，以及示範用的筆記工具）
   Lumi.App/                 Avalonia 介面與 DI 組裝（唯一的 composition root）
 tests/
   Lumi.Core.Tests/
   Lumi.Platform.Tests/      金鑰儲存的契約測試（記憶體、DPAPI、Keychain）
   Lumi.Providers.Tests/     Anthropic Provider 的 fixture 測試（不呼叫真實 API）
+  Lumi.Speech.Tests/        Whisper 客戶端與解析器（假的 HttpMessageHandler，不呼叫真實服務）
   Lumi.Infrastructure.Tests/ SQLite 實作（暫存資料夾的真資料庫檔）
   Lumi.Tools.Tests/         工具與運算式解析器（含惡意輸入）
   Lumi.App.Tests/           ViewModel、Markdown 解析與渲染（含 Avalonia.Headless）、EmojiText、字串資源
@@ -58,7 +60,6 @@ poc/
 之後會加入的專案（詳見 `agent.md`）：
 
 ```
-Lumi.Speech                 語音轉文字
 Lumi.Sprites.Abstractions   小精靈角色介面
 Lumi.Sprites.*              各個角色
 ```

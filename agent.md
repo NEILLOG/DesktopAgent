@@ -78,7 +78,7 @@ Lumi.App ──► Lumi.Sprites.* ──► Lumi.Sprites.Abstractions
 | `IConversationStore` | 對話與訊息存取 |
 | `IModelCatalog` | 連線與模型設定（可多筆） |
 | `ISecretStore` | 金鑰與 Token（Windows DPAPI / macOS Keychain） |
-| `ISpeechToText` / `IAudioRecorder` | 語音轉文字 / 錄音 |
+| `ISpeechToText` / `ISpeechConnectionTester` / `IAudioRecorder` | 語音轉文字 / 測試連線 / 錄音 |
 | `ISpriteFactory` / `ISpriteView` | 小精靈角色 |
 | `IOverlayPlatform` | 游標輪詢、點擊穿透。放在 Core、只吃原生視窗控制代碼（`Attach(nint)`），不認識 Avalonia；Windows／macOS 實作在 `Lumi.Platform`，每個視窗各一個實例 |
 | `IChatSession` | 目前的對話與回應流程：對話 id、模式、回應中、停止，並把每個 `ChatEvent` 發給所有觀察者。工作台與小精靈共用同一個，各自是觀察者（工作台更新訊息列表，小精靈更新氣泡與角色狀態） |
@@ -154,10 +154,14 @@ Lumi.App ──► Lumi.Sprites.* ──► Lumi.Sprites.Abstractions
 
 ## 11. 語音
 
-- 一律透過 `ISpeechToText`。第一個實作是公司內部的 Whisper 服務，規格見 `outter_sys_spec/whisper.md`（內部文件，不納入版控，只存在本機）。
-- 錄音輸出 16kHz、單聲道 WAV。
-- `source_pgm` 固定為 `Lumi`，`session_id` 帶入對話 ID。
-- **回應格式尚未確認**：在使用者提供範例之前，不要實作解析邏輯。
+- 一律透過 `ISpeechToText`（轉寫）與 `IAudioRecorder`（錄音）。第一個實作是公司內部的 Whisper 代理服務（`Lumi.Speech`），規格與舊版整合說明見 `outter_sys_spec/whisper.md`（內部文件，不納入版控，只存在本機）。**內部主機名稱不得寫進任何進版控的檔案**；端點預設為空，由使用者在設定 › 語音輸入。
+- 錄音輸出 16 kHz、單聲道、16-bit WAV，只存在記憶體；上限 90 秒、少於 0.5 秒忽略。原生錄音只在 `Lumi.Platform`（Windows `waveIn`、macOS `AudioQueue`），純邏輯（`WavFormat`、`LevelMeter`、`PcmRecorderCore`）在 Core。
+- 送出欄位：`file`（`audio/wav`）、`mode=normal`、`language`（非空才送）、`return_format=json`、`source_pgm=Lumi`、`file_name`、`session_id`（對話 ID，有才送）。不做說話者分離。
+- 回應解析（`WhisperResponseParser`）寬鬆但**不猜格式**：`text/*` 純文字；JSON 找 `text`，再找 `result`／`data`／`transcription`／`transcript`／`output` 包裝層（最多 3 層），最後 `segments[].text`；都找不到就失敗（`UnrecognizedResponse`）。測試 fixture 目前依舊版文件描述構造，不是真實錄製。
+- Token 只存 `ISecretStore`（`speech/whisper/token`），並**綁定端點 Host**：Host 不同視為沒有 Token，不會送到新主機。端點必須 https（只有 localhost 可用 http），不可含帳密、查詢字串、錨點。
+- **不提供略過憑證驗證**；憑證不受信任時，錯誤訊息指引使用者安裝內部 CA。錯誤訊息不含伺服器回應內文與 Token。
+- 麥克風鈕的可用判斷只看設定（端點、Token 的 hint 與綁定 Host），**不讀 `ISecretStore`**（避免 macOS 鑰匙圈授權視窗）。
+- 工作台與小精靈共用同一個 `IVoiceInputController`（單例）；轉寫失敗保留錄音，可重試或放棄。
 
 ## 12. UI 規則
 
