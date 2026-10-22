@@ -362,6 +362,19 @@ SettingsWindow（自訂標題列，同工作台）
 - [ ] UE-3：tertiary 的 Hover／Pressed（工具列、輸入區下層工具、訊息動作列）；Disabled 的 0.6 透明度是否看得出來（麥克風、👍👎 停用佔位）
 - [ ] UE-3：鍵盤 Tab 時所有按鈕的焦點框是 Accent 2px 圓角（膠囊、圓鈕、chip X 鈕貼合），不是黑白雙框；dashed、分段切換、進階區段標題只有一個 Accent 框；滑鼠點擊後不出現焦點框；chip 的 20×20 X 鈕上焦點框（畫在邊緣內側）是否蓋住圖示
 - [ ] UE-3：工具卡片標題與群組標題 Hover／Pressed 不換底也不變黑字；程式碼區塊「複製」Hover；小精靈氣泡「查看詳細」連結 Hover
+- [ ] UE-4：錯誤列「重試」（primary）與「用其他模型重試」（secondary）在警告淡底上的對比與間距；一次性提示「關閉」（tertiary，Muted 字）在 Warning 淡底上是否看得清楚，淺深色都要看
+- [ ] UE-4：ConfirmDialog 實機：一般確認 primary 實心、破壞性紅框、取消 secondary；Enter 觸發確認鈕時的外觀
+- [ ] UE-4：歷史抽屜、設定 Menu、卡片清單、色票卡、ModelPicker、小精靈狀態預覽的 Hover（SurfaceAlt）、Selected（Soft＋OnSoft 字）、鍵盤焦點框（卡片清單只有卡片邊框變 Accent，不是雙框）
+- [ ] UE-4：工具列「…」MenuFlyout 實機：Surface 底、Border 框、圓角 12、項目 Hover／Pressed／停用、內距與圓角協調；系統提供的浮起陰影是否看得出來（專案內沒有 Flyout 陰影慣例）
+- [ ] UE-4：模型選單 Flyout 外框改為 Surface 底＋Border 框＋圓角 12、文字 Text 色（原本是 Fluent 灰底黑字），深色模式尤其要看
+- [ ] UE-4：設定「進階」裡的核取方塊（顯示思考過程、啟用工具）與小精靈語氣開關：Accent 方塊與勾勾（terracotta 上勾勾為深色）、Hover、停用、Tab 焦點框；非分段的 RadioButton 目前沒有使用處，只有測試覆蓋
+- [ ] UE-4：下拉清單（ComboBoxItem）選取、Hover、鍵盤移動時的 Accent 焦點框
+- [ ] UE-4：捲軸 thumb 在淺色背景（BorderStrong 約 1.9:1）是否太淡、Hover 變 Muted 是否明顯；展開時的箭頭仍是 Fluent 黑白
+- [ ] UE-4：**NumericUpDown 高度仍是 Fluent 的 32，與旁邊 40 高的 TextBox 不一致**（最大輸出、上下文上限）；要不要統一高度請設計決定
+- [ ] UE-4：思考過程 Expander 改用 advanced 樣式（無框、Muted 標題＋chevron）在助理淡底氣泡內的觀感與內容區間距
+- [ ] UE-4：ProgressBar（模型選單「本對話」上下文用量）進度 Accent、軌道 Border，淺深色是否看得出來
+- [ ] UE-4：小精靈狀態預覽清單原本的 Fluent 灰底改透明，與上方區段銜接是否自然
+- [ ] UE-4：ToolTip 仍是 Fluent 預設樣式（不在視覺樹裡，掃描不到），確認在各主題淺深色的可讀性
 - [ ] UA-8：LumiIcon 在 16px 的線條粗細（1.75 縮放後約 1.17px）看起來順眼
 
 ## 實作紀錄
@@ -467,3 +480,10 @@ SettingsWindow（自訂標題列，同工作台）
 - 焦點框：Fluent 預設是黑色 2px＋白色 1px 直角雙框，疊在圓角按鈕上，整個換成 Accent 2px 圓角、畫在按鈕邊緣內側（間距尺度測試不允許 -2 Margin）；dashed、分段切換、Expander 標題自己畫焦點，`FocusAdorner` 設 null 避免雙框。
 - primary 淺色的 Pressed 無法「再深」（底色已近黑），改用 Hover 往 Background 靠 12%、Pressed 靠 24%。tertiary／chrome／分段切換／dashed 的 Disabled 另加 Opacity 0.6。
 - **未涵蓋**：ConversationView 的三顆沒有 class 的按鈕（關閉提示、重試、用其他模型重試）與 ConfirmDialog 的 ConfirmButton 初始沒有 class（程式碼才加），仍是 Fluent 灰預設外觀 → UE-4。`ListBoxItem`、`MenuItem`、`ComboBox` 的狀態不在範圍。測試：App 1158（新增 67）。
+
+### UE-4（剩餘按鈕層級與互動狀態）
+- 層級判斷：一次性提示的「關閉」tertiary；錯誤列「重試」primary（該區唯一）、「用其他模型重試」secondary；ConfirmDialog 一般確認 primary、破壞性 danger、取消 secondary。走訪工作台、設定視窗 15 種畫面狀態、ConfirmDialog、模型選單、工具卡片、程式碼區塊、小精靈共 278 個按鈕，全部屬於已 token 化層級（例外只有 Fluent 模板內的捲軸與 NumericUpDown 箭頭）。
+- 修前修後對照：換回舊 Controls.axaml 跑同批測試有 19 個失敗（CheckBox、RadioButton、ListBoxItem、MenuItem、Flyout、ScrollBar、ComboBoxItem 焦點）。ComboBox 原樣式沒被蓋掉，只補驗證。
+- **新發現的 Avalonia 規則**：帶偽類別條件（`:unchecked`、`:pointerover`…）的 setter 優先權高於不帶條件的 setter，也高於模板內的 TemplateBinding；所以 CheckBox／RadioButton 每個狀態都寫成「選取狀態＋互動狀態」完整組合，NumericUpDown 箭頭正常狀態用 `RepeatButton:not(:disabled)`，ScrollBar 用 `:vertical`／`:horizontal`。之後在模板零件上寫「正常」狀態都要注意。
+- 全域色彩殘留掃描（五套 × 淺深、約 44,000 個元素）0 種殘留；例外三條：捲軸展開時的箭頭、視窗模板的 `PART_TransparencyFallback`、色票卡的色塊。掃描順手修掉：小精靈狀態預覽清單灰底、NumericUpDown 半透明白底與黑框、思考過程 Expander 灰底、浮出層黑字、ProgressBar 強調色。
+- 新增 `LumiRadiusFlyout`（12）。測試：App 1199（新增 41）。
