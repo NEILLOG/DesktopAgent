@@ -75,7 +75,8 @@ Lumi.App ──► Lumi.Sprites.* ──► Lumi.Sprites.Abstractions
 | `ITool` / `ToolBase<TArgs>` / `IToolRegistry` | 工具定義、執行、註冊 |
 | `IToolApprovalService` | 需要確認的工具，向使用者請求同意 |
 | `IPromptLayer` / `IPromptComposer` | 分層組成 prompt |
-| `IConversationStore` | 對話與訊息存取 |
+| `IConversationStore` | 對話與訊息存取：分頁列出、搜尋、改名、刪除整個對話（`DeleteAsync`，由 `ConversationDeletionService` 呼叫，連同權限記憶與附件一起清） |
+| `INetworkStatus` | 系統有沒有可用的網路介面。只在失敗之後補「看起來沒有網路連線」的說明，不做主動偵測、不阻擋送出 |
 | `IModelCatalog` | 連線與模型設定（可多筆） |
 | `ISecretStore` | 金鑰與 Token（Windows DPAPI / macOS Keychain） |
 | `ISpeechToText` / `ISpeechConnectionTester` / `IAudioRecorder` | 語音轉文字 / 測試連線 / 錄音 |
@@ -94,7 +95,8 @@ Lumi.App ──► Lumi.Sprites.* ──► Lumi.Sprites.Abstractions
 - Anthropic 走官方 SDK（NuGet `Anthropic`，只在 `Lumi.Providers` 引用），不自己寫 HTTP／SSE 解析（M1 的 Q4）。
   SDK 吃我們自己的 `HttpClient`（`IHttpClientFactory` typed client），測試用假的 `HttpMessageHandler` 餵 fixture。
 - **對話歷史只能往後加，或從尾端移除**：已送出的訊息與內容區塊不能修改、重排，也不能刪除中間的訊息；thinking 區塊（含 signature／`redacted_thinking` 的資料）要原樣存檔、原樣送回下一次請求。模型會檢查這段歷史的一致性，改過會回 400。
-  從尾端移除訊息（例如「重新產生」，`IConversationStore.RemoveLastMessageAsync`）沒問題：前面每一則的內容都沒變。不認得的內容區塊（例如供應商專屬的 fallback 區塊）存成 `ProviderBlock`，只送回產生它的那個供應商。
+  從尾端移除訊息（例如「重新產生」，`IConversationStore.RemoveLastMessageAsync`）沒問題：前面每一則的內容都沒變。
+  **整個對話可以刪除**（`IConversationStore.DeleteAsync`，一律經過 `ConversationDeletionService`：訊息與上下文項目隨外鍵刪除，再清權限記憶與附件）；單則訊息仍不能刪除或修改。回應中（含小精靈回應）不能刪除任何對話。不認得的內容區塊（例如供應商專屬的 fallback 區塊）存成 `ProviderBlock`，只送回產生它的那個供應商。
 - **使用者加入的檔案、資料夾、圖片是「快照」**（M4）：加入的項目在**下一則使用者訊息**帶上當下的內容（`ContextBlock`、`ImageBlock`，和使用者的文字存成同一則訊息），之後不再重複送；移除項目只是從範圍拿掉（工具讀不到），已經送出的內容留在歷史裡，不會被收回；再加入同一個檔案＝再拍一次新快照。內容放不下（太大、不是文字、找不到）時不中斷送出，區塊用 `Note` 說明原因，檔案仍在範圍內，模型用 `read_file` 讀。轉成文字的格式只在 `ContextBlockFormatter` 定義一次，兩家 Provider 共用。
 - **圖片位元組不放進資料庫**：存成 `attachments/<sha256>.<ext>`（`IAttachmentStore`），訊息只記檔名；送給供應商時才讀出來轉 base64，讀不到就改成一段說明文字，不讓整個請求失敗。格式依檔案開頭的位元組判斷（PNG、JPEG、GIF、WebP，上限 5 MB），不信副檔名。啟動時清掉沒有被任何訊息引用的附件檔案。
 - token 用量以供應商回傳的 `usage` 為準。只有送出前的上下文預估才用估算值（`ITokenEstimator`，顯示成「≈ N tokens」）。
@@ -186,6 +188,9 @@ Lumi.App ──► Lumi.Sprites.* ──► Lumi.Sprites.Abstractions
 - 小精靈的「殼」與「角色」嚴格分離，詳見 `docs/sprite-dev-guide.md`。殼在 `Lumi.App/Sprites`：互動判定（`SpriteInteractionTracker`）、版面（`SpriteLayout`）、休眠（`SpriteSleepPolicy`）、對話事件→角色狀態（`SpriteStateMapper`）、氣泡（`SpriteBubbleViewModel`）都是不碰視窗的純邏輯，有單元測試；角色只會收到殼解析好的狀態。
 - 素材型角色（M8）：圖片加 `manifest.json` 放進使用者資料夾的 `sprites/`，設定頁按「重新載入」就能選用，不用寫程式；`SpriteLibrary`（`IReloadableSpriteCatalog`）是內建角色加資料夾裡的素材型角色，整份快照替換、載入失敗與警告列在設定頁。語氣文字經 `SpriteVoiceValidator`（單行純文字、200 字、不含標籤字元與指令字眼），沒通過就只忽略語氣。
 - 新增程式型角色只需要 `services.AddSprite<T>()`，設定頁的角色清單、狀態預覽與尺寸檔位自動可用；`tests/Lumi.App.Tests/Sprites/ChangingTheSpriteTests.cs` 用一個最小的假角色驗證殼完全不需要改。
+- **破壞性確認**（`ConfirmDialog` 的 destructive）的預設焦點在「取消」；不要把破壞性動作的按鈕設成預設焦點。
+- **啟動失敗說明視窗不依賴 DI**（DI 壞了它也要能顯示），只吃已組好的報告；啟動失敗與未處理例外一律寫進 log（`logs/`），UI 執行緒的例外記錄後照舊處理。
+- **聊天錯誤文字的補充**（離線句、「約 N 秒後再試」）只在 Core 的 `ChatFailureText` 組字，由 `ConversationService` 套用一次；錯誤列與小精靈氣泡都讀 `ChatFailure.Message`，View 不另外拼字。
 
 ## 13. 繪製與效能（POC 實測得到的教訓）
 

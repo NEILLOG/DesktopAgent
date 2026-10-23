@@ -7,7 +7,7 @@ Lumi 是一個跨平台（Windows / macOS）的桌面 AI 助理。使用者自�
 - **工作台**：完整的對話視窗。可以切換模型、加入檔案或資料夾當上下文、語音輸入，並在模型選單裡顯示本對話的 token 用量與回合數。
 - **小精靈**：一個住在桌面上的透明角色（第一個角色是會呼吸的光球）。游標靠近時才浮出輸入列，用簡短的氣泡回答，並用動畫表現聆聽、思考、呼叫工具、完成等過程。
 
-> 目前狀態：**M1 進行中**。光球 POC 已在 macOS 驗證；M1 的四段（骨架與外觀、金鑰安全儲存、Anthropic Provider、工作台與 SQLite）已完成並在 Mac 驗收，可以在工作台和 Claude 對話；待 Windows 驗證。
+> 目前狀態：M0～M8 與 M12（UI 重新設計）程式完成，多數待人工驗收與 Windows 驗證（各里程碑見 `plan/00-master-plan.md`）。M9「歷史對話與完成度」：歷史對話的搜尋、分組、改名、刪除，視窗位置記憶，啟動失敗說明，log 程式完成並待人工驗收；Windows 國旗 emoji 的判定等待實機結果。
 
 ## 特色
 
@@ -18,6 +18,8 @@ Lumi 是一個跨平台（Windows / macOS）的桌面 AI 助理。使用者自�
 - **人設**：可設定個性、積極度與自訂人設；小精靈模式會自動用更短的方式回答
 - **可擴充的小精靈角色**：殼與角色分離，支援程式繪製的角色，以及「美術素材 + JSON」的角色
 - **全部程式繪製**：光球不使用任何圖片，閒置時自動降低幀率以節省電力
+- **歷史對話**：抽屜可以搜尋標題與訊息內容、依日期分組、改名、刪除（直接刪除，不做垃圾桶；刪除會一併清掉附件）、載入更多
+- **視窗記憶與啟動說明**：工作台記得上次的位置、大小與最大化狀態（螢幕變動時退回置中）；啟動失敗時顯示說明視窗，記錄寫在使用者資料夾的 `logs/lumi-yyyy-MM-dd.log`
 
 ## 技術棧
 
@@ -38,8 +40,11 @@ docs/
   sprite-dev-guide.md       小精靈角色開發指南
 src/
   Lumi.Core/                資料模型、核心介面、對話迴圈（不依賴 UI）
+    Network/                系統網路狀態（只在失敗後補說明文字）
   Lumi.Providers/           Anthropic（官方 SDK）、OpenAI 相容（M2）
-  Lumi.Infrastructure/      SQLite（對話與訊息）
+  Lumi.Infrastructure/      SQLite（對話與訊息）、設定檔
+    Logging/                寫進使用者資料夾 logs/ 的記錄檔
+    Startup/                啟動失敗的原因分類（資料庫被鎖、權限、磁碟、較新 schema、設定檔）
   Lumi.Platform/            原生 API、金鑰安全儲存（DPAPI、Keychain）、麥克風錄音（waveIn、AudioQueue）
   Lumi.Speech/              Whisper 代理客戶端（上傳、回應解析、錯誤對應、測試連線）
   Lumi.Tools/               內建工具（目前時間、計算，以及示範用的筆記工具）
@@ -55,6 +60,7 @@ tests/
   Lumi.Architecture.Tests/  相依規則、色碼檢查、P/Invoke 與供應商 SDK 的歸屬
 poc/
   Lumi.OrbPoc/              光球 POC（驗證小精靈視窗的可行性，不在 Lumi.sln 內）
+  Lumi.EmojiPoc/            Emoji 驗證頁（Windows 國旗判定，不在 Lumi.sln 內）
 ```
 
 之後會加入的專案（詳見 `agent.md`）：
@@ -97,6 +103,12 @@ dotnet run -c Release
 2. 在 `plan/00-master-plan.md` 找到下一個里程碑
 3. 寫細部計畫 `plan/NN-名稱.md`，確認後才開工
 4. 完成後更新計畫狀態與實作紀錄
+
+## 已知限制
+
+- **Windows 國旗 emoji 待驗證**：Segoe UI Emoji 沒有國旗字形，預期會顯示成兩個字母（TW、JP）。判定由 Windows 實機執行 `dotnet run --project poc/Lumi.EmojiPoc` 完成，結果填進 `poc/Lumi.EmojiPoc/README.md`；結果出來之前不附 emoji 字型。
+- 離線判斷只在請求失敗後才補說明，不主動偵測網路。
+- 歷史搜尋只比對標題與訊息文字（不分大小寫，英文以外的大小寫折疊不做），命中字只在清單中加粗，不捲動到內文。
 
 ## 授權
 

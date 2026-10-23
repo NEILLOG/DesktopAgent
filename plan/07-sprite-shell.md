@@ -21,7 +21,7 @@
 不做：
 - 語音（麥克風、收音列、`Listening`／`Transcribing` 的觸發）：M6 暫緩。角色**仍然支援**這兩個狀態（`docs/sprite-dev-guide.md` 的狀態表），只是殼目前不會觸發；輸入列先不放麥克風鈕（M6 再加）
 - 素材型角色、manifest 的 JSON 載入、角色資料夾：M8（M7 只定義 `SpriteManifest` 這個型別）
-- 視窗位置與大小記憶（工作台的）、歷史對話：M9
+- 視窗位置與大小記憶（工作台的）、歷史對話：M9（M9 程式已完成待驗收，見 plan/09-history-polish.md）
 - macOS 的 accessory 模式（不顯示 Dock 圖示）、安裝程式、開機自動啟動：M11
 
 ## 現況（開工前盤點）

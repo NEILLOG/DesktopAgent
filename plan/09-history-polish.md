@@ -1,6 +1,6 @@
 # 09 歷史對話與完成度
 
-- 狀態：9A～9C 程式完成，待人工驗收（2026-10-23 使用者指示直接做，Q1～Q3 皆採建議）；9D、9E、9F 未開始
+- 狀態：9A～9D 程式完成，待人工驗收（2026-10-23 使用者指示直接做，Q1～Q3 皆採建議）；9E 的 macOS 部分（驗證頁與測試）完成，**9E 待 Windows 實機結果**（國旗判定，使用者執行，見 `poc/Lumi.EmojiPoc/README.md`）；9F 文件同步完成（2026-10-23）。整體 M9 待人工驗收，見「待人工確認」
 - 對應里程碑：M9
 - 前置：M2（對話儲存、最簡歷史抽屜）、M12（設計系統與歷史抽屜樣式）都已程式完成。
 - 檔名說明：`plan/09-convert-from-old.md` 是**舊版 WPF 資料格式規格**（不是 M9 的細部計畫），所以這份用不同的檔名。它與 M9 的關係見 Q3。
@@ -162,20 +162,21 @@ Task<IReadOnlyList<ConversationSearchHit>> SearchAsync(string query, int limit, 
 
 ### 9D 視窗位置與大小記憶
 
-- [ ] `WindowSettings` ＋ 讀寫（`settings.json`，損毀時退回預設並沿用既有的一次性提示）
-- [ ] `WindowPlacementRules` 與測試（多螢幕、螢幕消失、縮放變動、最小尺寸）
-- [ ] 工作台視窗接線（開啟時還原、移動／縮放節流寫入、關閉時寫入、最大化處理）
+- [x] `WindowSettings` ＋ 讀寫（`settings.json`，損毀時退回預設並沿用既有的一次性提示）
+- [x] `WindowPlacementRules` 與測試（多螢幕、螢幕消失、縮放變動、最小尺寸）
+- [x] 工作台視窗接線（開啟時還原、移動／縮放節流寫入、關閉時寫入、最大化處理）（多螢幕與縮放的實機驗證未做，見 9D 實作紀錄）
 
 ### 9E Emoji
 
-- [ ] 驗證頁與 Windows 實機結果（使用者執行）
-- [ ] 依結果結案，或打包 Twemoji COLR 並標示授權
+- [x] 驗證頁與測試已備（macOS 完成）：`poc/Lumi.EmojiPoc`（驗證頁）、`EmojiSamples`、`EmojiSegmentationTests`、README 驗證清單與判定流程
+- [ ] Windows 實機結果與結案（使用者執行）：在 Windows 跑驗證頁、把結果填進 `poc/Lumi.EmojiPoc/README.md`
+- [ ] 依結果結案，或打包 Twemoji COLR 並標示授權（等待實機結果，未開始）
 
 ### 9F 文件
 
-- [ ] `docs/ui-spec.md`：歷史抽屜（搜尋、分組、改名、刪除）、啟動失敗視窗、視窗記憶
-- [ ] `agent.md` 第 7 節補「整個對話可以刪除，單則訊息仍不可」，第 12 節若有新增規則一併
-- [ ] README、`plan/00-master-plan.md`（M9 狀態、決策紀錄）
+- [x] `docs/ui-spec.md`：歷史抽屜（搜尋、分組、改名、刪除）、啟動失敗視窗、視窗記憶
+- [x] `agent.md` 第 7 節補「整個對話可以刪除，單則訊息仍不可」，第 12 節若有新增規則一併
+- [x] README、`plan/00-master-plan.md`（M9 狀態、決策紀錄）
 
 ---
 
@@ -203,13 +204,17 @@ Task<IReadOnlyList<ConversationSearchHit>> SearchAsync(string query, int limit, 
 - **刪除是不可逆的**：確認對話框＋預設焦點在取消；不做批次刪除。
 - **視窗還原的螢幕座標**在 macOS（點）與 Windows（像素）單位不同：儲存時帶縮放比例，還原時重新換算並用 `WindowPlacementRules` 的測試守住。
 
-## 待人工確認（9A～9C，全部做完後一次確認）
+## 待人工確認（9A～9E，全部做完後一次確認）
 
 - 9A：補寫舊訊息與送出訊息同時寫 SQLite 的鎖競爭沒實機測過；LIKE 只對 ASCII 不分大小寫。
 - 9B：Narrow 時抽屜 Overlay 與刪除確認框的層級；Compact／Wide 抽屜內搜尋框、清除鈕、群組標題對齊；「…」游標移入才出現、點它不誤切換對話；從非目前列點「…」→改名時焦點與選取；F2／Delete／Shift+F10／右鍵開同一選單；回應中刪除的 Tooltip；中文 1～2 字搜尋、命中字（只加粗）辨識度、100 筆上限提示；刪除確認預設焦點在取消（設定頁刪連線、清金鑰也同樣）；刪目前對話後導向與草稿清空；深色與五套主題的選取底可讀性。
 - 9B 決定待確認：「…」不在 Tab 鏈上（改用 F2／Delete／Shift+F10／選單鍵）；回應中一律不能刪任何對話。
 - 9C：啟動失敗視窗實機顯示（鎖住資料庫、schema 改 99、`chmod 000 settings.json` 三種重現方式見 9C 實作紀錄）；鎖住時視窗約晚 30 秒出現（SQLite 預設 busy timeout）；詳細資訊含經遮蔽的例外訊息（要不要更保守只留型別與 HResult）；拔網路／VPN 的離線文字、429 的「約 N 秒後再試」；UI 例外寫 log 且仍照舊結束。
 - 9C 結論待決定：串流中途失敗時已收到的部分文字不保留（既有 Q15 規則，只有使用者取消才存 Stopped 訊息）。與本計畫預期不符；要保留需改歷史規則，M9 沒動。
+- 9D：多螢幕還原（工作台移到第二螢幕、關閉重開，回到相同位置與大小）；拔掉第二螢幕後重開（應退回置中的預設大小，不開在看不見的位置）；不同縮放的螢幕之間移動與還原；macOS 的位置單位（`WindowPlacementRules` 假設位置是螢幕像素，macOS 實機未確認）；最大化後關閉重開（應回到最大化，還原後的位置是最後一次正常狀態）；還原時是否閃一下（先置中再跳到位置）；小精靈模式與工作台切換後，工作台位置沒有被寫錯；最小化再還原；手改 `settings.json` 的 `workbenchWindow`（格式錯誤只忽略該欄，其他設定不受影響）。
+- 9E：在 Windows 11 執行 `dotnet run --project poc/Lumi.EmojiPoc`，把三欄（一般內文、粗體、等寬）的每一列填進 `poc/Lumi.EmojiPoc/README.md` 的 Win 欄，特別是「國旗」列；依 README 的判定流程結案（國旗正常：不附字型）或評估 Twemoji COLR（國旗顯示為字母）。
+
+- 9B 確認框：破壞性確認的預設焦點在「取消」，但「確認」鍵仍是 `IsDefault`（M12 守門測試要求）。請實機按 Enter 確認不會直接刪除；若會，要連同 M12 守門測試一起改成破壞性確認不設 `IsDefault`。
 
 ## 實作紀錄（偏離原計畫的地方與原因）
 
@@ -296,4 +301,58 @@ Task<IReadOnlyList<ConversationSearchHit>> SearchAsync(string query, int limit, 
 - 離線：關閉網路（或停用 Wi-Fi）後送訊息，錯誤列應含「看起來沒有網路連線」；接回網路後按「重試」成功。
 - 限流：送到會回 429 且帶 `retry-after` 的連線（例如 OpenAI 相容的 Gateway），錯誤列應顯示「約 N 秒後再試」。
 
-9D～9F：未動。
+9F：見下方「### 9F」。9E 見下方「### 9E」。
+
+### 9D
+
+9D：有偏離（計畫沒寫到，或與計畫文字不完全一致的小決定，採保守做法）：
+
+- **沒有新增 `GetWindowAsync`**：窗口設定放在 `AppSettings.WorkbenchWindow`（和 `Sprite` 一樣，讀取是 `Current`，`IModelCatalog` 只多一個 `SetWorkbenchWindowAsync`）。計畫的「`GetWindowAsync`／`SetWindowAsync`，或獨立 `IWindowSettingsStore`」擇一，選了與 `SpriteSettings` 相同的方式。
+- **寫入不觸發 `IModelCatalog.Changed`**：拖曳時會頻繁寫入，觸發事件會讓連線、語音、小精靈等設定頁重載。`Current` 仍會立刻更新。
+- **節流用 `TimeProvider.CreateTimer`**，沒用 `DispatcherTimer` 或 `System.Reactive`：可以用 `ManualTimeProvider` 測試。語意是「第一次變動後 500 ms 寫一次最新值」（節流），不是「停止變動後才寫」（防彈跳），拖曳中也會定期寫入。
+- **縮放的還原方式**：計畫寫「還原時若目前螢幕縮放不同則重新換算」。實際做法是寬高保持 DIP（視窗在 1× 與 2× 螢幕之間移動，邏輯大小不變，符合 Avalonia 與兩個平台的慣例），**範圍檢查**（不大於螢幕聯集、標題列在螢幕內）才以目標螢幕目前的縮放換算成螢幕像素。`Scaling` 仍存檔，用來擋掉不合法的值（<= 0 退回預設）。若要改成「保持實體像素大小」，只需改 `WindowPlacementRules.Restore` 的寬高換算。
+- **單位假設**：位置是螢幕像素（Avalonia 的 `PixelPoint`，Windows 與 macOS 相同；macOS 點數只在 AppKit 內部，沒有進入 Lumi）；寬高是 DIP。`WindowPlacementRulesTests` 用這組假設鎖住。**macOS 的實際行為未在實機確認**。
+- **標題列區域**：計畫寫「至少 100×40」，實作為「視窗左上角 100×40 DIP（換算成該螢幕的像素，且不超過視窗本身）完整落在某一個螢幕的工作區內」。跨在兩個螢幕交界就不算。
+- **格式錯誤的 `workbenchWindow`**：只忽略這一欄，不視為設定檔損毀（計畫說「損毀時退回預設並沿用一次性提示」，這裡的損毀指整個檔案讀不進來）。理由：視窗位置是非關鍵資料，不能因為它壞掉就把使用者的所有設定重設。
+- **還原的時機**：在 `Opened`（`Show` 之後）套用位置與大小，不是在建構式。原因是螢幕清單在視窗顯示前不一定可用。代價是可能有一瞬間置中後才跳到還原位置（**未實機確認是否看得到**）。
+- **關閉時的等待上限**：`Closing` 裡等待寫檔最多 500 ms（`WorkbenchWindowMemory.FlushTimeout`），超過就放棄等待，寫入仍會在背景完成。
+- **最大化的還原位置**：除了 `WindowState` 的變化，也監看 `Bounds` 的變化（大小可能只在排版時才改變），最大化時的 `Resized`／`PositionChanged` 一律忽略，只在 `Normal` 狀態記位置與大小。
+- **最小化與隱藏**：不記錄（`IsVisible` 為 false 時忽略事件）。切到小精靈模式時工作台被隱藏，之後的位置不會被寫錯。
+- **`WorkbenchWindow` 的建構參數**：新增可選參數 `settings`、`time`、`logger`，測試不傳就維持舊行為（不記也不還原），既有的 View 測試不用改。
+
+9D 測試：`WindowSettings.Normalize`（Core）、`JsonModelCatalog` 的讀寫與舊檔相容、損毀欄位（Infrastructure）、`WindowPlacementRules`（單螢幕、多螢幕與負座標、螢幕拔掉、縮放改變、最小與最大尺寸、標題列在螢幕外、NaN）、`WindowMemoryRecorder`（節流、關閉時寫最後的值、寫入失敗）、工作台視窗接線（還原、不可用時置中、最大化旗標、還原後的位置、關閉時寫入、最小化與隱藏不記）。
+
+9D 未驗證（需人工確認，見回報）：多螢幕實機（移到第二螢幕、拔掉後重開）、不同縮放的螢幕之間移動、macOS 的點數與像素、還原時是否閃一下、最大化後關閉重開。
+
+### 9E
+
+9E 目前進度（2026-10-23，macOS）：**等待 Windows 實機結果，9E 未結案。**
+
+- 已完成（macOS 可做的部分）：
+  - `EmojiSamples`（`src/Lumi.App/Controls/EmojiSamples.cs`）：國旗、膚色、ZWJ 組合、鍵帽、VS16 符號、Unicode 15+、混合句子。測試與驗證頁共用。
+  - `EmojiSegmentationTests`（`tests/Lumi.App.Tests/EmojiSegmentationTests.cs`，headless）：切段串接還原原文、叢集不被拆開、每個叢集的 emoji 判定與段落一致、單一叢集整段成為一個 emoji 段、國旗兩個 Regional Indicator 為一個叢集、套用粗體／等寬樣式後切段不變、換行。
+  - 驗證頁 `poc/Lumi.EmojiPoc/`：一般內文、粗體、等寬三欄並排，顯示作業系統與 emoji 字型名稱。README 含驗證清單、判定流程、評估 Twemoji COLR 的步驟與不可行的備案。
+- 切段測試結果：現況與預期**一致，沒有發現需要改行為的差異**。測試沒有 Skip。
+- 沒有做、也無法在 macOS 驗證：字型是否真的畫出彩色字形（含 Windows 國旗是否變成字母）。這是實機項目。
+- 決定（計畫沒寫到，採保守做法）：
+  - 驗證頁用連結檔（`<Compile Include ... Link>`）引用 `EmojiText.cs`、`EmojiTextBlock.cs`、`EmojiSamples.cs`，**不引用 Lumi.App**（它是 Exe，且不改動 Lumi.App 的相依與架構測試）。
+  - `EmojiSamples` 放在 Lumi.App（計畫允許），只有測試與驗證頁使用，產品程式不引用。
+  - 驗證頁不加入 `Lumi.sln`（與 `poc/Lumi.OrbPoc` 相同：OrbPoc 也沒有在 sln 裡），`dotnet build Lumi.sln` 不會因它變慢或失敗；單獨用 `dotnet build poc/Lumi.EmojiPoc` 建置。
+  - 驗證頁用程式碼建立 UI，不用 XAML，避免 Avalonia 的 XAML 編譯細節干擾 POC。
+  - 驗證頁的等寬字型用 Consolas（Windows）／Menlo（macOS）示意，不使用 Lumi 的 JetBrains Mono，因為 POC 不打包字型。
+  - 未打包任何 emoji 字型，`EmojiText` 的字型選擇行為未改動。
+- 未驗證：本機（macOS）未執行驗證頁（Avalonia 原生視窗在這個環境無法啟動，已知），只確認 build 成功。
+
+**等待 Windows 實機（使用者執行）**：在 Windows 11 執行 `dotnet run --project poc/Lumi.EmojiPoc`，把每列的結果填進 `poc/Lumi.EmojiPoc/README.md` 的 Win 欄，特別是「國旗」列。依 README 的判定流程決定：國旗正常 → 結案不附字型；國旗顯示為字母 → 評估 Twemoji COLR。
+
+### 9F
+
+9F 文件同步（2026-10-23，只改文件，沒有改程式碼與測試）：
+
+- `agent.md`：第 6 節新增 `INetworkStatus` 列，`IConversationStore` 的說明補上分頁、搜尋、刪除；第 7 節補「整個對話可以刪除、單則訊息仍不可、回應中不能刪」；第 12 節新增三條（破壞性確認的預設焦點、啟動失敗說明視窗不依賴 DI 與寫 log、錯誤文字只在 `ChatFailureText` 組字）。
+- `docs/ui-spec.md`：2.4 標題標出 9A～9B；第 3 節補離線與 `RetryAfter` 的文字規則；第 5 節補破壞性確認的預設焦點。章節 1～12 連續，文件沒有目錄需要同步。
+- 「搜尋與依日期分組留給 M9」「M2 最簡版」這類舊句子只存在 `plan/12-ui-redesign.md` 的 M12 實作紀錄，`docs/ui-spec.md` 裡已經沒有；plan/12 那兩處只加註，沒有改寫。
+- README：目前狀態從「M1 進行中」改為與主計畫一致；特色、專案結構（`Lumi.Core/Network`、`Lumi.Infrastructure/Logging`、`Startup`、`poc/Lumi.EmojiPoc`）與已知限制（Windows 國旗）更新。README 的 `plan/` 清單原本只列到 04，這次沒有補。
+- `plan/00-master-plan.md`：M9 列與段落改為實際狀態；決策紀錄新增 M9 的九條（2026-10-23）。
+- plan/02、04、07、12 的 M9 待辦句在原句後加註「M9 程式已完成待驗收」（沒有寫成「M9 已完成」，因為 9E 與人工驗收還沒做）；plan/06 補「M9 評估結果：不做」。
+- 偏離：Q3 的「匯入舊版資料」里程碑（暫稱 M13）沒有加進主計畫的里程碑總覽，只在 Q3 的決策與決策紀錄中提到。

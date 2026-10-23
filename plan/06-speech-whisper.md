@@ -22,7 +22,7 @@
 不做：
 - 說話者分離（`mode=diarization`、`min_speakers`／`max_speakers`）：語音輸入是單人口述，不需要（Q2）
 - 即時（串流）轉寫、本機 Whisper（whisper.net，主計畫已列為「之後」）
-- 把轉寫結果存成「語音訊息」型別：訊息只存文字，沒有輸入模式欄位；M9 再看是否需要
+- 把轉寫結果存成「語音訊息」型別：訊息只存文字，沒有輸入模式欄位；M9 再看是否需要（M9 評估結果：不做）
 - 針對語音調整 prompt 或關閉思考（舊版有 `DisableThinkingForVoice`，Lumi 沒有對應設定）
 - macOS 的 `Info.plist` 說明文字、`audio-input` entitlement、簽章與公證：M11（M6 先寫進風險與驗收說明）
 

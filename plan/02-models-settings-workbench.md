@@ -34,7 +34,7 @@
 | Markdown 渲染（經過 emoji 處理） | 2E |
 
 **不在 M2**（避免範圍膨脹，各自歸屬）：
-- 對話列表的搜尋、刪除、重新命名、依日期分組 → M9。M2 的「歷史對話」只做能切換對話的最簡列表。
+- 對話列表的搜尋、刪除、重新命名、依日期分組 → M9。M2 的「歷史對話」只做能切換對話的最簡列表。（M9 程式已完成待驗收，見 plan/09-history-polish.md）
 - 小精靈本身 → M7。M2 只存「小精靈預設模型」，工具列的「小精靈模式」按鈕先停用。
 - 設定視窗的語音、人格、工具權限、小精靈分類 → 各自的里程碑再加，M2 不放空頁面。
 
@@ -323,7 +323,7 @@ public sealed record ResolvedModel(ModelSettings Model, ConnectionSettings Conne
 - 狀態列右側：連線狀態點與文字
 
 **不做**
-- 對話列表的搜尋、刪除、改名、依日期分組（M9）
+- 對話列表的搜尋、刪除、改名、依日期分組（M9）（M9 程式已完成待驗收，見 plan/09-history-polish.md）
 - 小精靈模式本身（M7；按鈕先停用）
 - Markdown 渲染（2E）
 - 上下文列、加入檔案、語音（M4、M6）
@@ -357,7 +357,7 @@ public sealed record ResolvedModel(ModelSettings Model, ConnectionSettings Conne
 
 - 清單依最近更新時間排列，每列：標題、時間（今天顯示 `HH:mm`，其他顯示 `M/d`）；目前對話標示。沒有任何訊息的對話不列出。
 - 點選列 → 切換對話。回應中點選：先停止目前的回應（已收到的文字存成「已停止」），再切換（ui-spec 2.2：抽屜仍可瀏覽，切換前先停止）。
-- `IConversationStore.ListAsync(limit)`：只回有訊息的對話，依 `updated_at` 由新到舊；M2 先取最近 100 則，M9 做搜尋與分頁時再改。
+- `IConversationStore.ListAsync(limit)`：只回有訊息的對話，依 `updated_at` 由新到舊；M2 先取最近 100 則，M9 做搜尋與分頁時再改。（分頁與搜尋已在 M9 9A 加入，程式完成待驗收，見 plan/09-history-polish.md）
 - 清單在這些時機更新：啟動、新對話、一則回應結束或停止（更新時間變了）、設定視窗不影響它。
 
 #### 回應中的切換與停止
