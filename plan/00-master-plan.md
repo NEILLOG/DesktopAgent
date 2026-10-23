@@ -22,7 +22,8 @@
 | M8 | 素材型角色 | 🟨 8A～8D 程式與文件完成，待手動驗收（`plan/08-asset-sprites.md`）；第一個驗證素材：柯基（`samples/sprites/corgi-pixel`） | M7 |
 | M12 | UI 重新設計（設計系統、五套主題、RWD、設定新版面） | 🟨 程式完成，待人工驗收（見 `plan/12-ui-redesign.md` 的人工驗收清單） | M2、M7 |
 | M9 | 歷史對話與完成度 | 🟨 9A～9D 程式完成、9F 文件同步完成，9E 等 Windows 實機結果；整體待人工驗收（`plan/09-history-polish.md`） | M2、M12 |
-| M10 | WPF 小工具的工具移植 | ⬜ 細節暫不展開 | M3 |
+| M10 | WPF 小工具的工具移植 | 🟨 10A～10E 程式完成，F3 文件完成，待人工驗收（`plan/10-tools-port.md` 的 F4 清單） | M3、M4、M7、M9 |
+| M14 | 長期記憶（建議，M10 拆出） | ⬜ 尚未規劃；`memory_*` 工具、記憶設定頁、每輪注入 prompt 與快取的取捨、觸發詞；建議與 M13 匯入一起設計 | M5、M13 |
 | M11 | 打包與發佈 | ⬜ | 全部 |
 
 M2、M3、M5 都只依賴 M1，可以依需要調整順序。
@@ -170,11 +171,16 @@ M2、M3、M5 都只依賴 M1，可以依需要調整順序。
 - 錯誤處理與重試、離線提示（9C 程式完成：啟動失敗說明視窗、檔案 log、未處理例外寫 log、離線與 `RetryAfter` 文字；實機顯示未驗證）
 - 視窗位置與大小記憶（9D 程式完成：僅工作台視窗；多螢幕、縮放、macOS 單位待實機確認）
 
-## M10 WPF 小工具的工具移植　（細節暫不展開）
+## M10 WPF 小工具的工具移植
 
-把現有 WPF agent 小工具裡的工具，透過 Adapter 或改寫，接上 Lumi 的 `ITool`：
-筆記、提醒、排程、文字檔、Excel、Word、PPT、PDF。
-開工前先盤點現有介面，再決定採 Adapter 還是直接改寫。
+細部計畫：`plan/10-tools-port.md`（Q1～Q5 採建議；10A～10E 程式完成，待人工驗收）。盤點結論：舊版 55 個工具全部**改寫**（不做 Adapter），保留行為與限制數字。
+
+- 10A 寫入類檔案工具（`write_file`、`overwrite_file`、`copy_file`、`move_file`、`create_folder`），移除示範工具
+- 10B 筆記（`add_note`、`read_notes`，格式與舊版相同）、`conversation_search`
+- 10C `read_document`：Word、Excel、PowerPoint、PDF（新專案 `Lumi.Documents`，不做 OCR）
+- 10D～10E 提醒、計時器、週期排程（SQLite、背景服務、小精靈／工作台通知）
+- 10F 組裝、文件、兩平台手動驗收
+- 不在 M10：長期記憶（M14）、排程自動跑 prompt、Win32 專屬工具（剪貼簿、視窗、螢幕擷取…）、系統通知（M11）
 
 ## M11 打包與發佈
 
@@ -252,6 +258,12 @@ M2、M3、M5 都只依賴 M1，可以依需要調整順序。
 | 2026-10-23 | M9：啟動失敗顯示說明視窗（不依賴 DI）並寫檔案 log（`logs/lumi-yyyy-MM-dd.log`）；不做單一實例鎖，第二個實例只以說明取代無聲消失 |
 | 2026-10-23 | M9：串流失敗（中途出錯）時已收到的部分文字不保留，維持既有 Q15 規則（只有使用者停止才存為 `Stopped`）；與計畫的預期不同，待人工確認，未改歷史規則 |
 | 2026-10-23 | M9 Emoji：先在 Windows 實機驗證，再決定；不預先打包 emoji 字型。國旗正常就不附字型；國旗顯示為字母才評估 Twemoji COLR |
+
+| 2026-10-23 | M10：舊版 55 個工具全部改寫成 `ToolBase<TArgs>`，不做 Adapter；新增 14 個工具（檔案寫入 5、筆記 2、`conversation_search`、`read_document`、提醒 5），共 20 個；Q1 範圍＝主計畫八項加 `conversation_search`，長期記憶（M14）、排程自動跑 prompt、Win32 專屬 20 個工具不做 |
+| 2026-10-23 | M10 Q2：新增、追加、複製、移動、建資料夾、記筆記、設提醒、計時器＝`Write`；覆寫既有檔案獨立成 `overwrite_file`＝`Destructive`（「本次對話都允許」之後模型就能不再詢問而覆蓋任何檔案，所以結構上讓它無法被記住）；寫入類檔案工具只限工作台 |
+| 2026-10-23 | M10 Q3：提醒只顯示在 Lumi 自己的畫面（小精靈氣泡、工作台通知列），不自動消失；系統通知留給 M11；Lumi 沒在執行時不會觸發，下次啟動彙總錯過的一次性提醒、週期提醒補一次 |
+| 2026-10-23 | M10 Q4：新專案 `Lumi.Documents`（`DocumentFormat.OpenXml` 3.5.1、`PdfPig` 0.1.16——NuGet 套件 ID 是 `PdfPig`），只透過 Core 的 `IDocumentReader` 對外；不做 OCR、不讀 .doc／.xls／.ppt 與有密碼的檔案；文件內容一律包 `<document>` 標籤標為資料 |
+| 2026-10-23 | M10 Q5：提醒存 SQLite（migration 5 `scheduled_items`），欄位與列舉數值同舊版 `schedules.json`；先寫狀態再通知；筆記格式與舊版完全相同，不走 `IFileScope` |
 
 ## 待確認事項
 

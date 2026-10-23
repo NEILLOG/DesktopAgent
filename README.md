@@ -14,6 +14,8 @@ Lumi 是一個跨平台（Windows / macOS）的桌面 AI 助理。使用者自�
 - **BYOK、多模型**：可以新增多組連線與模型，工作台和小精靈可以各自用不同的模型
 - **工具呼叫**：內建工具採用統一的 `ITool` 介面，以 DI 注入；寫入類工具會先詢問使用者
 - **檔案與資料夾上下文**：資料夾不會整包塞進 prompt，而是讓模型透過「限定範圍」的工具按需讀取
+- **檔案整理與文件讀取**：在你加入的範圍內建立、追加、複製、移動檔案（覆寫每次都詢問）；可讀 Word、Excel、PowerPoint、PDF 的文字
+- **筆記與提醒**：每天一個 Markdown 的筆記（相容 Obsidian）、提醒、週期排程與計時器（Lumi 執行中才會觸發）
 - **語音輸入**：工作台與小精靈都能錄音，透過 Whisper 服務轉成文字（以 `ISpeechToText` 注入，可替換）；服務端點與 Token 在設定 › 語音輸入，Token 只存在這台裝置的安全儲存
 - **人設**：可設定個性、積極度與自訂人設；小精靈模式會自動用更短的方式回答
 - **可擴充的小精靈角色**：殼與角色分離，支援程式繪製的角色，以及「美術素材 + JSON」的角色
@@ -47,7 +49,8 @@ src/
     Startup/                啟動失敗的原因分類（資料庫被鎖、權限、磁碟、較新 schema、設定檔）
   Lumi.Platform/            原生 API、金鑰安全儲存（DPAPI、Keychain）、麥克風錄音（waveIn、AudioQueue）
   Lumi.Speech/              Whisper 代理客戶端（上傳、回應解析、錯誤對應、測試連線）
-  Lumi.Tools/               內建工具（目前時間、計算，以及示範用的筆記工具）
+  Lumi.Tools/               內建工具（時間、計算、範圍內檔案讀寫、筆記、提醒與計時器、文件讀取）
+  Lumi.Documents/          讀取 Word、Excel、PowerPoint、PDF 的文字（OpenXml、PdfPig；只透過 Core 的 IDocumentReader 對外）
   Lumi.App/                 Avalonia 介面與 DI 組裝（唯一的 composition root）
 tests/
   Lumi.Core.Tests/
@@ -55,7 +58,8 @@ tests/
   Lumi.Providers.Tests/     Anthropic Provider 的 fixture 測試（不呼叫真實 API）
   Lumi.Speech.Tests/        Whisper 客戶端與解析器（假的 HttpMessageHandler，不呼叫真實服務）
   Lumi.Infrastructure.Tests/ SQLite 實作（暫存資料夾的真資料庫檔）
-  Lumi.Tools.Tests/         工具與運算式解析器（含惡意輸入）
+  Lumi.Tools.Tests/         工具與運算式解析器（含惡意輸入、路徑逃逸）
+  Lumi.Documents.Tests/    四種文件格式的讀取（測試檔由程式產生，不提交二進位檔）
   Lumi.App.Tests/           ViewModel、Markdown 解析與渲染（含 Avalonia.Headless）、EmojiText、字串資源
   Lumi.Architecture.Tests/  相依規則、色碼檢查、P/Invoke 與供應商 SDK 的歸屬
 poc/
