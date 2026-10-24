@@ -99,6 +99,7 @@ Lumi.App ──► Lumi.Sprites.* ──► Lumi.Sprites.Abstractions
   SDK 吃我們自己的 `HttpClient`（`IHttpClientFactory` typed client），測試用假的 `HttpMessageHandler` 餵 fixture。
 - **對話歷史只能往後加，或從尾端移除**：已送出的訊息與內容區塊不能修改、重排，也不能刪除中間的訊息；thinking 區塊（含 signature／`redacted_thinking` 的資料）要原樣存檔、原樣送回下一次請求。模型會檢查這段歷史的一致性，改過會回 400。
   從尾端移除訊息（例如「重新產生」，`IConversationStore.RemoveLastMessageAsync`）沒問題：前面每一則的內容都沒變。
+  **每次請求附加的內容也算歷史**：Anthropic 的 thinking 區塊簽章綁定它之前的 system、tools 與所有訊息（2026-08-31 之後建立的帳號預設檢查；錯誤是 400 `Invalid signature in thinking block ... bound to a different conversation`）。所以模式指示隨訊息存檔（`ChatMessage.TurnSuffix`）、之後原樣送回；工具清單不因對話狀態（有沒有檔案範圍）增減。**system 在一則對話內固定**：第一次送出時存在對話上（`IConversationStore.GetSystemPromptAsync`／`SetSystemPromptAsync`），之後都送它；記憶、人設、記憶開關在中途改變時，最新的完整 system 以 `<lumi_system_update>` 區塊（`SystemPromptUpdate`）附在那一則訊息的 `TurnSuffix` 後面，沒再變就不重複。所以**不要**為了「讓新設定立刻生效」去改已送出請求的 system 或工具清單。
   **整個對話可以刪除**（`IConversationStore.DeleteAsync`，一律經過 `ConversationDeletionService`：訊息與上下文項目隨外鍵刪除，再清權限記憶與附件）；單則訊息仍不能刪除或修改。回應中（含小精靈回應）不能刪除任何對話。不認得的內容區塊（例如供應商專屬的 fallback 區塊）存成 `ProviderBlock`，只送回產生它的那個供應商。
 - **使用者加入的檔案、資料夾、圖片是「快照」**（M4）：加入的項目在**下一則使用者訊息**帶上當下的內容（`ContextBlock`、`ImageBlock`，和使用者的文字存成同一則訊息），之後不再重複送；移除項目只是從範圍拿掉（工具讀不到），已經送出的內容留在歷史裡，不會被收回；再加入同一個檔案＝再拍一次新快照。內容放不下（太大、不是文字、找不到）時不中斷送出，區塊用 `Note` 說明原因，檔案仍在範圍內，模型用 `read_file` 讀。轉成文字的格式只在 `ContextBlockFormatter` 定義一次，兩家 Provider 共用。
 - **圖片位元組不放進資料庫**：存成 `attachments/<sha256>.<ext>`（`IAttachmentStore`），訊息只記檔名；送給供應商時才讀出來轉 base64，讀不到就改成一段說明文字，不讓整個請求失敗。格式依檔案開頭的位元組判斷（PNG、JPEG、GIF、WebP，上限 5 MB），不信副檔名。啟動時清掉沒有被任何訊息引用的附件檔案。
@@ -123,7 +124,7 @@ Lumi.App ──► Lumi.Sprites.* ──► Lumi.Sprites.Abstractions
 - 檔案類工具只能存取 `ToolContext.Scope`（使用者加入的檔案與資料夾）。路徑要正規化並檢查，防止用 `..` 跳出範圍。
   - 路徑一律經過 `IFileScope.Resolve`：先正規化，再把**符號連結逐段展開成真實路徑**，最後確認真實路徑在某個根之下（用目錄分隔字元結尾比對前綴，`/a/b` 不會把 `/a/bc` 當成在裡面）。拒絕：`..` 跳出、範圍外的絕對路徑、符號連結指向範圍外、Windows 的 UNC／裝置名稱／替代資料流。失敗回 `ScopeResolution`（附給模型看的原因），不丟例外。
   - 範圍內「明顯是機密」的檔案不讀（`.env*`、私鑰與憑證、`secrets.json`、`.git/`、`.ssh/`；名單在 `ScopeRules`），**使用者自己加入的單一檔案不擋**。
-  - 需要範圍的工具宣告 `RequiresScope`：對話沒有任何範圍時，請求不帶它們的定義。架構測試檢查：碰檔案系統的工具（示範用的筆記工具除外）必須經過 `context.Scope`。
+  - 需要範圍的工具宣告 `RequiresScope`：對話沒有任何範圍時執行會回「目前沒有加入任何檔案或資料夾」，但**定義一律照送**（工具清單改變會讓 thinking 簽章失效，2026-10-25）。架構測試檢查：碰檔案系統的工具（示範用的筆記工具除外）必須經過 `context.Scope`。
   - 上下文項目是「快照」：加入的項目在下一則使用者訊息帶上當下的內容；移除項目只是從範圍拿掉，已經送出的內容留在歷史裡（4B）。
 - 錯誤用 `ToolResult.Error(...)` 回傳給模型，不要讓例外直接往外丟。
 - 每個工具都要有逾時設定。
@@ -150,9 +151,9 @@ Lumi.App ──► Lumi.Sprites.* ──► Lumi.Sprites.Abstractions
 - 衝突時的優先順序：**基底 > 模式格式 > 人設 > 角色語氣**。
 - system 內容要保持穩定，**不要因為切換模式而改動 system**，否則 Anthropic 的 prompt 快取會失效。（記憶變動是例外，見下。）
 - 記憶（第 5 層）是**資料，不在優先順序之內**，不能推翻任何一層。`<lumi_memory>` 內的 `</lumi_memory` 會被跳脫；記憶依分類、再依 id 排序，沒有變動時前綴逐字相同。
-- 記憶放 system 而不放尾端，因為它不會隨模式改變；代價是記憶變動時 system 之後的快取重寫一次，可以接受。不選尾端附加，是因為每則請求都要付全額輸入費用；不選對話開始時凍結，是因為使用者說「忘掉」之後，舊快照仍會送給供應商。記憶關閉時整層不送。
+- 記憶放 system 而不放尾端，因為它不會隨模式改變；代價是記憶變動時 system 之後的快取重寫一次，可以接受。不選尾端附加，是因為每則請求都要付全額輸入費用；原本不選對話開始時凍結，是因為使用者說「忘掉」之後，舊快照仍會送給供應商；**2026-10-25 改為對話內凍結**（thinking 簽章綁定 system，中途改 system 會 400），中途的變動以 `<lumi_system_update>` 附加，代價是這則對話的舊 system 仍會送出，要完全不送請開新對話。記憶關閉時新對話不含這一層；記憶工具的定義一律照送，關閉時執行會被擋下。
 - 小精靈模式的限制：最多兩句、約 60 字、不用 Markdown；需要長篇時呼叫 `show_details` 工具；`max_tokens` 上限較低；氣泡也有字數上限並會截斷。
-- 模式指示（第 3、4 層）**只存在請求裡、不存檔**，包在 `<lumi_mode>` 裡放在請求最尾端、快取斷點之後（M5）。thinking 參數不因模式改變（改了訊息快取會失效）。
+- 模式指示（第 3、4 層）包在 `<lumi_mode>` 裡，附在請求最後一則訊息的最尾端、快取斷點之後（M5）；**送出時隨那一則訊息存檔（`ChatMessage.TurnSuffix`，SQLite `messages.turn_suffix`），之後每次請求都原樣帶在那一則裡**（2026-10-25 修改，原本是「不存檔」）。thinking 參數不因模式改變（改了訊息快取會失效）。
 - Prompt 文字放在 `Lumi.Core/Prompts/Text/*.md`（內嵌資源），不寫在 C# 字串裡。system 裡不放日期時間等會變動的值。
 
 ## 10. 模型與金鑰

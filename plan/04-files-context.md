@@ -105,7 +105,7 @@ public sealed record ImageBlock(string FileName, string MediaType, string Displa
 | `search` | 在範圍內搜尋：`pattern` 比對內容（正規表示式），可選 `glob` 限制檔名；回傳「檔案:行號: 內容」 |
 
 - 工具的 `Preview().Target` 顯示路徑（卡片標題「讀取檔案 · plan/00-overview.md · 182 行」）；`Summary` 由工具提供。
-- 沒有任何範圍（使用者沒加入資料夾或檔案）時，工具回錯誤「目前沒有加入任何檔案或資料夾」，而且**不送出這三個工具的定義**（`ConversationService` 依範圍是否為空過濾，省 token 也避免模型亂試）。
+- 沒有任何範圍（使用者沒加入資料夾或檔案）時，工具回錯誤「目前沒有加入任何檔案或資料夾」，~~而且**不送出這三個工具的定義**（`ConversationService` 依範圍是否為空過濾，省 token 也避免模型亂試）~~（**2026-10-25 修改：定義一律照送**，因為工具清單改變會讓 Anthropic 的 thinking 簽章失效、請求 400；沒有範圍時執行仍回上述錯誤）。
 
 ---
 
