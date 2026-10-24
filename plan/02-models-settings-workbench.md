@@ -35,7 +35,7 @@
 
 **不在 M2**（避免範圍膨脹，各自歸屬）：
 - 對話列表的搜尋、刪除、重新命名、依日期分組 → M9。M2 的「歷史對話」只做能切換對話的最簡列表。（M9 程式已完成待驗收，見 plan/09-history-polish.md）
-- 小精靈本身 → M7。M2 只存「小精靈預設模型」，工具列的「小精靈模式」按鈕先停用。
+- 小精靈本身 → M7。M2 只存「小精靈預設模型」，工具列的「小精靈模式」按鈕先停用。（2026-10-24：小精靈改為與工作台共用預設模型，設定畫面已移除「小精靈預設模型」，見主計畫決策紀錄。）
 - 設定視窗的語音、人格、工具權限、小精靈分類 → 各自的里程碑再加，M2 不放空頁面。
 
 ---
@@ -88,7 +88,7 @@ public sealed record AppSettings(
     IReadOnlyList<ConnectionSettings> Connections,
     IReadOnlyList<ModelSettings> Models,
     string? WorkbenchModelId,     // ModelSettings.Id
-    string? SpriteModelId,        // M7 才會用到，M2 先存
+    string? SpriteModelId,        // M7 才會用到，M2 先存（2026-10-24 起不再讀取，欄位保留以相容舊設定檔）
     ThemePreference Theme);       // System／Light／Dark
 ```
 
@@ -141,7 +141,7 @@ public sealed record ResolvedModel(ModelSettings Model, ConnectionSettings Conne
 
 - `ChatRequest` 改成帶 `ResolvedModel`（取代 M1 的 `ModelId` + `MaxTokens`），Provider 從裡面拿 Base URL、模型 ID、連線 Id（取金鑰用）、最大輸出、是否顯示思考。
 - `RoutingChatProvider : IChatProvider` 依 `Connection.Format` 轉給 `AnthropicChatProvider` 或 2B 的 `OpenAICompatibleChatProvider`。UI 與 `ConversationService` 只認得 `IChatProvider`，不變。
-- `ConversationService` 送出時用 `IModelCatalog.Current.WorkbenchModelId`（M7 的小精靈用 `SpriteModelId`）。
+- `ConversationService` 送出時用 `IModelCatalog.Current.WorkbenchModelId`（2026-10-24 起小精靈也用同一個，不再有 `SpriteModelId`）。
 - **換模型時的歷史**：Anthropic 的 thinking 區塊、`ProviderBlock` 只送回 Anthropic 連線（1C 已是這樣）；送給 OpenAI 相容時只送文字。從 OpenAI 相容換回 Anthropic 時照常送出全部，API 會丟掉不認得的 thinking 區塊（不收費）。
 
 ### 工作項目
@@ -212,7 +212,7 @@ public sealed record ResolvedModel(ModelSettings Model, ConnectionSettings Conne
 **做**
 - 獨立的設定視窗（可與工作台並排），左側分類 M2 只有「連線與模型」「一般」
 - 連線分頁：清單、表單、金鑰、測試連線、刪除
-- 模型設定分頁：工作台／小精靈預設模型、依連線分組的清單、表單、從連線列出可用模型
+- 模型設定分頁：預設模型（2026-10-24 起工作台與小精靈共用）、依連線分組的清單、表單、從連線列出可用模型
 - 一般：主題（跟隨系統／淺色／深色），立即生效
 - 缺金鑰時改為開啟設定視窗並定位到該連線，M1 的 `ApiKeyDialog` 整個刪除
 - 工作台頂端先加一顆「設定」按鈕（2D 會重排整條工具列，這裡只放進入點）
@@ -244,8 +244,8 @@ public sealed record ResolvedModel(ModelSettings Model, ConnectionSettings Conne
 
 #### 模型設定分頁
 
-- 上方兩個下拉：**工作台預設模型**、**小精靈預設模型**（M7 才用，先存）。改了立即生效（`SetWorkbenchModelAsync`／`SetSpriteModelAsync`）。
-- 左側清單依連線分組，預設的項目標上「工作台預設」「小精靈預設」。下方「新增模型設定」（需要至少一個連線，沒有時按鈕停用並提示先加連線）。
+- 上方一個下拉：**預設模型**（工作台與小精靈共用；2026-10-24 前有第二個「小精靈預設模型」下拉，已移除）。改了立即生效（`SetWorkbenchModelAsync`）。
+- 左側清單依連線分組，預設的項目標上「預設」（2026-10-24 前是「工作台預設」「小精靈預設」）。下方「新增模型設定」（需要至少一個連線，沒有時按鈕停用並提示先加連線）。
 - 表單：使用的連線（下拉）、模型 ID、顯示名稱、最大輸出 tokens、上下文上限、顯示思考過程。
   - **模型 ID 是可編輯的下拉**：選了連線之後，背景用 `IConnectionTester` 以已儲存的金鑰列出可用模型填進下拉；取不到（404、服務沒開、沒有金鑰）時下拉是空的，顯示一行說明，使用者可以直接手動輸入。旁邊「重新整理」。
   - 顯示名稱留空時，選了／輸入模型 ID 後自動帶入模型 ID；使用者改過就不再覆蓋。

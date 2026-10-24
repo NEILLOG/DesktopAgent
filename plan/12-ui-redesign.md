@@ -507,6 +507,10 @@ SettingsWindow（自訂標題列，同工作台）
 - `docs/ui-spec.md` 整份依實作重寫（章節 1～8 編號不變，因為程式註解引用 2.2、6.1、8.1 等；新增 9 RWD、10 共用元件與互動狀態）；`agent.md` 第 12 節換成新規則；`README.md` 兩處更新；`docs/sprite-dev-guide.md` 沒改（提到的「琥珀色」是光球 Tool 狀態的固定色）。
 - 文件與實作的差異已以實作為準：歷史抽屜只有標題加時間（搜尋與分組留給 M9，M9 程式已完成待驗收，見 plan/09-history-polish.md）；確認區沒有「提供檢視內容」；Windows 標題列保留寬度是常數 138＋8 間距＝146。
 
+### UF 後續調整（2026-10-24）
+- 標題列只顯示「Lumi」文字，不放 logo 方塊（`CustomTitleBar`，設定視窗共用）；`TitleBar_LogoMark` 字串仍用於設定視窗側欄與助理頭像。
+- 設定 › 模型：移除「小精靈預設模型」下拉與「小精靈預設」標籤，剩「預設模型」與「預設」；`ModelListItem` 不再有 `IsSpriteDefault`。其餘決策與行為變更（模式互斥、氣泡可點、Anthropic fallback 與 log）見主計畫 2026-10-24 與 `plan/manual-verification.md` 的 ADJ。
+
 ## 完成摘要（2026-10-22）
 - 任務 UA、UA-8、UA-9、UB-1～UB-5、UC-1、UC-2、UD-1～UD-3、UE-1～UE-5 全部完成並各自提交於分支 `m12-ui-redesign`。
 - 測試：Core 229、Infrastructure 97、Architecture 63、Tools 329、Platform 54（略過 13，非 Windows）、Sprites 424、Providers 136、App 1199，全綠；build 0 警告 0 錯誤。
