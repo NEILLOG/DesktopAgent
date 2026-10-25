@@ -1,6 +1,6 @@
 # 18 瀏覽器操作
 
-- 狀態：**已確認，實作中**（2026-10-25 使用者確認）
+- 狀態：**程式與文件完成，待人工驗收**（2026-10-25 實作；人工驗收項目見 `plan/manual-verification.md` 的 M18，**第一項是在公司 Windows＋Edge 跑 POC**）
 - 對應里程碑：M18
 - 前置：M17（Proxy 設定 `INetworkProxyInfo`／`NetworkSettings`、網址來源規則、`WebToolSupport`、`IWebContentExtractor`）。M3、M15、M16 已完成。
 - 設計依據：`plan/ui-guide/ui-guide.html`（權威）、`docs/ui-spec.md`（設定頁版面以 M17 的「網路」頁為主要參照）。
@@ -897,4 +897,22 @@ internal sealed class FakeBrowserSessions : IBrowserSessions
 
 **實作紀錄**（偏離原計畫的地方與原因）
 
-（實作時填寫。）
+2026-10-25 實作（協調者＋ 12 個子代理，分支 `m18-browser`；Wave 1 九包、Wave 2 三包）。**這台 Mac＋Chrome 155 上：`LUMI_BROWSER_TESTS=1 LUMI_BROWSER_TESTS_VISIBLE=1` 的 `Lumi.Browser.Tests` 139 個全過；預設（沒有環境變數）全專案 build 零警告、測試零失敗。** 沒有在 Edge／Windows 上跑過（等使用者的 POC）。
+
+- **派工做法**：協調者用 `git worktree add -b w18x ../DesktopAgent-wt/w18x HEAD` 建好每一包的工作目錄（Wave 2 在 Wave 1 合併後才建），子代理只在指定目錄工作、不 commit。沒有再發生 M17 的舊 commit 問題。
+- **Wave 2 的前置**：18D、18E 都需要改 `LocalSite`，協調者先自己加好 `/tall`、`/form` 與共用的 `BrowserTestRig`，Wave 2 就不必改它，三包的檔案完全不重疊。
+- **`BrowserPageState.Page` 丟例外**（18C）：沒有分頁時丟 `NoPage`；另有 `PageOrNull`。18F 的「Page 為 null」改成判斷 `PageOrNull is null` 或 `!_host.IsRunning`。
+- **`BrowserHost` 建構式收 `ILogger`（非泛型）**（18C），另有 internal 建構式可注入 `planner` 委派。
+- **孤兒附件清理的 SQL 預先篩選漏掉工具結果的圖片**（18K 發現）：`content_json LIKE '%"type":"image"%'` 找不到 `ToolResultBlock.Images`（元素型別宣告為 `ImageBlock`，序列化不帶 `type`），`AttachmentCleaner` 會誤刪。加了 `OR content_json LIKE '%"Images":[{%'`，並有真資料庫的測試保證。這個比對依賴 JSON 沒有縮排。
+- **Playwright 例外訊息的 call log 會帶出輸入內容**（18E 發現，`fill("…")`）：Debug log 一律只寫例外型別加訊息第一行（第一行含 `://` 時略過）；18D、18F 同理。
+- **Playwright .NET 的逾時是 `System.TimeoutException`**（沒有 `Microsoft.Playwright.TimeoutException`）；不存在的 iframe ref 不回 count 0 而是丟 `PlaywrightException`「Invalid frame in aria-ref selector」，都轉成對應的 `BrowserException`（逾時、`StaleRef`）。
+- **18F**：文字條件只算看得見的文字（`Filter(Visible = true)`）；`WaitForUserAsync` 先取一次 `GetStateAsync(create:false)`，沒有分頁或瀏覽器已關閉時直接報錯，不會白白重啟成可見視窗。下載只監聽目前分頁（點擊開新分頁再下載會被判為沒有下載）。
+- **18H**：`browser_upload`、`browser_wait_for_user` 設 `CanAlwaysAllow=false`（連同 `memory_save` 共三個）；工具說明改成「會先請使用者確認」（因為「本次對話都允許」仍可記住）。`browser_wait_for_user` 的 `message` 只在確認卡片的 Detail 顯示，等待期間視窗內不會顯示。`browser_download` 的 `path` 是資料夾時回錯誤（下載的檔名要下載完才知道）。
+- **無參數工具的 schema**：`ToolSchema` 補上空的 `properties`（`browser_close`、`browser_back`），部分 OpenAI 相容的閘道要求一定要有。
+- **副檔名封鎖不分大小寫**：`BrowserRules.IsBlockedDownloadExtension`（`.MSI` 原本擋不住）。
+- **Proxy 例外清單的 IPv4 樣式轉 CIDR**（18B 提出）：`10.*` → `10.0.0.0/8`、`192.168.1.*` → `192.168.1.0/24`，其他寫法原樣交給 Chromium。
+- **`browser_extract` 的 tables 模式加長度上限**（`WebLimits.MaxChars`），避免大表格整張送出。
+- **`BrowserHostedService` 在 `Lumi.Browser`**（不是 `Lumi.App/Services`），`AddLumiBrowser(configure)` 用 `Replace` 取代 Core 預設的 `NullBrowserSessions`；`ProfileRoot` 由 `Program.cs` 設定。
+- **設定視窗**：瀏覽器區段放在 `SettingsWindow` 網路頁的 `NetworkPanel` 下方（同一個 `ScrollViewer`），不是放進 `NetworkPanel` 本身（`NetworkPanel` 的 DataContext 是 `NetworkViewModel`）；選單副標改成「Proxy、瀏覽器」。
+- **端到端測試**：`Lumi.Browser.Tests` 引用 `Lumi.Tools`，`BrowserToolsEndToEndTests` 用真正的工具類別操作真瀏覽器（填表送出、確認卡片描述不洩漏輸入、密碼欄位被拒、截圖、表格擷取、關閉）。
+- **沒做**：卡片上顯示截圖；跨分頁的下載偵測；Edge／Windows 的實機驗證（等 POC）；`browser_wait_for_user` 的 `message` 顯示在瀏覽器視窗裡（需要改介面）。
