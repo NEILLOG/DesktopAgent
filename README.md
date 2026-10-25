@@ -7,7 +7,7 @@ Lumi 是一個跨平台（Windows / macOS）的桌面 AI 助理。使用者自�
 - **工作台**：完整的對話視窗。可以切換模型、加入檔案或資料夾當上下文、語音輸入，並在模型選單裡顯示本對話的 token 用量與回合數。
 - **小精靈**：一個住在桌面上的透明角色（第一個角色是會呼吸的光球）。游標靠近時才浮出輸入列，用簡短的氣泡回答，並用動畫表現聆聽、思考、呼叫工具、完成等過程。
 
-> 目前狀態：M0～M8 與 M12（UI 重新設計）程式完成，多數待人工驗收與 Windows 驗證（各里程碑見 `plan/00-master-plan.md`）。M9「歷史對話與完成度」：歷史對話的搜尋、分組、改名、刪除，視窗位置記憶，啟動失敗說明，log 程式完成並待人工驗收；Windows 國旗 emoji 的判定等待實機結果。M10「WPF 小工具的工具移植」：10A～10E 程式完成，待人工驗收。M14「長期記憶」：程式完成，待人工驗收（`plan/14-long-term-memory.md` 第 14F 節）。
+> 目前狀態：M0～M8 與 M12（UI 重新設計）程式完成，多數待人工驗收與 Windows 驗證（各里程碑見 `plan/00-master-plan.md`）。M9「歷史對話與完成度」：歷史對話的搜尋、分組、改名、刪除，視窗位置記憶，啟動失敗說明，log 程式完成並待人工驗收；Windows 國旗 emoji 的判定等待實機結果。M10「WPF 小工具的工具移植」：10A～10E 程式完成，待人工驗收。M14「長期記憶」：程式完成，待人工驗收（`plan/14-long-term-memory.md` 第 14F 節）。M15「工具清單」與 M16「MCP 伺服器」：程式完成，待人工驗收（`plan/manual-verification.md` 的 M15、M16）。
 
 ## 特色
 
@@ -22,6 +22,8 @@ Lumi 是一個跨平台（Windows / macOS）的桌面 AI 助理。使用者自�
 - **可擴充的小精靈角色**：殼與角色分離，支援程式繪製的角色，以及「美術素材 + JSON」的角色
 - **全部程式繪製**：光球不使用任何圖片，閒置時自動降低幀率以節省電力
 - **歷史對話**：抽屜可以搜尋標題與訊息內容、依日期分組、改名、刪除（直接刪除，不做垃圾桶；刪除會一併清掉附件）、載入更多
+- **工具清單**：設定 › 工具列出 Lumi 所有能用的工具，依群組分類；可以逐一或整組啟用、關閉（新對話才生效），並把寫入、網路類工具設成「永遠允許」（破壞性工具與寫入記憶一律先問你）。
+- **MCP 伺服器**：可以設定多個 MCP 伺服器（本機指令或遠端 HTTP），它們的工具和內建工具一樣出現在工具清單、一樣先確認；支援貼上 Claude Desktop／Claude Code 的設定 JSON 匯入。環境變數與標頭的值只存在這台裝置。
 - **視窗記憶與啟動說明**：工作台記得上次的位置、大小與最大化狀態（螢幕變動時退回置中）；啟動失敗時顯示說明視窗，記錄寫在使用者資料夾的 `logs/lumi-yyyy-MM-dd.log`
 
 ## 技術棧
@@ -52,6 +54,7 @@ src/
   Lumi.Speech/              Whisper 代理客戶端（上傳、回應解析、錯誤對應、測試連線）
   Lumi.Tools/               內建工具（時間、計算、範圍內檔案讀寫、筆記、提醒與計時器、文件讀取）
   Lumi.Documents/          讀取 Word、Excel、PowerPoint、PDF 的文字（OpenXml、PdfPig；只透過 Core 的 IDocumentReader 對外）
+  Lumi.Mcp/                MCP 伺服器的連線與工具 Adapter（官方 SDK 只在這裡引用；只透過 Core 的 IMcpToolSource 對外）
   Lumi.App/                 Avalonia 介面與 DI 組裝（唯一的 composition root）
 tests/
   Lumi.Core.Tests/
@@ -61,6 +64,7 @@ tests/
   Lumi.Infrastructure.Tests/ SQLite 實作（暫存資料夾的真資料庫檔）
   Lumi.Tools.Tests/         工具與運算式解析器（含惡意輸入、路徑逃逸）
   Lumi.Documents.Tests/    四種文件格式的讀取（測試檔由程式產生，不提交二進位檔）
+  Lumi.Mcp.Tests/          MCP 管理員、工具 Adapter、結果格式（用假連線與記憶體內的 SDK 伺服器）
   Lumi.App.Tests/           ViewModel、Markdown 解析與渲染（含 Avalonia.Headless）、EmojiText、字串資源
   Lumi.Architecture.Tests/  相依規則、色碼檢查、P/Invoke 與供應商 SDK 的歸屬
 poc/
