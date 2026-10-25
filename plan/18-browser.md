@@ -1,6 +1,6 @@
 # 18 瀏覽器操作
 
-- 狀態：**草稿**（2026-10-25 撰寫，待使用者確認後實作）
+- 狀態：**已確認，實作中**（2026-10-25 使用者確認）
 - 對應里程碑：M18
 - 前置：M17（Proxy 設定 `INetworkProxyInfo`／`NetworkSettings`、網址來源規則、`WebToolSupport`、`IWebContentExtractor`）。M3、M15、M16 已完成。
 - 設計依據：`plan/ui-guide/ui-guide.html`（權威）、`docs/ui-spec.md`（設定頁版面以 M17 的「網路」頁為主要參照）。
@@ -890,4 +890,11 @@ internal sealed class FakeBrowserSessions : IBrowserSessions
 
 ## 實作紀錄
 
-（實作時填寫：偏離原計畫的地方與原因，以及 POC 結果。）
+**POC 結果**
+
+- 2026-10-25，macOS 27.0.1，Google Chrome 155.0.8059.85（`poc/Lumi.BrowserPoc`，背景與 `--visible` 各一次）：全部 PASS——啟動持久設定檔、AI 快照有 ref（含 iframe 的 `fNeM`）、`aria-ref` 點擊與輸入、辨識密碼欄位、對話框、新分頁、截圖、下載、關閉後重開 Cookie 還在、**背景 ↔ 視窗 ↔ 背景的重啟 Cookie 還在（D9）**、http PAC 導向指定 Proxy。`--pac`、`--intranet` 沒有環境可測（SKIP）。
+- 公司 Windows＋Edge：（待使用者執行，結果記在這裡；任何 FAIL 先回報再往下做人工驗收。）
+
+**實作紀錄**（偏離原計畫的地方與原因）
+
+（實作時填寫。）
