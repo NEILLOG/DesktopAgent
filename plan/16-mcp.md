@@ -1,6 +1,6 @@
 # 16 MCP 伺服器
 
-- 狀態：**草稿**（2026-10-25 細節與使用者討論定案，待確認後動工）
+- 狀態：**程式完成，待人工驗收**（2026-10-25 實作；人工驗收項目見 `plan/manual-verification.md` 的 M16）
 - 對應里程碑：M16
 - 前置：**M15 必須完成**（工具快照、`IToolCatalog`、工具清單頁、`ToolSettings`、「永遠允許」）。M3、M12 皆已程式完成。
 - 設計依據：`plan/ui-guide/ui-guide.html`（權威）、`docs/ui-spec.md` 第 7 節（「AI 連線」的清單＋詳細版面是主要參照）。
@@ -490,3 +490,25 @@ Phase 0（協調者）
 - `NotificationKind.SystemNotice` 已加。
 - 架構測試：新增 `McpLibraryRuleTests`（SDK 只在 Lumi.Mcp 與 Lumi.Mcp.Tests、其他組件不引用 SDK、Lumi.Mcp 只有 `McpTool` 實作 `ITool`）；`DependencyRuleTests` 與 `DocumentLibraryRuleTests` 已把 `Lumi.Mcp` 列入。`ToolRuleTests.Other_assemblies_implement_no_tools` 沒有列 `Lumi.Mcp`，不需要改。
 - Phase 0 結束時：build 零警告、全部測試通過。
+
+### Wave 1、Wave 2 與整合（2026-10-25，協調者）
+
+- 16A～16F 為 Wave 1（6 個 Haiku 子代理，16F 因為和 15D 都要改 `Strings` 而晚一點派），16G 為 Wave 2；整合：`AddLumiMcp`、`McpHostedService`（放在 App）、設定視窗「工具」分類加分段「工具清單｜MCP 伺服器」、`SettingsViewModel.ToolsTabIndex`、組裝檢查、文件。
+- **與計畫不同**：
+  - 內容片段型別是 `McpTextPart`／`McpImagePart`／`McpResourcePart`（計畫寫 Text／Image／Resource）。
+  - SDK 的 `StreamClientTransport` 在 `ModelContextProtocol.Protocol`、`StreamServerTransport` 在 `ModelContextProtocol.Server`；其餘 API 名稱與計畫相符。
+  - 16C 額外行為：引數不是 JSON 物件時回「參數必須是 JSON 物件。」；未知內容型別轉成「[未支援的內容類型：…]」；屬性值也跳脫 `<`；伺服器被移除時一併刪除它的工具快取；錯誤文字與 stderr 把祕密的值換成 `***`。
+  - 16D：`InternalsVisibleTo("Lumi.Platform.Tests")` 寫在 `ShellEnvironment.cs` 裡；解析會略過名稱不合法的項目，也處理 shell 橫幅黏在第一個變數前的情況。
+  - 16B：載入時除了格式錯誤，也會跳過代號不合法或重複、`Id` 重複、傳輸值未定義的伺服器；`SaveMcpServerAsync` 在 `newSecrets` 為 null 時沿用已存的 `SecretsVersion`；寫入前先檢查設定檔是否唯讀。`McpToolNaming.IsValidKey` 的正規表示式改用 `\z`（原本 `$` 會接受尾端換行）。
+  - 16E：`ListGroups` 只為已啟用的伺服器建群組（`GetStatuses()` 沒有名稱）。
+  - 16F：祕密儲存時先讀現有的祕密，依列計算後與現值比對，完全相同才傳 null；環境變數／標頭名稱重複的檢查在 ViewModel（`McpServerRules` 沒有這條）；「更換」後留空視為沒有更換；測試連線讀不到祕密時沿用 `ApiKey_Unreadable` 的文字。
+  - 16G：`ToolsViewModel` 建構式另加 `IUiDispatcher`（`IMcpToolSource.Changed` 可能在背景執行緒）；伺服器提示同時有 readOnly 與 destructive 時顯示「會刪除或覆蓋」。
+  - 連線方式的分段改綁整數 `TransportIndex`（`TabIndexConverter`）：原本兩個 RadioButton 各綁一個布林屬性，會互相回寫成無限迴圈（測試卡死在 100% CPU，用 `dotnet-stack` 找到）。MCP 頁面的 headless 測試因此也改成放在真正的設定視窗裡。
+- **已知問題／待決定**：
+  - 連線中斷是**惰性偵測**：stdio 程序結束後，要等下一次讀取狀態或呼叫工具才會顯示為失敗；`IMcpToolSource` 沒有「連線中斷」事件，所以畫面不會即時更新。
+  - **沒有自動測試涵蓋**：真正的 stdio 伺服器程序、真實的 Streamable HTTP 伺服器、Windows 上 `ResolveWindowsCommand` 的實際執行（只有邏輯的單元測試）、macOS 登入 shell 取得 PATH 的實機行為。這些都在人工驗收清單。
+  - 16A 的錯誤文字有幾句計畫沒寫、由子代理暫定：欄位型別不對「欄位 {欄位名} 的格式不正確」、「不支援的傳輸類型「{type}」」、「標頭 {名稱} 的值必須是文字」，網址的 scheme 不是 http／https 用「請輸入完整的網址」。
+  - 匯入時 `type: sse` 的檢查先於 command 判斷，即使同時有 command 也回 SSE 錯誤。
+  - MCP 回傳的圖片只轉成一行文字說明（`ToolResult` 只有文字）。
+- 測試（整合後）：Core 812、Mcp 50、Infrastructure 411、App 1802、Architecture 98、Platform 62（15 略過）；建置零警告。
+- **未做**：人工驗收；沒有用真實 MCP 伺服器和真實模型試過；沒有實際啟動 GUI 做冒煙測試。

@@ -1,6 +1,6 @@
 # 15 工具清單
 
-- 狀態：**草稿**（2026-10-25 細節與使用者討論定案，待確認後動工）
+- 狀態：**程式完成，待人工驗收**（2026-10-25 實作；人工驗收項目見 `plan/manual-verification.md` 的 M15）
 - 對應里程碑：M15
 - 前置：M3（工具框架與權限確認）、M10（工具移植）、M12（設定頁新版面）、M14（記憶工具與記憶開關）皆已程式完成。
 - 後續：M16（MCP）會在這一頁加上「MCP 伺服器」分段與依伺服器分組的 MCP 工具；本計畫**不預留** M16 的畫面。
@@ -429,3 +429,18 @@ Phase 0（協調者） ──► Wave 1：15A、15B、15C、15D 同時進行 ─
 - migration 9 已加；既有升級測試（降版用的 SQL）已補 `DROP COLUMN tool_snapshot`，並已新增 `UpgradeFromVersion8_AddsToolSnapshot_AndKeepsConversations`；**15A 不必再寫這個測試**，只需寫 `GetToolSnapshotAsync`／`SetToolSnapshotAsync` 的測試。
 - `ToolSnapshotJson`、`ToolSettings` 的單元測試已在 `tests/Lumi.Core.Tests/Tools/`。
 - Phase 0 結束時：build 零警告、全部測試通過（Core 676、Tools 969、Providers 147、Infrastructure 365、App 1734）。
+
+### Wave 1 與整合（2026-10-25，協調者）
+
+- 15A～15D 由 4 個 Haiku 子代理平行完成並合併（15A：Infrastructure 設定檔與快照；15B：`ToolCatalog` 與對話迴圈；15C：21 個工具的群組與說明；15D：`ToolsViewModel`／`ToolsPanel`）。整合：設定視窗新分類「工具」（索引 3，原本的外觀、小精靈、語音順延為 4、5、6，相關測試的索引已更新）、`wrench` 圖示、DI（`IToolCatalog`→`ToolCatalog`、`ToolsViewModel`）、文件。
+- **與計畫不同**：
+  - `Tools_ModelToolsOff` 的文字含「›」，被架構測試 `NoSymbolIconRuleTests` 禁止，改為「可以到「AI 連線」的「模型設定」打開。」（計畫表格已同步）。
+  - 15B：工具快照在 `RunTurnAsync` 開頭解析一次（for 迴圈外）；移除 `ConversationService` 裡不再使用的 `_registry` 欄位。
+  - 15D：「永遠允許」的確認用 `ConfirmDestructiveAsync`（紅色確認鍵）；「恢復預設」用一般確認；儲存時保留目錄裡沒有的名稱（M16 離線的 MCP 伺服器）。
+  - 4 個（不是 3 個）`IModelCatalog` 測試替身；`memory_save`、`show_details` 的欄位在 Phase 0 就設好。
+- **已知問題／待決定**：
+  - 群組勾選框與同名工具的勾選框無障礙名稱相同（例如群組「寫入檔案」與工具「寫入檔案」），螢幕閱讀器會重複；計畫沒有給群組名稱的字串。
+  - 「永遠允許」確認用紅色（danger）按鈕；如果想改成主要按鈕，是計畫文字要改。
+  - `ToolSettings` 是 record 但集合比參考，所有「是否為預設」的判斷都必須比內容（`ToolsViewModel.CanResetToDefaults` 已這樣做）。
+- 測試（整合後）：Core 812、Tools 973、Providers 147、Infrastructure 411、App 1802、Architecture 98；建置零警告。
+- **未做**：人工驗收（需要真實金鑰與兩個平台）；沒有實際啟動 GUI 做冒煙測試。
