@@ -477,4 +477,16 @@ Phase 0（協調者）
 
 ## 實作紀錄
 
-（實作時填寫）
+### Phase 0（2026-10-25，協調者完成，已 commit）
+
+與計畫不同或補充的地方（子代理以這裡為準）：
+
+- Phase 0 提前在 M15 Wave 1 進行中完成；M16 的工作包仍然要等 M15 合併後才派（16A、16C、16D 與 M15 沒有檔案重疊，可以更早）。
+- `McpHostedService` **放在 `Lumi.App/Services/`**（和 `ReminderHostedService`、`MemoryCleanupService` 一樣，託管服務都在 App），不在 `Lumi.Mcp`。因此 `Lumi.Mcp` **沒有**引用 `Microsoft.Extensions.Hosting.Abstractions`，**16C 不要寫 `McpHostedService`**，由協調者在整合時寫。`McpServerManager` 只要提供 `StartAllAsync()` 與 `DisposeAsync()`。
+- `McpToolNaming.ToolName` 的雜湊是對**原始完整名稱**（`mcp__{key}__{tool}`，替換字元之前）算 SHA-256，取小寫十六進位前 8 碼；已有測試。
+- 已建立：`Lumi.Mcp`（只有 `AddLumiMcp()` 空入口）、`Lumi.Mcp.Tests`、`Lumi.Core/Mcp/`（`McpServerSettings`、`McpServerSecrets`、`McpSecrets`、`IMcpToolSource`＋`EmptyMcpToolSource`、`IMcpTool`、`IMcpToolCache`＋`NullMcpToolCache`、`McpToolNaming`）、`Lumi.Core/Platform/IShellEnvironment.cs`。`Lumi.App` 已參考 `Lumi.Mcp`。
+- `AppSettings.McpServers`、`ToolSettings.PermissionOverrides`、`IModelCatalog` 的三個 MCP 方法已加；四個測試替身都已補上。`JsonModelCatalog` 目前是最簡版（只更新記憶體中的設定並寫檔的既有路徑，**祕密永遠回 `Empty`、設定檔的 `mcpServers` 與 `permissionOverrides` 欄位尚未讀寫**），16B 要補完整。
+- migration 10（`mcp_tool_cache`）已加，既有升級測試已補 `DROP TABLE IF EXISTS mcp_tool_cache`，並新增 `UpgradeFromVersion9_AddsMcpToolCache_AndKeepsConversations`；16B 不必再寫升級測試。
+- `NotificationKind.SystemNotice` 已加。
+- 架構測試：新增 `McpLibraryRuleTests`（SDK 只在 Lumi.Mcp 與 Lumi.Mcp.Tests、其他組件不引用 SDK、Lumi.Mcp 只有 `McpTool` 實作 `ITool`）；`DependencyRuleTests` 與 `DocumentLibraryRuleTests` 已把 `Lumi.Mcp` 列入。`ToolRuleTests.Other_assemblies_implement_no_tools` 沒有列 `Lumi.Mcp`，不需要改。
+- Phase 0 結束時：build 零警告、全部測試通過。
