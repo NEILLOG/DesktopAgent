@@ -1,6 +1,6 @@
 # 17 網路基礎與網頁讀取
 
-- 狀態：**已確認**（2026-10-25 使用者確認，尚未開始實作）
+- 狀態：**程式與文件完成，待人工驗收**（2026-10-25 實作；人工驗收項目見 `plan/manual-verification.md` 的 M17）
 - 對應里程碑：M17
 - 前置：M15（工具清單、「永遠允許」）、M16（MCP 的遠端連線要跟著走 Proxy）。M3、M10、M12 皆已程式完成。
 - 設計依據：`plan/ui-guide/ui-guide.html`（權威）、`docs/ui-spec.md`（設定頁版面以「語音」頁為主要參照）。
@@ -1144,4 +1144,20 @@ internal sealed class FakeWebClient : IWebClient
 
 ## 實作紀錄
 
-（實作時填寫：偏離原計畫的地方與原因。）
+2026-10-25 實作（協調者＋ 8 個子代理平行，分支 `m17-network-web`，各包在 `w17a`～`w17h`）。偏離計畫或計畫沒寫到的地方：
+
+- **`NetworkSettings` 加內容相等比較**：record 預設對清單欄位比參考，內容相同的兩份設定被判成不同（17D 發現）。Phase 0 之後補上 `Equals`／`GetHashCode`。
+- **只改 Proxy 密碼要生效**：密碼存 `ISecretStore`、不在 `NetworkSettings`，只改密碼時設定相等，`LumiWebProxy` 不會重建（17B 發現）。改成驗證方式是「帳號與密碼」時，任何設定變更都重建一次。
+- **網址偵測 regex 多排除中文標點**（17A）：`，。；：！？、（《》`，免得「看https://a.example/b，然後」把後面的字吃進網址。`ExtractUrls`／`Key` 是 internal，測試改走 `UrlProvenance.From(...).IsKnown(...)`。
+- **IPv4 樣式 `10.*`**（17A）：少於四段時結尾的 `*` 代表剩下的所有段；`HostMatches` 先判斷 IPv4 樣式再判斷 `*.` 子網域。
+- **`LumiWebProxy`／`NetworkTester` 的公開建構式不帶 `IWebProxy? systemProxy`**（17B）：DI 會把已註冊的 `IWebProxy`（就是 `LumiWebProxy` 自己）塞進選用參數造成循環；帶 `systemProxy` 與 `PacScriptLoader` 的建構式是 `internal`，只給測試。PAC 執行失敗的結果也進 5 分鐘快取；Mode=None 時 `Credentials` 一律 null。
+- **ReverseMarkdown 6.3.0 的設定屬性改名**（17C）：`Config.UnknownTags`、`RemoveComments`、`SmartHrefHandling` 已標 Obsolete（專案把警告當錯誤），改用 `Tags.Unknown`、`Formatting.RemoveComments`、`Links.SmartHref`。
+- **`WebClient` 轉址到不同主機時丟掉 `Authorization` 與 `Cookie`**（17C，計畫沒寫）；301／302／303 之後 HEAD 維持 HEAD。
+- **`WebClient` 型別名稱與 `System.Net.WebClient` 衝突**：`AddLumiWeb` 用別名 `LumiWebClient`。
+- **`SdkMcpConnectionFactory` 的建構式接受 `IHttpClientFactory?`**，HTTP 傳輸改用具名用戶端 `mcp`（逾時設為無限，靠 token 與伺服器自己的逾時），Proxy 因此涵蓋遠端 MCP。
+- **`download_file` 網址最後一段**（17F）：去掉尾端 `/` 再判斷（`https://x/files/` 存成 `files`）；多一個「path 是既有資料夾」的檢查。
+- **`web_fetch` 讀文件**（17E）：文件還有內容時結尾補「續讀請帶 offset=N」。
+- **既有測試的期望值更新**：工具清單（23 → 30 個，小精靈可用 4 個新增）、設定視窗分類數（7 → 8）與方向鍵順序。
+- **`ToolGroups` 的順序**：「網路」插在「提醒與計時」之後（索引 5），記憶、小精靈順延。
+- **第一次派工失敗**：用 `isolation: worktree` 建的 worktree 是從舊 commit（53b5b51）建的，沒有計畫與 Phase 0。改成協調者自己用 `git worktree add -b w17x ../DesktopAgent-wt/w17x HEAD` 建好、子代理只在指定目錄工作。**之後派工照這個做法。**
+- 沒做：`NetworkDiagnostics` 的憑證擷取沒有單元測試（需要 TLS 伺服器），列入人工驗收。
