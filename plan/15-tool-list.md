@@ -419,4 +419,13 @@ Phase 0（協調者） ──► Wave 1：15A、15B、15C、15D 同時進行 ─
 
 ## 實作紀錄
 
-（實作時填寫）
+### Phase 0（2026-10-25，協調者完成，已 commit）
+
+與計畫不同或補充的地方（子代理以這裡為準）：
+
+- 有**四個**實作 `IModelCatalog` 的測試替身，不是三個：多了 `tests/Lumi.Speech.Tests/TestSupport/FakeSpeechCatalog.cs`。四個都已補上 `SetToolsAsync`；`FakeModelCatalog`（App.Tests）另有 `ToolSaves` 清單。`JsonModelCatalog.SetToolsAsync` 已是 `MutateAsync(s => s with { Tools = tools.Normalize() })`，但設定檔的讀寫（`tools` 區段）**尚未做**，是 15A 的工作。
+- `memory_save` 與 `show_details` 兩個工具的 `Group`、`Summary`、`CanAlwaysAllow`／`CanDisable` 已在 Phase 0 設好；**15C 不要再改這兩個檔案**，其餘 21 個工具才由 15C 處理。
+- `ChatRequest.Tools` 已改為 `IReadOnlyList<ToolDefinition>?`；`ConversationService` 暫時用 `tools.Select(ToolDefinition.From).ToList()`（15B 會改成快照）。既有測試裡的 `t.Descriptor.Name` 已改成 `t.Name`。
+- migration 9 已加；既有升級測試（降版用的 SQL）已補 `DROP COLUMN tool_snapshot`，並已新增 `UpgradeFromVersion8_AddsToolSnapshot_AndKeepsConversations`；**15A 不必再寫這個測試**，只需寫 `GetToolSnapshotAsync`／`SetToolSnapshotAsync` 的測試。
+- `ToolSnapshotJson`、`ToolSettings` 的單元測試已在 `tests/Lumi.Core.Tests/Tools/`。
+- Phase 0 結束時：build 零警告、全部測試通過（Core 676、Tools 969、Providers 147、Infrastructure 365、App 1734）。
