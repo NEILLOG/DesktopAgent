@@ -345,7 +345,7 @@ Phase 0（協調者） ──► Wave 1：15A、15B、15C、15D 同時進行 ─
   4. 任何一個開關或確認方式改變 → 組出新的 `ToolSettings` → `await settings.SetToolsAsync(...)`。同一時間只會有一個儲存在進行（用 `SemaphoreSlim(1,1)`）。失敗時把 `SaveError` 設成「儲存失敗：{例外訊息}」，並從 `settings.Current` 重新載入狀態。
   5. 把 `AlwaysAllow` 改成 true 時：先 `await confirm.ConfirmDestructiveAsync(訊息, "永遠允許")`；false → 改回 false、不儲存。
   6. `ResetToDefaultsCommand`：先確認；確認後 `SetToolsAsync(ToolSettings.Default)`。`CanResetToDefaults`＝目前不是預設；不能按時 `ResetBlockedReason`＝「目前已是預設」。
-  7. `ModelToolsOffWarning`：`settings.Current` 的工作台預設模型存在且 `ToolsEnabled` 是 false 時，回「目前的預設模型「{0}」關閉了「啟用工具」，對話中不會送出任何工具。可以在「AI 連線 › 模型設定」打開。」（`{0}`＝模型的 `DisplayName`）；否則 null。
+  7. `ModelToolsOffWarning`：`settings.Current` 的工作台預設模型存在且 `ToolsEnabled` 是 false 時，回「目前的預設模型「{0}」關閉了「啟用工具」，對話中不會送出任何工具。可以到「AI 連線」的「模型設定」打開。」（`{0}`＝模型的 `DisplayName`）；否則 null。
   8. `ToolsPanel.axaml` 依「設計 › 畫面」排版。頁首（`SettingsPageHeader`）由整合包放在 `SettingsWindow`，這個面板從 Caption 開始。間距只能用 4、8、12、16、24、32；顏色只能用既有的 `Lumi*Brush` token。
   9. `ToolCardViewModel`：`ToolApproval.AllowedAlways => Strings.Tool_ApprovedAlways`。
   10. 新增字串（key 與文字照抄）：
@@ -359,7 +359,7 @@ Phase 0（協調者） ──► Wave 1：15A、15B、15C、15D 同時進行 ─
       | `Tools_HeaderDescription` | 選擇 Lumi 在對話中可以使用哪些工具，以及使用前要不要先問你。 |
       | `Tools_EffectNote` | 啟用與關閉從下一則新對話開始生效；進行中的對話維持原本的工具。 |
       | `Tools_ConfirmNote` | 確認方式改了立即生效。 |
-      | `Tools_ModelToolsOff` | 目前的預設模型「{0}」關閉了「啟用工具」，對話中不會送出任何工具。可以在「AI 連線 › 模型設定」打開。 |
+      | `Tools_ModelToolsOff` | 目前的預設模型「{0}」關閉了「啟用工具」，對話中不會送出任何工具。可以到「AI 連線」的「模型設定」打開。 |
       | `Tools_GroupCount` | 已啟用 {0}／{1} |
       | `Tools_MemoryOff` | 長期記憶已在「記憶」頁關閉，這些工具目前不會執行。 |
       | `Tools_PermissionReadOnly` | 唯讀 |
