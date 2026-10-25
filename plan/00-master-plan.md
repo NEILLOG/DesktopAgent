@@ -26,6 +26,9 @@
 | M14 | 長期記憶（M10 拆出） | 🟨 14A～14E 程式與文件完成，待人工驗收（`plan/14-long-term-memory.md` 的 14F 清單，需要真實金鑰）；舊版 `memory.dat` 的匯入留給 M13 | M5（M13 不是前置，只接收匯入） |
 | M15 | 工具清單（分組顯示、啟用與關閉、永遠允許） | 🟨 15A～15D 程式與文件完成，待人工驗收（`plan/manual-verification.md` 的 M15） | M3、M10、M12、M14 |
 | M16 | MCP 伺服器（多筆設定、Adapter 接成 `ITool`） | 🟨 16A～16G 程式與文件完成，待人工驗收與真實伺服器測試（`plan/manual-verification.md` 的 M16） | M3、M12、M15 |
+| M17 | 網路基礎與網頁讀取（Proxy、`web_fetch` 等七個網路工具、網址來源規則） | 📝 細部計畫已確認（`plan/17-network-web.md`），尚未實作 | M15、M16 |
+| M18 | 瀏覽器操作（內建 Playwright，Edge → Chrome） | ⬜ 大綱 | M17 |
+| M19 | 網站爬取與網頁監看 | ⬜ 大綱 | M17 |
 | M11 | 打包與發佈 | ⬜ | 全部 |
 
 M2、M3、M5 都只依賴 M1，可以依需要調整順序。
@@ -221,6 +224,39 @@ M2、M3、M5 都只依賴 M1，可以依需要調整順序。
 - MCP 工具出現在 M15 的工具清單，依伺服器分組
 - stdio＋Streamable HTTP、自訂標頭（值在 `ISecretStore`）、預設 `Write` 可逐一調整、預設只在工作台、JSON 匯入；新專案 `Lumi.Mcp`（唯一引用 MCP SDK）
 
+## M17 網路基礎與網頁讀取
+
+細部計畫：`plan/17-network-web.md`（已確認，尚未實作）。
+
+**目標**：Lumi 能透過使用者的網路環境（包含公司的 PAC Proxy 與 AD 驗證）讀網頁、呼叫 API、下載、讀 RSS、診斷網路；Proxy 是選擇性的。
+
+- 新專案 `Lumi.Web`（Proxy、PAC、HTTP 用戶端、HTML 轉 Markdown、RSS、診斷；解析套件只在這裡）
+- 設定 › 網路：Proxy 四種模式（跟隨系統／PAC 網址／手動／不使用）、三種驗證、「自動使用 Windows 登入的網站」、逾時、測試連線；套用到 Lumi 所有連線
+- 工具（群組「網路」）：`web_fetch`、`web_links`、`rss_read`、`http_request`、`http_send`（Destructive）、`download_file`、`net_check`
+- 網址來源規則：使用者給過的網站、結果裡出現過的完整網址才自動允許；其他網站與搜尋引擎網址一律詢問
+- 不在 M17：網路搜尋（不提供）、瀏覽器（M18）、爬取與監看（M19）、Cookie、判定內網
+
+## M18 瀏覽器操作
+
+**目標**：內建瀏覽器自動化，讓 Lumi 能開啟網頁、點擊、輸入、擷取內容，處理需要 JavaScript 或登入的網站。使用者不需要安裝 Node 或設定 MCP。
+
+- 新專案 `Lumi.Browser`，只有它引用 `Microsoft.Playwright`；驅動電腦上已安裝的瀏覽器：**Edge 優先，其次 Chrome**；都沒有時提示安裝 Edge 或經 Proxy 下載 Chromium；**不支援 Safari**
+- 每則對話一個分頁；用無障礙樹快照加 `ref` 編號指定元素
+- 工具（只在工作台）：`browser_open`、`browser_snapshot`、`browser_extract`、`browser_screenshot`（Network）；`browser_click`、`browser_type`、`browser_select`、`browser_press`、`browser_scroll`、`browser_back`、`browser_download`、`browser_upload`（Write）；`browser_wait_for_user`（請使用者自己登入或過驗證碼）、`browser_close`
+- 顯示瀏覽器視窗是設定選項（預設背景執行，偵錯時可以打開）；登入狀態保留在 Lumi 專屬的瀏覽器設定檔，不讀使用者平常瀏覽器的 Cookie
+- Proxy 沿用 M17 的設定（`INetworkProxyInfo`）；`browser_open` 沿用 M17 的網址來源規則；點擊造成的跳轉不受限
+- 工具結果支援圖片（截圖要交給模型）：擴充 `ToolResult` 與兩個 Provider
+- 先做 POC（Edge／Chrome 的偵測、專屬設定檔在兩個平台的行為、Proxy 與 AD 驗證）再寫細部計畫
+- 不做：`browser_evaluate`（執行任意 JavaScript）
+
+## M19 網站爬取與網頁監看
+
+**目標**：在同一個網站內批次讀取頁面並存成檔案；定時檢查網頁變化並通知。
+
+- `web_crawl`：起始網址、深度與頁數上限、網址樣式篩選、限速、遵守 robots.txt；結果存成 Markdown 到使用者加入的資料夾；工具卡片顯示進度
+- 網頁監看：搭配 M10 的提醒排程，內容改變時通知
+- 沿用 M17 的 HTTP 管線與網址規則
+
 ## 之後再評估（不在目前範圍）
 
 - 程式碼型角色外掛（第三方 dll）
@@ -315,6 +351,9 @@ M2、M3、M5 都只依賴 M1，可以依需要調整順序。
 | 2026-10-25 | 細部計畫改為「給低階快速模型、多子代理平行實作」的寫法（主計畫「細部計畫的撰寫方式」一節，M15 起適用）：協調者先做 Phase 0 共用契約，再分 Wave 平行派工，同一 Wave 的工作包修改的檔案不重疊，共用檔案只由協調者改 |
 | 2026-10-25 | M15／M16 計畫撰寫時另外定下：工具快照存完整定義（名稱、說明、schema）而不只名稱；`ChatRequest.Tools` 改送 `ToolDefinition`；MCP 工具的「本次對話都允許」依工具名稱記住（內建工具仍依權限等級）；MCP 回傳的圖片先換成文字說明（`ToolResult` 只有文字，支援圖片之後再評估）；macOS 用登入 shell 的 PATH 啟動 stdio 伺服器 |
 | 2026-10-25 | M15／M16 實作完成（協調者＋ Haiku 子代理平行實作，工作在分支 `m15-m16-tools-mcp`）。實作時另外定下：`Tools_ModelToolsOff` 等字串不可含「›」（架構測試）；連線方式分段要綁整數索引，不可兩個 RadioButton 各綁布林；MCP 頁的 headless 測試要放在真正的設定視窗裡；設定視窗分類索引變成 0 AI 連線、1 人格、2 記憶、3 工具、4 外觀、5 小精靈、6 語音 |
+| 2026-10-25 | 新開 M17 網路基礎與網頁讀取、M18 瀏覽器操作、M19 網站爬取與網頁監看。M17 先寫完整細部計畫，M18（先做 POC）、M19 等 M17 完成後再寫 |
+| 2026-10-25 | M17／M18 討論定案：①Proxy 是選擇性的，預設跟隨系統（公司是 PAC＋AD 帳號），套用到 Lumi 所有連線；②**不提供網路搜尋**，模型的工具說明與確認卡片的固定警告兩層提示，搜尋引擎網址一律詢問且不能記住；③網址只自動允許對話中出現過的（使用者給的網站整站、結果裡的完整網址），其他一律詢問，不判定內網；④瀏覽器內建 Playwright，不用 Playwright MCP（使用者多半不是技術人員）；⑤瀏覽器 Edge 優先、其次 Chrome，不支援 Safari；顯示視窗是選項；保留 Lumi 專屬設定檔 |
+| 2026-10-25 | M17 計畫撰寫時另外定下：呼叫 API 拆成 `http_request`（GET／HEAD，Network）與 `http_send`（Destructive）；新增「自動使用 Windows 登入的網站」（只對列出的網站送 Windows 身分，只套用在網路工具）；單次讀取不看 robots.txt、User-Agent 誠實寫 Lumi、不存 Cookie；設定視窗「網路」放在索引 7 |
 
 ## 待確認事項
 
