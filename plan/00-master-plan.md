@@ -27,7 +27,7 @@
 | M15 | 工具清單（分組顯示、啟用與關閉、永遠允許） | 🟨 15A～15D 程式與文件完成，待人工驗收（`plan/manual-verification.md` 的 M15） | M3、M10、M12、M14 |
 | M16 | MCP 伺服器（多筆設定、Adapter 接成 `ITool`） | 🟨 16A～16G 程式與文件完成，待人工驗收與真實伺服器測試（`plan/manual-verification.md` 的 M16） | M3、M12、M15 |
 | M17 | 網路基礎與網頁讀取（Proxy、`web_fetch` 等七個網路工具、網址來源規則） | 🟨 17A～17H 程式與文件完成，待人工驗收（需要公司網路，`plan/manual-verification.md` 的 M17） | M15、M16 |
-| M18 | 瀏覽器操作（內建 Playwright，Edge → Chrome） | ⬜ 大綱 | M17 |
+| M18 | 瀏覽器操作（內建 Playwright，Edge → Chrome） | 📝 細部計畫草稿（`plan/18-browser.md`），待確認 | M17 |
 | M19 | 網站爬取與網頁監看 | ⬜ 大綱 | M17 |
 | M11 | 打包與發佈 | ⬜ | 全部 |
 
@@ -238,16 +238,17 @@ M2、M3、M5 都只依賴 M1，可以依需要調整順序。
 
 ## M18 瀏覽器操作
 
-**目標**：內建瀏覽器自動化，讓 Lumi 能開啟網頁、點擊、輸入、擷取內容，處理需要 JavaScript 或登入的網站。使用者不需要安裝 Node 或設定 MCP。
+細部計畫：`plan/18-browser.md`（草稿，待確認）。
 
-- 新專案 `Lumi.Browser`，只有它引用 `Microsoft.Playwright`；驅動電腦上已安裝的瀏覽器：**Edge 優先，其次 Chrome**；都沒有時提示安裝 Edge 或經 Proxy 下載 Chromium；**不支援 Safari**
-- 每則對話一個分頁；用無障礙樹快照加 `ref` 編號指定元素
-- 工具（只在工作台）：`browser_open`、`browser_snapshot`、`browser_extract`、`browser_screenshot`（Network）；`browser_click`、`browser_type`、`browser_select`、`browser_press`、`browser_scroll`、`browser_back`、`browser_download`、`browser_upload`（Write）；`browser_wait_for_user`（請使用者自己登入或過驗證碼）、`browser_close`
-- 顯示瀏覽器視窗是設定選項（預設背景執行，偵錯時可以打開）；登入狀態保留在 Lumi 專屬的瀏覽器設定檔，不讀使用者平常瀏覽器的 Cookie
-- Proxy 沿用 M17 的設定（`INetworkProxyInfo`）；`browser_open` 沿用 M17 的網址來源規則；點擊造成的跳轉不受限
-- 工具結果支援圖片（截圖要交給模型）：擴充 `ToolResult` 與兩個 Provider
-- 先做 POC（Edge／Chrome 的偵測、專屬設定檔在兩個平台的行為、Proxy 與 AD 驗證）再寫細部計畫
-- 不做：`browser_evaluate`（執行任意 JavaScript）
+**目標**：內建瀏覽器自動化，讓 Lumi 能開啟網頁、點擊、輸入、擷取內容與截圖，處理需要 JavaScript 或登入的網站。使用者不需要安裝 Node 或設定 MCP（Playwright 套件已內含各平台的 Node）。
+
+- 新專案 `Lumi.Browser`，只有它引用 `Microsoft.Playwright`；驅動電腦上已安裝的瀏覽器：**Edge 優先，其次 Chrome**；都沒有時提示安裝 Edge（**不自動下載 Chromium**）；**不支援 Safari**
+- 一個瀏覽器程序、一個 Lumi 專屬設定檔（登入狀態保留，可在設定清除），所有對話共用；每則對話有自己的分頁；閒置 10 分鐘自動關閉
+- 14 個工具（只在工作台）：`browser_open`（Network，套用 M17 網址來源規則）；`browser_snapshot`、`browser_extract`、`browser_screenshot`、`browser_scroll`、`browser_close`（ReadOnly）；`browser_click`、`browser_type`、`browser_select`、`browser_press`、`browser_back`、`browser_upload`、`browser_download`、`browser_wait_for_user`（Write）。用 AI 模式無障礙快照的 `ref` 指定元素，每個動作回新快照；不往密碼欄位輸入
+- 設定 › 網路新增「瀏覽器」區段：瀏覽器選擇與偵測結果、顯示視窗（預設背景執行）、清除登入狀態，皆立即生效；Proxy 沿用 M17 設定（PAC 必須是 http(s) 網址）
+- 工具結果可以帶圖片（`ToolResult.Images`）：Anthropic 放進 `tool_result`，OpenAI 相容改成後面緊接的使用者訊息
+- 先在 `poc/Lumi.BrowserPoc` 驗證（這台 Mac＋Chrome 由協調者跑，公司 Windows＋Edge 由使用者跑）
+- 不做：`browser_evaluate`（執行模型給的 JavaScript）、偵測規避、錄影與追蹤、在工具卡片顯示截圖
 
 ## M19 網站爬取與網頁監看
 
@@ -354,6 +355,8 @@ M2、M3、M5 都只依賴 M1，可以依需要調整順序。
 | 2026-10-25 | 新開 M17 網路基礎與網頁讀取、M18 瀏覽器操作、M19 網站爬取與網頁監看。M17 先寫完整細部計畫，M18（先做 POC）、M19 等 M17 完成後再寫 |
 | 2026-10-25 | M17／M18 討論定案：①Proxy 是選擇性的，預設跟隨系統（公司是 PAC＋AD 帳號），套用到 Lumi 所有連線；②**不提供網路搜尋**，模型的工具說明與確認卡片的固定警告兩層提示，搜尋引擎網址一律詢問且不能記住；③網址只自動允許對話中出現過的（使用者給的網站整站、結果裡的完整網址），其他一律詢問，不判定內網；④瀏覽器內建 Playwright，不用 Playwright MCP（使用者多半不是技術人員）；⑤瀏覽器 Edge 優先、其次 Chrome，不支援 Safari；顯示視窗是選項；保留 Lumi 專屬設定檔 |
 | 2026-10-25 | M17 計畫撰寫時另外定下：呼叫 API 拆成 `http_request`（GET／HEAD，Network）與 `http_send`（Destructive）；新增「自動使用 Windows 登入的網站」（只對列出的網站送 Windows 身分，只套用在網路工具）；單次讀取不看 robots.txt、User-Agent 誠實寫 Lumi、不存 Cookie；設定視窗「網路」放在索引 7 |
+| 2026-10-25 | M18 撰寫計畫時實測與查證（`Microsoft.Playwright` 1.64.1、本機 Chrome 155）：①套件已內含各平台的 Node 執行檔，使用者不必安裝 Node（建置只複製目前平台的那一份，約 100～125 MB）；②`page.AriaSnapshotAsync(Mode=Ai)` 的 `[ref=…]` 與 `aria-ref=` 選擇器可用，iframe 內的 ref 形如 `f1e2`；③對話框、新分頁、下載、截圖、關閉後重開的 Cookie 都可用；④`--proxy-pac-url` 只有 http(s) 網址有效，`file://` 沒有作用（所以瀏覽器模式要求 PAC 是 http(s)）；⑤Playwright 文件警告公司的瀏覽器原則可能禁止自動化，列為第一個人工驗收項目 |
+| 2026-10-25 | M18 修訂先前的說法：**不自動下載 Chromium**（原本提過「沒有 Edge／Chrome 時經 Proxy 下載 Chromium」）——Windows 內建 Edge，只有 Mac 可能缺，v1 只提示安裝 Edge。其餘定案：瀏覽器工具的「本次對話都允許」自成一組（不連帶 `write_file`）；`browser_type` 不往密碼欄位輸入，改用 `browser_wait_for_user`（Write，每次確認，必須指定完成條件，背景執行時重啟成可見視窗）；工具結果圖片兩家供應商的送法不同（OpenAI 相容改成後面緊接的使用者訊息）；派工**不要用 Agent 工具的 `isolation: "worktree"`**（M17 發現它從舊 commit 建立），改由協調者用 `git worktree add` 從 Phase 0 的 commit 建好 |
 
 ## 待確認事項
 
