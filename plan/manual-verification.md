@@ -354,7 +354,7 @@
 | | | M12-28 | 淺色主題的狀態點對比 | 在淺色主題看 8px 的 Success、Warning 狀態點（Surface 與 Chrome 上） | 肉眼看得清楚；若不清楚，依計畫決定是否調深（色碼照 ui-guide） | 來源：plan/12-ui-redesign.md 第 303 行附近（UB-2）；另見待決定第 4 項 |
 | | | M12-29 | 歡迎區的位置與出現時機 | 在五套主題淺色與深色看歡迎區；送出第一則後看它消失；開新對話再看；啟動載入既有對話 | 位置與間距正確；送出後消失，新對話再出現；啟動載入既有對話時不閃現 | 來源：plan/12-ui-redesign.md 第 304 行附近（UB-3） |
 | | | M12-30 | 使用者與助理訊息的對齊與色差 | 送出一則訊息並取得回覆；看頭像「L」、名稱、時間、淡底氣泡；看 Wide 左右 Padding 64 | 對齊正確；助理淡底氣泡與背景有區隔；氣泡內的思考區塊、Markdown、工具卡片疊放自然 | 來源：plan/12-ui-redesign.md 第 305 行附近（UB-3） |
-| | | M12-31 | 訊息動作列 | 滑過「複製」「重新產生」；點複製；滑過 👍👎 | 圖示與文字對齊；複製後變打勾與「已複製」；👍👎 灰階停用，滑過顯示「評價功能即將推出」且不擠版 | 來源：plan/12-ui-redesign.md 第 306 行附近（UB-3） |
+| | | M12-31 | 訊息動作列 | 滑過「複製」「重新產生」；點複製 | 圖示與文字對齊；複製後變打勾與「已複製」；沒有 👍👎 按鈕（M20 已移除） | 來源：plan/12-ui-redesign.md 第 306 行附近（UB-3） |
 | | | M12-32 | 程式碼區塊 | 讓回應含超長程式碼與多種字級的程式碼；水平捲動；滑過複製鈕 | 標題列與複製鈕不隨程式碼捲動；12／13 等寬字可讀；淡底氣泡內深色區塊對比足夠 | 來源：plan/12-ui-redesign.md 第 307 行附近（UB-3） |
 | | | M12-33 | 頭像與時間的中文可讀性 | 看 32 圓頭像與 11px 時間文字 | 可讀 | 來源：plan/12-ui-redesign.md 第 308 行附近（UB-3） |
 | | | M12-34 | 串流中逐字更新 | 送出會串流的長回答，觀察直到結束 | Markdown 增量渲染正常；自動捲到底沒有退化 | 來源：plan/12-ui-redesign.md 第 309 行附近（UB-3） |
@@ -375,7 +375,7 @@
 | | | M12-49 | Narrow 的歷史抽屜 Overlay | 縮到 Narrow 開歷史；點抽屜外；在抽屜開著時把視窗縮放跨過 620 寬 | 抽屜蓋在訊息區上；點外面自動收起，並與「歷史對話」按鈕狀態同步；縮放時順暢 | 來源：plan/12-ui-redesign.md 第 325 行附近（UC-1） |
 | | | M12-50 | 訊息寬度與隱藏時間 | 在 Compact、Narrow、Wide 各看一則助理與使用者訊息；Narrow 看時間與「你」後的對齊 | Compact／Narrow 助理 92%、使用者 80%；Wide 助理 ≤820、使用者 72%；Narrow 隱藏時間，頭像 24 | 來源：plan/12-ui-redesign.md 第 326 行附近（UC-1） |
 | | | M12-51 | Composer 純圖示按鈕 | 縮到 Compact 與 Narrow 看輸入區的純圖示按鈕；滑過看 Tooltip | 對齊正確；Tooltip 正常；回應中 RespondingHint 被省略是否可接受，需確認 | 來源：plan/12-ui-redesign.md 第 327 行附近（UC-1） |
-| | | M12-52 | Narrow 的訊息動作列 | 在 500 寬看訊息動作列（含 👍👎、Caption「評價功能即將推出」、token 文字）；點複製 | 不擠版；複製後只有圖示變打勾 | 來源：plan/12-ui-redesign.md 第 328 行附近（UC-1） |
+| | | M12-52 | Narrow 的訊息動作列 | 在 500 寬看訊息動作列（把進階的 token 用量打開時含 token 文字）；點複製 | 不擠版；複製後只有圖示變打勾 | 來源：plan/12-ui-redesign.md 第 328 行附近（UC-1） |
 | | | M12-53 | 預設視窗尺寸 | 清除設定後啟動，或直接開新的工作台視窗 | 以 1040×760 開啟為完整桌面版；在小螢幕上 Height 760 不超出螢幕 | 來源：plan/12-ui-redesign.md 第 330 行附近（UC-2）；「寬 960」那項已勾選，不列入 |
 | | | M12-54 | 高度的 short 與 veryshort 版面 | 把視窗高度調到 小於 700、小於 600、最小高度 420，並跨過 600 與 700 來回拖 | short：歡迎區留白縮小、訊息間距 16、輸入框兩行高不擁擠；veryshort：歡迎區消失，工具列、對話區、輸入框完整；切換不跳動；420 高度時輸入區完整、對話區仍看得到內容 | 來源：plan/12-ui-redesign.md 第 331 行附近（UC-2） |
 | | | M12-55 | 工作台的 Tab 順序與焦點框 | 用 Tab 走一遍工作台；歷史抽屜收起時確認 Tab 不會跑進去 | 焦點框清楚；順序符合預期；抽屜收起時 Tab 不進入 | 來源：plan/12-ui-redesign.md 第 332 行附近（UC-2） |
@@ -422,7 +422,7 @@
 | | | M12-96 | 詳細卡片改 Grid 後的捲動與貼底 | 在 AI 連線頁的詳細卡片中，於 stacked 與小高度下捲動；看底部按鈕列是否貼底 | 卡片內捲動正常；底部按鈕列貼底外觀正確 | 來源：plan/12-ui-redesign.md 第 372 行附近（UE-2） |
 | | | M12-97 | primary 按鈕的 Hover 與 Pressed | 在五套主題淺色與深色（特別是深色）滑過與按下「儲存」「允許」 | Hover 與 Pressed 的深淺明顯但不突兀；Hover 比原色暗一點 | 來源：plan/12-ui-redesign.md 第 373 行附近（UE-3） |
 | | | M12-98 | secondary、danger 按鈕的互動狀態 | 滑過、按下、停用 secondary 按鈕；滑過 danger 按鈕；在 ConfirmDialog 的紅框鈕上看 Hover 與 Enter | secondary：Hover SurfaceAlt、Pressed Soft、停用為透明底加淺框與 Muted 字；danger：Hover 淡紅底、Pressed 紅框 | 來源：plan/12-ui-redesign.md 第 375 行附近（UE-3） |
-| | | M12-99 | tertiary 按鈕與停用佔位 | 滑過與按下工具列、輸入區下層工具、訊息動作列的 tertiary 按鈕；看麥克風與 👍👎 的停用外觀 | Hover、Pressed 正確；停用的 0.6 透明度看得出來 | 來源：plan/12-ui-redesign.md 第 376 行附近（UE-3） |
+| | | M12-99 | tertiary 按鈕與停用佔位 | 滑過與按下工具列、輸入區下層工具、訊息動作列的 tertiary 按鈕；看麥克風的停用外觀 | Hover、Pressed 正確；停用的 0.6 透明度看得出來 | 來源：plan/12-ui-redesign.md 第 376 行附近（UE-3） |
 | | | M12-100 | 鍵盤焦點框 | 用 Tab 走過膠囊、圓鈕、chip 的 X 鈕、dashed、分段切換、進階區段標題；另用滑鼠點擊按鈕 | 焦點框是 Accent 2px 圓角，不是黑白雙框；每處只有一個 Accent 框；滑鼠點擊後不出現焦點框；chip 的 20×20 X 鈕上焦點框不蓋住圖示 | 來源：plan/12-ui-redesign.md 第 377 行附近（UE-3） |
 | | | M12-101 | 工具卡片與群組標題的 Hover、Pressed | 滑過與按下工具卡片標題與群組標題；看程式碼區塊「複製」Hover；看小精靈氣泡「查看詳細」連結 Hover | 不換底也不變黑字；Hover 正常 | 來源：plan/12-ui-redesign.md 第 378 行附近（UE-3） |
 | | | M12-102 | 錯誤列的按鈕與一次性提示 | 讓訊息失敗，看錯誤列的「重試」（primary）與「用其他模型重試」（secondary）；看一次性提示的「關閉」（tertiary）；淺色與深色都看 | 按鈕在警告淡底上對比與間距足夠；「關閉」文字看得清楚 | 來源：plan/12-ui-redesign.md 第 379 行附近（UE-4） |
@@ -582,6 +582,8 @@
 | | | M20-12 | macOS .app | 取得 `Lumi-<版本>-osx-arm64.zip`，解壓後第一次用右鍵 › 開啟（或 `xattr -dr com.apple.quarantine Lumi.app`） | 能啟動；語音輸入第一次會跳麥克風權限，說明文字是「Lumi 需要使用麥克風…」；版本字樣一致 | 來源：plan/20-settings-release.md 包 20F |
 | | | M20-13 | 單檔版的瀏覽器工具 | 用單檔版（Windows 與 macOS 各測）請 Lumi 用瀏覽器打開一個網站 | 能開啟瀏覽器並讀到內容（driver 從單檔解壓資料夾找到）；log 沒有 Driver not found；公司 Windows 若 AppLocker 擋暫存資料夾執行，這項會失敗，請記錄 | 來源：主計畫 2026-10-26 M20 決策④（Windows 只能實機確認） |
 | | | M20-14 | 自動發佈 | 推一個 `v` 開頭的 tag（或手動觸發 Release workflow） | GitHub Release 出現 `Lumi-<版本>-win-x64.exe` 與 `Lumi-<版本>-osx-arm64.zip` 兩個檔案 | 來源：plan/20-settings-release.md 包 20F |
+| | | M20-15 | 移除評價按鈕 | 工作台任一則助理訊息下方 | 只有「複製」和（最後一則的）「重新產生」，沒有 👍👎，也沒有「評價功能即將推出」 | 來源：使用者要求 |
+| | | M20-16 | token 用量開關 | 回答下方預設看不到 token 文字；設定 › 外觀與操作 › 進階勾選「在每則回答下方顯示 token 用量」；再取消勾選；重開程式 | 勾選後不用重開，既有與新的回答下方都立刻出現 `↑ 輸入 · ↓ 輸出`；取消後消失；重開程式後維持上次的選擇 | 來源：使用者要求 |
 
 ---
 
