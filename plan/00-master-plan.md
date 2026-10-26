@@ -28,7 +28,7 @@
 | M16 | MCP 伺服器（多筆設定、Adapter 接成 `ITool`） | 🟨 16A～16G 程式與文件完成，待人工驗收與真實伺服器測試（`plan/manual-verification.md` 的 M16） | M3、M12、M15 |
 | M17 | 網路基礎與網頁讀取（Proxy、`web_fetch` 等七個網路工具、網址來源規則） | 🟨 17A～17H 程式與文件完成，待人工驗收（需要公司網路，`plan/manual-verification.md` 的 M17） | M15、M16 |
 | M18 | 瀏覽器操作（內建 Playwright，Edge → Chrome） | 🟨 18A～18L 程式與文件完成，待人工驗收與公司 Windows＋Edge 的 POC（`plan/manual-verification.md` 的 M18） | M17 |
-| M19 | 網站爬取（不含網頁監看） | 📝 細部計畫草稿（`plan/19-web-crawl.md`），待確認 | M17、M18 |
+| M19 | 網站爬取（不含網頁監看） | 🟦 實作中（`plan/19-web-crawl.md`，已確認） | M17、M18 |
 | M11 | 打包與發佈 | ⬜ | 全部 |
 
 M2、M3、M5 都只依賴 M1，可以依需要調整順序。
@@ -252,9 +252,9 @@ M2、M3、M5 都只依賴 M1，可以依需要調整順序。
 
 ## M19 網站爬取
 
-細部計畫：`plan/19-web-crawl.md`（草稿，待確認）。
+細部計畫：`plan/19-web-crawl.md`（已確認，實作中）。
 
-**目標**：`web_crawl` 從一個網址開始，在同一個網站內讀取少量頁面（預設 10、最多 30），每頁存成 Markdown 並附目錄 `index.md`。
+**目標**：`web_crawl` 從一個網址開始，在同一個網站內讀取少量頁面（預設 10、最多 20），每頁存成 Markdown 並附目錄 `index.md`。
 
 - 內外網都能爬：一般網頁用 HTTP（M17 的 Proxy 與 Windows 登入），需要登入或 JavaScript 的網站自動改用 M18 的瀏覽器（共用 Lumi 瀏覽器的登入狀態）
 - 只爬同一網站、遵守 robots.txt、每頁間隔 1 秒、跳過登出連結、不下載 PDF 等檔案；回給模型的是摘要，內容在檔案裡
@@ -359,7 +359,7 @@ M2、M3、M5 都只依賴 M1，可以依需要調整順序。
 | 2026-10-25 | M17／M18 討論定案：①Proxy 是選擇性的，預設跟隨系統（公司是 PAC＋AD 帳號），套用到 Lumi 所有連線；②**不提供網路搜尋**，模型的工具說明與確認卡片的固定警告兩層提示，搜尋引擎網址一律詢問且不能記住；③網址只自動允許對話中出現過的（使用者給的網站整站、結果裡的完整網址），其他一律詢問，不判定內網；④瀏覽器內建 Playwright，不用 Playwright MCP（使用者多半不是技術人員）；⑤瀏覽器 Edge 優先、其次 Chrome，不支援 Safari；顯示視窗是選項；保留 Lumi 專屬設定檔 |
 | 2026-10-25 | M17 計畫撰寫時另外定下：呼叫 API 拆成 `http_request`（GET／HEAD，Network）與 `http_send`（Destructive）；新增「自動使用 Windows 登入的網站」（只對列出的網站送 Windows 身分，只套用在網路工具）；單次讀取不看 robots.txt、User-Agent 誠實寫 Lumi、不存 Cookie；設定視窗「網路」放在索引 7 |
 | 2026-10-25 | M18 撰寫計畫時實測與查證（`Microsoft.Playwright` 1.64.1、本機 Chrome 155）：①套件已內含各平台的 Node 執行檔，使用者不必安裝 Node（建置只複製目前平台的那一份，約 100～125 MB）；②`page.AriaSnapshotAsync(Mode=Ai)` 的 `[ref=…]` 與 `aria-ref=` 選擇器可用，iframe 內的 ref 形如 `f1e2`；③對話框、新分頁、下載、截圖、關閉後重開的 Cookie 都可用；④`--proxy-pac-url` 只有 http(s) 網址有效，`file://` 沒有作用（所以瀏覽器模式要求 PAC 是 http(s)）；⑤Playwright 文件警告公司的瀏覽器原則可能禁止自動化，列為第一個人工驗收項目 |
-| 2026-10-26 | M19 範圍定案（使用者）：只做網站爬取、**不做網頁監看**；規模小（一般使用者只要幾頁，預設 10、最多 30）；內外網都要能爬，能處理就直接處理（一般網頁 HTTP，需要登入或 JavaScript 時自動改用瀏覽器） |
+| 2026-10-26 | M19 範圍定案（使用者）：只做網站爬取、**不做網頁監看**；規模小（一般使用者只要幾頁，預設 10、最多 20）；內外網都要能爬，能處理就直接處理（一般網頁 HTTP，需要登入或 JavaScript 時自動改用瀏覽器） |
 | 2026-10-25 | M18 修訂先前的說法：**不自動下載 Chromium**（原本提過「沒有 Edge／Chrome 時經 Proxy 下載 Chromium」）——Windows 內建 Edge，只有 Mac 可能缺，v1 只提示安裝 Edge。其餘定案：瀏覽器工具的「本次對話都允許」自成一組（不連帶 `write_file`）；`browser_type` 不往密碼欄位輸入，改用 `browser_wait_for_user`（Write，每次確認，必須指定完成條件，背景執行時重啟成可見視窗）；工具結果圖片兩家供應商的送法不同（OpenAI 相容改成後面緊接的使用者訊息）；派工**不要用 Agent 工具的 `isolation: "worktree"`**（M17 發現它從舊 commit 建立），改由協調者用 `git worktree add` 從 Phase 0 的 commit 建好 |
 
 ## 待確認事項
