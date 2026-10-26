@@ -28,7 +28,7 @@
 | M16 | MCP 伺服器（多筆設定、Adapter 接成 `ITool`） | 🟨 16A～16G 程式與文件完成，待人工驗收與真實伺服器測試（`plan/manual-verification.md` 的 M16） | M3、M12、M15 |
 | M17 | 網路基礎與網頁讀取（Proxy、`web_fetch` 等七個網路工具、網址來源規則） | 🟨 17A～17H 程式與文件完成，待人工驗收（需要公司網路，`plan/manual-verification.md` 的 M17） | M15、M16 |
 | M18 | 瀏覽器操作（內建 Playwright，Edge → Chrome） | 🟨 18A～18L 程式與文件完成，待人工驗收與公司 Windows＋Edge 的 POC（`plan/manual-verification.md` 的 M18） | M17 |
-| M19 | 網站爬取（不含網頁監看） | 🟦 實作中（`plan/19-web-crawl.md`，已確認） | M17、M18 |
+| M19 | 網站爬取（不含網頁監看） | 🟨 19A～19E 程式與文件完成，待人工驗收（`plan/manual-verification.md` 的 M19） | M17、M18 |
 | M11 | 打包與發佈 | ⬜ | 全部 |
 
 M2、M3、M5 都只依賴 M1，可以依需要調整順序。
@@ -252,7 +252,7 @@ M2、M3、M5 都只依賴 M1，可以依需要調整順序。
 
 ## M19 網站爬取
 
-細部計畫：`plan/19-web-crawl.md`（已確認，實作中）。
+細部計畫：`plan/19-web-crawl.md`（程式完成，待人工驗收）。
 
 **目標**：`web_crawl` 從一個網址開始，在同一個網站內讀取少量頁面（預設 10、最多 20），每頁存成 Markdown 並附目錄 `index.md`。
 

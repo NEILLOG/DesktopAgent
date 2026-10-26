@@ -206,6 +206,8 @@ ui-guide.html 的三項核心原則：一般使用者優先，技術資訊按需
   `狀態圖示  動作 · 對象 · 結果摘要  …  耗時  chevron`
 
   例：「讀取檔案 `plan/00-overview.md` · 182 行」、「執行 `dotnet build` · 失敗（exit 1）· 3 個編譯錯誤」。
+
+  執行中（M19）：工具可以回報進度（`ToolContext.Progress` → `ToolCallProgress` 事件），標題最後一段從「執行中…」換成最新的進度文字，例如「爬取網站 · intranet.example.com · 第 3／10 頁」；等待確認時不顯示進度，完成後換成結果摘要。進度只給畫面看，不存檔、不送給模型。
   動作名稱由工具的 `Descriptor` 提供顯示名稱（繁中）；結果摘要由工具回傳，不由 UI 猜。
 - **狀態圖示**（Lucide，形狀各不相同，不只靠顏色；顏色用文字等級的 token，不用 Dot）：
 

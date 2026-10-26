@@ -1,6 +1,6 @@
 # 19 網站爬取
 
-- 狀態：**已確認，實作中**（2026-10-26 使用者確認；頁數上限定為 20）
+- 狀態：**程式與文件完成，待人工驗收**（2026-10-26 實作；頁數上限 20；人工驗收項目見 `plan/manual-verification.md` 的 M19）
 - 對應里程碑：M19
 - 前置：M17（`IWebClient`、`IWebContentExtractor`、網址來源規則、`WebToolSupport`）、M18（`IBrowserSessions`、Lumi 專屬瀏覽器設定檔的登入狀態）。
 - 設計依據：`plan/ui-guide/ui-guide.html`（權威）、`docs/ui-spec.md` 第 4 節（工具卡片）。
@@ -328,4 +328,12 @@ Phase 0（協調者）──► Wave 1：19A、19B、19C、19D、19E 同時進�
 
 ## 實作紀錄
 
-（實作時填寫。）
+2026-10-26 實作（協調者＋ 5 個 Haiku 子代理，分支 `m19-web-crawl`，疊在 `m18-browser` 上）。這台 Mac 上 HTTP 與瀏覽器兩種模式的端到端測試都通過。偏離計畫或計畫沒寫到的地方：
+
+- **登出與篩選要比對編碼前後兩種網址**（19A 發現）：`Uri.AbsoluteUri` 會把中文百分比編碼，只比對它的話「登出」永遠比對不到。
+- **檔案連結在入列時就分流**（端到端測試發現）：瀏覽器模式讀不出差別，會把 PDF 檢視器的畫面存成網頁。新增 `CrawlRules.LooksLikeFile`（依副檔名：PDF、Office、壓縮檔、圖片、影音、安裝檔），這類連結兩種模式都不讀，只列在 index.md 的「其他檔案連結」。HTTP 模式仍會用回應的媒體類型再確認一次（沒有副檔名的檔案連結）。
+- **取消發生在建立輸出資料夾之前**（robots.txt 或起始頁讀取階段）丟 `OperationCanceledException`，不回 `Stopped=true`（還沒有資料夾可報告）；之後取消才回 `Stopped=true` 並寫 index.md。
+- **19B 的實作細節**：迭代器不能在帶 `catch` 的 `try` 裡 `yield`，所以等待進度的迴圈放在 `try` 外面；工具用的取消權杖改成與呼叫端連結，迭代器在工具執行中被釋放時取消工具；進度截斷不加省略號。
+- **瀏覽器模式的 `BrowserException`** 一律記為單頁失敗，不往外丟。寫檔的 `IOException`（例如磁碟滿）沒有特別處理，會變成一般的「工具執行失敗」。
+- **端到端測試**：`Lumi.Browser.Tests` 多引用 `Lumi.Web`，用真的 `IWebClient`（DI）與真的瀏覽器工作階段爬本機測試站（`LocalSite` 的 `/crawl/…`：登出連結、被 robots.txt 擋的頁面、PDF、外部連結都沒被請求）；`LocalSite` 新增 `Requests` 記錄收到的請求。
+- **沒做**：寫檔失敗的單頁處理、續爬、並行；Windows／Edge 的實機驗證。
