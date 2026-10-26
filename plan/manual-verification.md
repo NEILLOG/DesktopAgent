@@ -561,6 +561,28 @@
 | | | M19-06 | 檔案連結 | 爬一個頁面裡有 PDF 連結的網站 | PDF 沒有被下載或存成網頁，只列在 index.md 的「其他檔案連結」 | 來源：plan/19-web-crawl.md D8 |
 | | | M19-07 | 確認卡片 | 觀察爬取前的確認卡片；爬一個沒出現過的網站 | 顯示「爬取 {主機} 最多 n 頁（深度 d），存到 …」；沒出現過的網站強制詢問 | 來源：plan/19-web-crawl.md D11 |
 
+
+---
+
+## M20 設定頁補強、App 圖示、單一檔案發佈
+
+| Mac | Win | ID | 項目 | 怎麼測 | 通過標準 | 備註 |
+|---|---|---|---|---|---|---|
+| | | M20-01 | 設定首頁與選單 | 從工作台「…」開啟設定；再從小精靈右鍵選單開啟 | 預設落在「設定首頁」；Menu 最上面直接是「回到對話」，沒有「Lumi 設定」標題區；十一個分類都在、沒有「即將推出」 | 來源：plan/20-settings-release.md |
+| | | M20-02 | 首頁連結 | 在設定首頁逐一點十一個連結 | 每個都跳到對應的分類（「模型設定」跳到 AI 連線的模型設定分頁）；Hover 有淡底；Tab 與 Enter 可操作 | 來源：plan/20-settings-release.md 包 20D |
+| | | M20-03 | 工具頁分類標題 | 設定 › 工具 | 分類名稱（檔案、記憶…）明顯比工具名稱大且有淡底標題列；工具列縮排；深色主題也清楚 | 來源：使用者要求 |
+| | | M20-04 | 提醒排程列表 | 對話請 Lumi 建立三個提醒（一次性、每天、一個計時器）；開設定 › 提醒排程 | 三個都列在「待觸發」，有種類徽章、下次時間（週期有說明）；沒有新增按鈕 | 來源：plan/20-settings-release.md 包 20B |
+| | | M20-05 | 刪除提醒 | 刪除一個待觸發提醒（確認後）；等它原本的時間過去 | 從清單消失；到時間不會響；對話裡問 Lumi「我有哪些提醒」也不會再列出 | 來源：plan/20-settings-release.md 包 20A、20B |
+| | | M20-06 | 已結束與清除 | 讓一個計時器響完或取消一個提醒；按「清除已結束」 | 出現在「已結束」並標示已完成／已取消；清除後清單變空 | 來源：plan/20-settings-release.md 包 20B |
+| | | M20-07 | 資料位置 | 設定 › 資料與隱私，逐列按「在 Finder／檔案總管顯示」與「複製路徑」 | 路徑與實際位置相符（資料庫 lumi.db、設定檔 settings.json、logs、attachments、browser、sprites、筆記資料夾）；顯示位置會開到正確資料夾；複製後貼得出路徑；大小有顯示；Windows 的金鑰列顯示 secrets.json，macOS 顯示鑰匙圈說明 | 來源：plan/20-settings-release.md 包 20C |
+| | | M20-08 | 隱私說明與連結 | 資料與隱私頁讀「哪些內容會送出去」「怎麼控制」，點各個「前往設定」 | 文字看得懂；連結分別跳到記憶、工具、網路、提醒排程、語音 | 來源：plan/20-settings-release.md 包 20C |
+| | | M20-09 | App 圖示（macOS） | 執行 .app（見 M20-12），看 Dock、Cmd+Tab、Finder 與托盤（選單列） | 都是深色圓角方塊上的光球，不是禁止符號 | 來源：使用者回報的 Dock 圖示問題 |
+| | | M20-10 | App 圖示（Windows） | 執行 .exe，看工作列、Alt+Tab、檔案總管裡的檔案、通知區域托盤，以及視窗標題列 | 都是光球；16～32px 小圖仍看得出是球；淺色與深色工作列都清楚 | 來源：plan/20-settings-release.md 包 20E（只能在 Windows 實機確認） |
+| | | M20-11 | Windows 單檔 exe | 取得 `Lumi-<版本>-win-x64.exe`（GitHub Release），複製到沒有 .NET 的乾淨 Windows 雙擊 | 能啟動；檔名帶版本號；設定視窗左下角版本字樣與檔名一致；第一次啟動較慢（解壓原生元件）；SmartScreen 會警告（未簽章） | 來源：plan/20-settings-release.md 包 20F |
+| | | M20-12 | macOS .app | 取得 `Lumi-<版本>-osx-arm64.zip`，解壓後第一次用右鍵 › 開啟（或 `xattr -dr com.apple.quarantine Lumi.app`） | 能啟動；語音輸入第一次會跳麥克風權限，說明文字是「Lumi 需要使用麥克風…」；版本字樣一致 | 來源：plan/20-settings-release.md 包 20F |
+| | | M20-13 | 單檔版的瀏覽器工具 | 用單檔版（Windows 與 macOS 各測）請 Lumi 用瀏覽器打開一個網站 | 能開啟瀏覽器並讀到內容（driver 從單檔解壓資料夾找到）；log 沒有 Driver not found；公司 Windows 若 AppLocker 擋暫存資料夾執行，這項會失敗，請記錄 | 來源：主計畫 2026-10-26 M20 決策④（Windows 只能實機確認） |
+| | | M20-14 | 自動發佈 | 推一個 `v` 開頭的 tag（或手動觸發 Release workflow） | GitHub Release 出現 `Lumi-<版本>-win-x64.exe` 與 `Lumi-<版本>-osx-arm64.zip` 兩個檔案 | 來源：plan/20-settings-release.md 包 20F |
+
 ---
 
 ## 2026-10-24 調整（ADJ）

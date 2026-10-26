@@ -7,7 +7,7 @@ Lumi 是一個跨平台（Windows / macOS）的桌面 AI 助理。使用者自�
 - **工作台**：完整的對話視窗。可以切換模型、加入檔案或資料夾當上下文、語音輸入，並在模型選單裡顯示本對話的 token 用量與回合數。
 - **小精靈**：一個住在桌面上的透明角色（第一個角色是會呼吸的光球）。游標靠近時才浮出輸入列，用簡短的氣泡回答，並用動畫表現聆聽、思考、呼叫工具、完成等過程。
 
-> 目前狀態：M0～M8 與 M12（UI 重新設計）程式完成，多數待人工驗收與 Windows 驗證（各里程碑見 `plan/00-master-plan.md`）。M9「歷史對話與完成度」：歷史對話的搜尋、分組、改名、刪除，視窗位置記憶，啟動失敗說明，log 程式完成並待人工驗收；Windows 國旗 emoji 的判定等待實機結果。M10「WPF 小工具的工具移植」：10A～10E 程式完成，待人工驗收。M14「長期記憶」：程式完成，待人工驗收（`plan/14-long-term-memory.md` 第 14F 節）。M15「工具清單」與 M16「MCP 伺服器」：程式完成，待人工驗收（`plan/manual-verification.md` 的 M15、M16）。M17「網路基礎與網頁讀取」：程式完成，待人工驗收（需要公司網路，`plan/manual-verification.md` 的 M17）。M18「瀏覽器操作」：程式完成，待人工驗收（需要公司的 Windows＋Edge，`plan/manual-verification.md` 的 M18）。M19「網站爬取」：程式完成，待人工驗收（`plan/manual-verification.md` 的 M19）。
+> 目前狀態：M0～M8 與 M12（UI 重新設計）程式完成，多數待人工驗收與 Windows 驗證（各里程碑見 `plan/00-master-plan.md`）。M9「歷史對話與完成度」：歷史對話的搜尋、分組、改名、刪除，視窗位置記憶，啟動失敗說明，log 程式完成並待人工驗收；Windows 國旗 emoji 的判定等待實機結果。M10「WPF 小工具的工具移植」：10A～10E 程式完成，待人工驗收。M14「長期記憶」：程式完成，待人工驗收（`plan/14-long-term-memory.md` 第 14F 節）。M15「工具清單」與 M16「MCP 伺服器」：程式完成，待人工驗收（`plan/manual-verification.md` 的 M15、M16）。M17「網路基礎與網頁讀取」：程式完成，待人工驗收（需要公司網路，`plan/manual-verification.md` 的 M17）。M18「瀏覽器操作」：程式完成，待人工驗收（需要公司的 Windows＋Edge，`plan/manual-verification.md` 的 M18）。M19「網站爬取」：程式完成，待人工驗收（`plan/manual-verification.md` 的 M19）。M20「設定頁補強、App 圖示、單一檔案發佈」：程式完成，待人工驗收（`plan/manual-verification.md` 的 M20；發佈方式見 `plan/20-settings-release.md`）。
 
 ## 特色
 

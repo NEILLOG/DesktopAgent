@@ -230,6 +230,13 @@ Lumi.App ──► Lumi.Sprites.* ──► Lumi.Sprites.Abstractions
 - macOS 透過 `objc_msgSend` 呼叫 AppKit；Windows 透過 user32。
 - 新增原生功能時，要同時提供兩個平台的實作，或明確提供退化行為。
 
+### 發佈與圖示（M20）
+
+- **版本號只有一個來源**：`Directory.Build.props` 的 `<Version>`；發佈用 `-p:Version=` 覆寫。設定視窗的版本字樣讀組件版本，不要另外寫死。
+- **單一檔案發佈**：`src/Lumi.App/Properties/PublishProfiles/{win-x64,osx-arm64}.pubxml`（自包含、不裁剪、`IncludeNativeLibrariesForSelfExtract`）；做法與腳本見 `plan/20-settings-release.md`、`scripts/publish-release.sh`。發佈時只拿那一個執行檔，不要連 `.playwright`、`.pdb` 一起給使用者。**程式不可以假設資料在執行檔旁邊**（`AppContext.BaseDirectory` 在單檔裡只有執行檔；內嵌資源用 `GetManifestResourceStream`，Avalonia 資源用 `avares://`）。Playwright 的 driver 由 `PlaywrightDriverLocator.Prepare()` 在建立 Playwright 前指給解壓資料夾。
+- **圖示檔是產出物**：`src/Lumi.App/Assets/Icons/` 由 `tools/Lumi.IconGen` 產生後提交（`dotnet run --project tools/Lumi.IconGen -- src/Lumi.App/Assets/Icons`），建置不依賴它；要改圖示就改這個工具再重產。macOS 的 Dock 圖示在執行期由 `MacDockIcon` 設定（直接執行或包成 `.app` 都適用）。
+- **設定視窗的分類順序是 `SettingsCategory` 列舉**（`SettingsViewModel.cs`），選單（`SettingsWindow.axaml` 的 `CategoryList`）的項目順序必須與它一致；測試不要寫死數字，用 `(int)SettingsCategory.Xxx`。新增分類時三處一起改：列舉、選單、`Show*` 屬性。
+
 ## 15. 測試
 
 - `Lumi.Core`、`Lumi.Tools`、`Lumi.Providers` 要有單元測試。
