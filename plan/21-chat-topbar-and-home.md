@@ -64,7 +64,7 @@
    - `IConversationStore`（用 default 實作，仿檔內其他預設方法，Fake 不用改）：
      `Task<TokenTotals> GetTokenTotalsAsync(DateTimeOffset since, CancellationToken ct = default)`（回 `TokenTotals(long Input, long CacheRead, long Output)`，預設全 0）；
      `Task<IReadOnlyList<RecentToolAction>> ListRecentToolActionsAsync(int limit, CancellationToken ct = default)`（`RecentToolAction(DateTimeOffset At, string ConversationId, ToolResultBlock Result)`，預設空清單）。
-   - `UsageLevel` 列舉（`Empty／Normal／Warning／Danger`）與純函式 `UsageLevel.From(bool hasData, double ratio)`（放 `Lumi.App.ViewModels`，21B 實作內容）。
+   - `UsageLevel` 列舉（`Empty／Normal／Warning／Danger`）與純函式 `UsageLevelRules.From(bool hasData, double ratio)`（放 `Lumi.App.ViewModels/UsageLevel.cs`，Phase 0 已實作，21B 只補測試）。
 4. **骨架**：`ConversationUsageViewModel`（屬性清單見 ui-usage-and-topbar.md 第 4 節，內容 21E 實作）；`HomeViewModel` 新增的公開成員簽章（見 21D）。
 5. **文件**：在 [ui-usage-and-topbar.md](ui-usage-and-topbar.md) 開頭加一行「與本稿不同處以 plan/21-chat-topbar-and-home.md 為準」；`docs/ui-spec.md` 2.1、2.3、第 3 節、設定首頁段落由整合階段一次改完。
 
@@ -96,13 +96,13 @@
 ## 包 21C：齒輪、「⋯」對話動作、匯出（Wave 1）
 
 - **先讀**：`Views/CustomTitleBar.axaml(.cs)`、`TitleBarLayout.cs`、`Views/ChatToolbar.axaml(.cs)`、`ViewModels/HistoryViewModel.cs`（重命名規則第 279–345 行、刪除第 350–390 行）、`Views/ConfirmDialog.axaml`＋`ConfirmService.cs`、`ChatToolbarTests.cs`、`ResponsiveWorkbenchTests.cs`、`tests/Lumi.App.Tests/Headless` 裡標題列相關測試。
-- **可修改／新增**：`CustomTitleBar.axaml(.cs)`、`ChatToolbar.axaml(.cs)`、`WorkbenchViewModel.ConversationActions.cs`（新）、`src/Lumi.Core/Chat/ConversationMarkdownExporter.cs`（新）、`Views/RenameDialog.axaml(.cs)`（新，仿 `ConfirmDialog`）、上列測試檔。
+- **可修改／新增**：`CustomTitleBar.axaml(.cs)`、`ChatToolbar.axaml(.cs)`、`WorkbenchViewModel.ConversationActions.cs`（新）、`src/Lumi.App/Services/ConversationMarkdownExporter.cs`（新；放 App 層才能用 `Strings`）、`Views/RenameDialog.axaml(.cs)`（新，仿 `ConfirmDialog`）、上列測試檔。
 - **步驟**：
   1. **齒輪**：`CustomTitleBar` 在小精靈按鈕右邊加 32×32 圖示按鈕（無框、透明底、`LumiIconSettings`、hover `LumiSurfaceAltBrush`），Command 綁 `OpenSettingsCommand`（已存在）、Tooltip 與 `AutomationProperties.Name` ＝ `Strings.Workbench_Settings`。與小精靈間距 8；仍在分隔線與系統按鈕左邊。設定視窗共用此標題列（`ShowSpriteButton=False`、`DataContext=null`）：齒輪要一併隱藏（新增 `ShowSettingsButton` 或併入同一開關）。回應中齒輪**可用**。
   2. **「⋯」選單**：移除「設定」「管理連線與模型」兩項（管理仍在模型選單底部），改為「重新命名對話」「匯出為 Markdown」「刪除這則對話」（Header 文字用 `LumiDangerBrush`）。`AutomationProperties.Name` 改 `對話選項`。回應中：重新命名可用、匯出與刪除停用；空對話（沒有訊息）三項全停用。
   3. **重新命名**：開 `RenameDialog`（TextBox 預填目前標題、儲存／取消、Enter 儲存、Esc 取消）；標題的清理與長度上限重用 `HistoryViewModel` 的同一份規則（抽成共用靜態函式，不要複製）；成功後更新工作台標題與歷史清單。
   4. **刪除**：重用 `ConversationDeletionService` 與 `HistoryViewModel` 的確認文字與「刪除後切到下一則」流程（`ConversationDeletedAsync`）；不得另寫一套。
-  5. **匯出**：`ConversationMarkdownExporter.Export(Conversation, IReadOnlyList<ChatMessage>)` 純函式 → Markdown：`# 標題`、匯出時間；使用者訊息 `## 你`、助理訊息 `## Lumi`，文字區塊原樣；工具呼叫一行引用 `> 工具：{DisplayName} {Target}（成功／失敗）`；`ThinkingBlock`／`RedactedThinkingBlock`／`ProviderBlock` 略過；圖片 `[圖片：{名稱}]`；`ContextBlock` `[附檔：{名稱}]`。檔名預設「標題.md」（去除檔名不允許的字元）。流程：`IFilePickerService.SaveFileAsync` → 寫檔 → 成功／失敗訊息（用既有的 Notice／Error 呈現方式，先看 `WorkbenchViewModel` 現有通知機制）。
+  5. **匯出**：`ConversationMarkdownExporter.Export(Conversation, IReadOnlyList<ChatMessage>, DateTimeOffset exportedAt)` 純函式（文字用 `Strings.Export_*`） → Markdown：`# 標題`、匯出時間；使用者訊息 `## 你`、助理訊息 `## Lumi`，文字區塊原樣；工具呼叫一行引用 `> 工具：{DisplayName} {Target}（成功／失敗）`；`ThinkingBlock`／`RedactedThinkingBlock`／`ProviderBlock` 略過；圖片 `[圖片：{名稱}]`；`ContextBlock` `[附檔：{名稱}]`。檔名預設「標題.md」（去除檔名不允許的字元）。流程：`IFilePickerService.SaveFileAsync` → 寫檔 → 成功／失敗訊息（用既有的 Notice／Error 呈現方式，先看 `WorkbenchViewModel` 現有通知機制）。
 - **測試**：標題列在 Windows／macOS 配置下齒輪都在系統按鈕左邊、設定視窗沒有齒輪；「⋯」三項的啟用／停用條件（回應中、空對話）；匯出器各區塊（含空訊息、只有工具）；重新命名空白、過長、取消；刪除流程確認與取消。更新既有 `ChatToolbarTests`／`ResponsiveWorkbenchTests` 裡對 `SettingsMenuItem`、`ManageModelsMenuItem` 的斷言。
 - **不要做**：不動模型膠囊、不加用量按鈕（21E）、不改 `HistoryDrawer` 的內聯重新命名。
 
@@ -130,7 +130,7 @@
 - **可修改／新增**：`ConversationUsageViewModel.cs`、`Views/UsageFlyout.axaml(.cs)`（新）、`WorkbenchViewModel.Usage.cs`（新）、`ChatToolbar.axaml`（只加用量按鈕，位置在膠囊與「⋯」之間）、`ModelPicker.axaml`、`ModelSwitcherViewModel.cs` 及測試。
 - **步驟**：
   1. **累計**：`ConversationUsageTally`（純類別，好測）：`Committed`＝本對話已存訊息的 usage 加總（載入時對所有助理訊息加總）、`InFlight`＝進行中請求最新的 `UsageEvent`（它是該次請求的累計值，不要重複相加）；顯示值＝`Committed + InFlight`；收到 `Completed` 把該訊息 usage 併入 `Committed`、清掉 `InFlight`；失敗／中止以資料庫實際存下來的為準。`ContextUsed`＝最近一次請求（輸入含快取＋輸出，沿用現有算法）。`TurnCount`＝使用者送出次數（沿用 `Turns`）。切換／新對話整組換掉。
-  2. **`ConversationUsageViewModel`**：依 ui-usage-and-topbar.md 第 4 節屬性，加上 `Level`（`UsageLevel.From`）、`Ratio`、各顯示字串（格式照 3.2：`FormatTokens`，<1% 顯示「<1%」，「還可以再用約」下限 0）、快取命中率＝累計快取讀取 ÷ 累計輸入（含快取）；累計快取 = 0 時 `ShowCacheRing=false`（見差異表）；`ContextWindow` 為 0 或未知時：不顯示百分比與圓環進度，圓環用 `Empty`，面板只顯示累計數字。
+  2. **`ConversationUsageViewModel`**：依 ui-usage-and-topbar.md 第 4 節屬性，加上 `Level`（`UsageLevelRules.From`）、`Ratio`、各顯示字串（格式照 3.2：`FormatTokens`，<1% 顯示「<1%」，「還可以再用約」下限 0）、快取命中率＝累計快取讀取 ÷ 累計輸入（含快取）；累計快取 = 0 時 `ShowCacheRing=false`（見差異表）；`ContextWindow` 為 0 或未知時：不顯示百分比與圓環進度，圓環用 `Empty`，面板只顯示累計數字。
   3. **按鈕**：32×32、`Classes="tertiary toolbar iconOnly"` 的外觀，內含 `UsageRing`（直徑 20、線寬 2.5）；面板開啟中底色 `LumiAccentSoftBrush`、框 `LumiAccentBrush`；`Danger` 時右上 10px 紅點（`LumiDangerDotBrush`，2px `LumiSurfaceBrush` 外框）；Tooltip 與 `AutomationProperties.Name` 照 2.1；`Button.Flyout`（`Placement="BottomEdgeAlignedRight"`、`VerticalOffset=6`）；Tab 可聚焦，Enter／Space 開、Esc 關並把焦點還給按鈕。回應中可用（唯讀）。
   4. **面板**（`UsageFlyout`，寬 320）：照第 3 節——標題列、上下文區（大圓環直徑 104、線寬 10＋三行文字）、三個小方塊（輸入／輸出／回合）、連線列（Ok／Unknown／Failed；Failed 的「重試」呼叫現有的連線測試流程，找 `ModelSwitcherViewModel`／`ConnectionStatusCache` 既有接口，沒有就回報）、費用說明。`Danger` 時插入快滿提醒（「開新對話」回應中停用、「繼續這則」只關閉面板）。顏色只用既有 token（見差異表）。
   5. **模型選單精簡**：移除 `ModelPicker` 的 `SessionSection`、`ModelSwitcherViewModel` 的 `UpdateSession／HasSession／UsageText／ContextUsed／ContextWindow／ContextLabel`，以及 `WorkbenchViewModel` 裡只為它存在的 `SyncSessionUsage`、`StatusText`（若仍有其他引用就保留）。寬度維持 320。模型選單的搜尋、分組清單、「管理連線與模型…」不變；膠囊 Tooltip 維持現狀。
