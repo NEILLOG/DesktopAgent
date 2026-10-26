@@ -134,3 +134,35 @@
   - `MacDockIconTests`（`[SkippableFact]`，非 macOS 略過）：傳入亂位元組 `TryApply` 回 false 且不丟例外（不要呼叫會真的改 Dock 的成功路徑）。
 - **完成檢查**：`dotnet build Lumi.sln` 零警告；`dotnet test tests/Lumi.App.Tests --filter "AppIconAssetTests|TrayIconTests"`、`dotnet test tests/Lumi.Platform.Tests --filter MacDockIcon` 全過。
 - **不要做**：不改 `Lumi.App.csproj`（協調者處理 `ApplicationIcon`；`AvaloniaResource` 已加好）、不改 `Lumi.sln`、不加視窗的 `Icon` 屬性。
+
+---
+
+### 包 20B：提醒排程頁（Wave 2，20A 合併後）
+
+- **目標**：`RemindersViewModel` 與 `RemindersPanel.axaml` 完成：列出所有提醒、可刪除、可清除已結束；不提供新增（尚未掛進 `SettingsWindow`，由協調者整合）。
+- **先讀**：`src/Lumi.App/ViewModels/RemindersViewModel.cs`（骨架，**保留建構子簽章** `(ReminderService reminders, IConfirmService confirm, IUiDispatcher dispatcher, TimeProvider time)` 與 `IDisposable`）、`src/Lumi.App/ViewModels/MemoryViewModel.cs`（仿照 `Subscribe`／`OnStoreChanged`／`Dispose` 的變更訊號寫法、`SetMessage`、刪除確認的寫法、`ClearAllAsync`）、`src/Lumi.App/Views/MemoryPanel.axaml` 與 `.axaml.cs`（面板版型、列的樣式、窄視窗規則、訊息列）、`src/Lumi.Core/Reminders/ReminderService.cs`（`ChangeToken`、`ListAsync`、`DeleteAsync`、`DeleteFinishedAsync`）、`ScheduledItem.cs`、`ScheduledTypes.cs`、`Trigger.cs`、`ScheduleCalculator.cs`（`Describe`、`ResolveTimeZone`）、`tests/Lumi.App.Tests/TestSupport/SettingsHost.cs`（已有 `Reminders`、`ReminderService`、`ReminderStore`）、`tests/Lumi.App.Tests/Headless/MemoryPanelTests.cs`、`tests/Lumi.App.Tests/TestSupport/FakeTimeProvider.cs`、`SyncUiDispatcher.cs`、`FakeConfirmService.cs`。
+- **可修改／新增**：`src/Lumi.App/ViewModels/RemindersViewModel.cs`、`src/Lumi.App/Views/RemindersPanel.axaml`、`RemindersPanel.axaml.cs`、`tests/Lumi.App.Tests/RemindersViewModelTests.cs`、`tests/Lumi.App.Tests/Headless/RemindersPanelTests.cs`。
+- **步驟**：
+  1. `RemindersViewModel`（`ObservableObject`，`IDisposable`）：
+     - `ObservableCollection<ReminderRowViewModel> Pending`、`Finished`；`bool HasPending`、`HasFinished`、`ShowPendingEmpty`（`!HasPending`）、`ShowFinishedEmpty`（`!HasFinished`）；`[ObservableProperty] string? Message`、`bool MessageIsError`、`HasMessage`。
+     - 建構時 `Subscribe()`（註冊 `reminders.ChangeToken`，被取消時 `dispatcher.Post(OnChanged)`，`OnChanged` 重新 `Subscribe()` 後 `_ = ReloadAsync()`；`Dispose` 後不再處理）並 `_ = ReloadAsync()`。先取得權杖、之後才讀資料（同 `MemoryViewModel`）。
+     - `public async Task ReloadAsync()`：`reminders.ListAsync(new ReminderQuery(null, null, 500), CancellationToken.None)`；狀態是 `Pending` 的進 `Pending`（維持 store 的順序），其餘進 `Finished`（反過來排，最近的在最上面）；例外時 `Message = Strings.Reminders_LoadFailed`、`MessageIsError = true`。
+     - `ReminderRowViewModel`（同檔，sealed）：`Id`、`Title`、`Message`（可空白）、`KindText`（`Reminders_KindReminder`／`KindTimer`／`KindSchedule`）、`StatusText`（待觸發且 `Enabled == false` → `Reminders_StatusPaused`；Completed／Missed／Cancelled → 對應 `Reminders_StatusXxx`；其餘 null）、`ScheduleText`、`CreatedByText`（`Reminders_CreatedByAgent`／`CreatedByUser`）、`DeleteCommand`（`IAsyncRelayCommand`）。`ScheduleText`：待觸發的週期項目是 `ScheduleCalculator.Describe(recurrence, item.TimeZoneId)`，有 `NextFireAt` 時再接 `" · "` 與 `string.Format(Strings.Reminders_NextFireFormat, 時間)`；待觸發的一次性項目只有「下次」那段；已結束的項目是 `string.Format(Strings.Reminders_LastFiredFormat, 時間)`（沒有 `LastFiredAt` 就是 null）。時間格式固定 `"yyyy/MM/dd HH:mm"`，轉成 `ScheduleCalculator.ResolveTimeZone(item.TimeZoneId)` 的當地時間（`TimeZoneInfo.ConvertTime`）。
+     - `DeleteAsync(row)`：`confirm.ConfirmDestructiveAsync($"{Strings.Reminders_DeleteQuestion}\n{row.Title}", Strings.Reminders_Delete)`，取消就結束；`reminders.DeleteAsync(row.Id, CancellationToken.None)`；成功 `Message = Strings.Reminders_Deleted`；回 false（已經不存在）也當成成功並重新載入；例外 `Message = Strings.Reminders_DeleteFailed`、`MessageIsError = true`。
+     - `[RelayCommand(CanExecute = nameof(HasFinished))] ClearFinishedAsync()`：確認 `string.Format(Strings.Reminders_ClearFinishedQuestion, Finished.Count)`、按鈕 `Strings.Reminders_ClearFinished`；`reminders.DeleteFinishedAsync`；`Message = string.Format(Strings.Reminders_Cleared, 筆數)`。`HasFinished` 變動時 `ClearFinishedCommand.NotifyCanExecuteChanged()`。
+  2. `RemindersPanel.axaml`（`UserControl`，`x:DataType="vm:RemindersViewModel"`，版型仿 `MemoryPanel`：`ScrollViewer` → `ctl:FractionWidthLimiter MaxPixels="640"` → `StackPanel`）：
+     - 頂端說明 `muted`：`Strings.Reminders_RunningNote`；訊息列（`Message`，`muted`，`MessageIsError` 時 `Classes.error`），`IsVisible="{Binding HasMessage}"`。
+     - 區段標題（`TextBlock Classes="section-title"`）`Reminders_PendingTitle`；沒有項目時顯示 `Reminders_EmptyPending`（`muted`，綁 `ShowPendingEmpty`）；`ItemsControl x:Name="PendingList"` 綁 `Pending`。
+     - 區段標題 `Reminders_FinishedTitle`，右側「清除已結束」按鈕（`Classes="secondary"`，`Command="{Binding ClearFinishedCommand}"`）；下一行 `muted` 的 `Reminders_FinishedNote`；沒有項目時 `Reminders_EmptyFinished`；`ItemsControl x:Name="FinishedList"` 綁 `Finished`。
+     - 一列（兩個清單共用同一個 `DataTemplate`，`x:DataType="vm:ReminderRowViewModel"`）：下邊 1px `LumiBorderBrush`、Padding `0,12`；左欄：第一行 `WrapPanel`：標題（14／600）、種類徽章（`Border Classes="badge"` 內 `KindText`）、狀態徽章（`StatusText` 非空才顯示，同樣 `badge`）；第二行訊息（`muted`，換行，空白不顯示）；第三行 `ScheduleText`（`muted`）與 `CreatedByText`（`muted`），以 `WrapPanel` 並排、間距 12；右欄「刪除」按鈕：`Button Classes="tertiary"`，內容 `StackPanel Horizontal` 的 `LumiIconTrash`（Size 16）加文字 `Strings.Reminders_Delete`，`Command="{Binding DeleteCommand}"`，`AutomationProperties.Name` 用 `Reminders_Delete`。窄視窗（`Window.narrow`）時刪除鈕移到內容下方、靠左（仿 `MemoryPanel` 的 `StackPanel.memory-actions` 規則）。
+     - `RemindersPanel.axaml.cs`：只有 `InitializeComponent()`。
+- **測試**（`RemindersViewModelTests`，用 `SettingsHost.Reminders`／`ReminderService`，`SyncUiDispatcher`、`FakeConfirmService`；時間用 `ManualTimeProvider` 或固定時間，建項目用 `ReminderService.CreateReminderAsync(new NewReminder(...))`，仿 `ReminderServiceCreateTests` 的建法）：
+  - 建一個一次性提醒與一個每天的週期提醒後 `ReloadAsync`：`Pending` 有 2 筆、`Finished` 空、`ShowFinishedEmpty` 為 true；週期那筆的 `ScheduleText` 含 `ScheduleCalculator.Describe` 的結果。
+  - 取消其中一筆（`CancelAsync`）後（變更訊號觸發自動重新載入）：該筆出現在 `Finished`、`StatusText` 是 `Reminders_StatusCancelled`。
+  - 刪除：`Confirm` 回 true → 項目從清單消失且 `ReminderService.ListAsync` 也查不到、`Message` 是 `Reminders_Deleted`；`Confirm` 回 false → 項目還在、沒有訊息。
+  - 刪掉待觸發項目後，`ReminderService.ProcessDueAsync` 不再為它通知（不需要，20A 已測；這裡只測 ViewModel，**不要重複**）。
+  - 清除已結束：有 2 筆已結束時 `ClearFinishedCommand.CanExecute` 為 true；確認後 `Finished` 空、`Message` 含「2」；沒有已結束時 `CanExecute` 為 false。
+  - 外部（工具）新增一筆提醒（直接呼叫 `ReminderService.CreateReminderAsync`）後 `Pending` 自動多一筆（驗證變更訊號）；`Dispose` 之後再新增，`Pending` 不再變動。
+  - `Headless/RemindersPanelTests`（仿 `MemoryPanelTests`）：面板內 `PendingList` 與 `FinishedList` 存在；有 1 筆待觸發時 `PendingList` 有 1 個項目、每個刪除鈕 `AutomationProperties.Name` 非空；沒有項目時顯示空狀態文字。
+- **完成檢查**：`dotnet build Lumi.sln` 零警告；`dotnet test tests/Lumi.App.Tests --filter "RemindersViewModelTests|RemindersPanelTests"` 全過。
+- **不要做**：不新增「新增提醒」功能、不加啟停開關（只顯示「已暫停」狀態）、不改 `SettingsWindow.axaml`、`SettingsViewModel.cs`、`Strings.*`、DI 檔。
