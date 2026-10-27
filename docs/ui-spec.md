@@ -165,7 +165,7 @@ ui-guide.html 的三項核心原則：一般使用者優先，技術資訊按需
 - **資料**：`ConversationUsageTally`（累計：已存訊息的 usage 加總，加上進行中那次請求的最新值，不重複計）與 `ConversationUsageViewModel`；上下文用量取最近一次請求（輸入含快取加輸出）。token 以供應商回傳的 `usage` 為準（DeepSeek 的 `prompt_cache_hit_tokens` 也算快取）。
 - 回應中用量圖示與面板仍可用（唯讀）；數字隨每次收到 `usage` 更新。
 - 費用說明：「費用由供應商依 token 用量計算，從你的帳號扣款。」
-- **整理並繼續**（M22）：Danger 時快滿提醒的按鈕依序是「整理並繼續」（primary，呼叫 `IChatSession.CompactAsync`）、「開新對話」（secondary）、「繼續這則」；回應中或整理中停用。整理後圓環要等下一次回應才更新。
+- **整理並繼續**（M22）：Danger 時快滿提醒的按鈕依序是「整理並繼續」（primary，呼叫 `IChatSession.CompactAsync`）、「開新對話」（secondary）、「繼續這則」；回應中或整理中停用。整理完成後圓環立刻改用估算值（整理後的歷史＋system prompt＋工具定義），下一次回應後再換回供應商回報的實際用量。
 
 ### 2.4 歷史對話抽屜（M9 9A～9B）
 
