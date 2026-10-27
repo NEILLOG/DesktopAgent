@@ -60,6 +60,8 @@
 
 ## Phase 0（協調者）
 
+> **實際執行（2026-10-28）**：Phase 0 只做了字串（下面第 1 點，鍵名見 `Strings.resx` 末尾：`Chat_Error*`、`Models_DefaultReplaced`、`AiSettings_*`、`ToolCard_*`、`ImageGen_*`、`Compact_*`、`Usage_CompactAndContinue`、`Sprite_ConversationTitle`、`History_SpriteTag`、`Workbench_ClearConversation`、`Confirm_ClearSpriteConversation`；「清除」沿用既有的 `Confirm_Clear`）與 `ChatFailureKind.AppFilesMissing`／`ContextTooLong`。第 2 點的 Core 型別改由**唯一使用它的包自己加**：`LastTest` → 22B；圖片設定、`IImageGenerator`、`ToolResult.ImageFiles` → 22F；壓縮的 schema／store／事件／`CompactAsync` → 22H。工具的顯示名稱與群組名稱照現有慣例寫在 Core／Tools 的程式碼裡，不放 resx。
+
 1. **字串**（`Strings.resx`＋`Strings.cs`）：
    - 缺檔錯誤：`Chat_ErrorAppFilesMissing`「Lumi 的程式檔案不完整，請重新啟動 Lumi；仍然發生請重新下載安裝。」
    - 首頁：預設模型無法使用的待處理（標題／說明）。
@@ -311,7 +313,12 @@ AI 連線                                                    [＋ 新增連線]
    - 回到工作台：重新開回記下的那則（被刪了就照 `InitializeAsync` 的規則）。
    - 切換時若正在回應：不停止，等 `RunFinished` 之後才切；這段時間小精靈不顯示那則回應（`SpriteConversationController` 現在就會忽略工作台發起的回應），輸入列照現有的回應中規則。
    - 啟動時若上次是小精靈模式（`SpriteSettings.LastMode`），直接開小精靈對話。
-3. **歷史清單**：小精靈對話照常出現在工作台的歷史清單，可以打開來看或繼續聊。在工作台打開它不影響規則（回到小精靈時仍開它）。可以刪除，刪了下次自動重建。
+3. **歷史清單**（使用者 2026-10-28 決定：固定在最上方）：
+   - 小精靈對話**固定在歷史清單最上方**，不參與時間排序、不受分頁影響；用小精靈圖示（沿用既有的小精靈圖示資源）加「小精靈」標籤區分。還沒建立時不顯示。
+   - 搜尋時照一般規則：符合才出現，出現時仍在最上方。
+   - 在工作台點它可以看或繼續聊；不影響切換規則（回到小精靈時仍開它）。
+   - 它的「⋯」選單（歷史清單與工作台第二列）沒有「刪除」，改成「清除內容」：確認後刪掉全部訊息與整理紀錄、保留這則對話與 id（標題不變）。重新命名、匯出照常。
+   - 萬一 id 對不到（資料庫被手動改），照第 1 點重建。
 4. **「在工作台顯示完整內容」**（小精靈把長內容交給工作台的既有流程）：先讀現有做法。如果它依賴「兩邊是同一則對話」，改成：工作台開啟小精靈對話並捲到那則訊息。不確定就停下來回報。
 5. **測試**：切到小精靈開專屬對話、切回工作台回到原對話、回應中切換延後、專屬對話被刪後重建、啟動時的模式、在工作台顯示完整內容。
 
