@@ -913,4 +913,12 @@ public sealed record DownscaledImage(byte[] Data, string MediaType);
 
 ## 實作紀錄
 
-（實作時填寫）
+分支 `m23-usage-cost`；子代理工作在 `../DesktopAgent-wt/w23<包>`（照 [[subagent-worktrees-manual]] 從 Phase 0 的 commit 建立），由協調者合併回來。
+
+- **2026-10-31 Phase 0 完成**（commit `d3a7293`）：
+  - `src/Lumi.Core/Usage/` 新增計畫列的型別（`ModelPricing`、`PriceSnapshot`、`UsageRecord`、`IUsageStore`、`IUsageRecorder`、`UsageSettings`、`Money`、`UsageHintIds`／`UsageHintThresholds`／`IUsageHintLog`、`IImageDownscaler`）。
+  - `ModelSettings.Pricing`、`AppSettings.Usage`、`IModelCatalog.SetUsageAsync`；`JsonModelCatalog` 的檔案 DTO 要另外加 `Usage` 欄位（計畫沒寫到：設定檔是手寫的 `SettingsFile` DTO，不是直接序列化 `AppSettings`）；`ModelSettings.Pricing` 直接隨模型序列化。
+  - migration 12（`request_usage`、`usage_hints`）。既有的「模擬舊版資料庫」升級測試要在 `UPDATE schema_version` 前加 `DROP TABLE IF EXISTS request_usage; DROP TABLE IF EXISTS usage_hints;`（共 4 個測試檔），`SqliteCompactionTests` 的硬編碼版本 11 改成 `LatestVersion`。**之後每次加 migration 都要重複這件事。**
+  - 價目表快照：LiteLLM 原檔 3.1 MB、4,538 筆（含 `sample_spec`），快照日期 2026-10-31；`Lumi.Web.csproj` 設成 EmbeddedResource；README 加「第三方資料」段落記來源與 MIT 授權。
+  - 字串（約 100 條，`Usage_CostNote` 改新文字）、`LumiIconBarChart`、`SettingsSection.Usage`、兩邊 `FakeModelCatalog` 的 `SetUsageAsync`、`InMemoryUsageStore`／`InMemoryUsageHintLog`（Core 與 App 測試各一份）。
+  - 測試：`UsageContractTests`（9）、`JsonModelCatalogUsageTests`（4）；全方案建置零警告、全部測試通過。
