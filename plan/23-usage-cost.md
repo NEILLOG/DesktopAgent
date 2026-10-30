@@ -933,4 +933,15 @@ public sealed record DownscaledImage(byte[] Data, string MediaType);
   - **23D**：`MoneyFormat`、`MonthlyUsageSummary`、`BudgetMonitor`。`MoneyFormat.Tokens` 與 `WorkbenchViewModel.FormatTokens` 規則完全相同（兩邊要一起改）；`BudgetMonitor` 用 `SemaphoreSlim` 避免兩個回應同時結束時重複提醒。
   - **23E**：`SkiaImageDownscaler`（SkiaSharp 2.88，用 `SKFilterQuality.High`）。**帶 EXIF 旋轉標記的照片不縮**（縮圖會丟掉方向資訊，保守處理；手機照片因此不會變小，之後可改成縮前先套用旋轉）；帶透明的 WebP 會轉 JPEG 失去透明（照計畫，未另外處理）。
   - **踩到的坑**：完整 `dotnet test` 在本機同時跑多個 worktree 後變得很慢（App.Tests 30 分鐘）。子代理之後只跑篩選過的測試，完整測試由協調者在整合時跑一次。
+- **2026-10-31 Wave 2 完成**（23F、23G、23H、23L，Haiku 5.5 子代理；協調者審查、合併並做 Wave 2 整合）：
+  - **23F**：`ModelPricingViewModel`、`PricingAutoFill`（`app_meta` 旗標 `pricing_autofill_done`）、`ModelsViewModel`／`ModelsPanel.axaml` 的單價段落。`IPriceTableSource` 是 `ModelsViewModel` 的選用參數，沒註冊時整段隱藏。單價欄位本身沒有單位文字（摘要行有）；單價有錯誤時 `CanSave` 擋住儲存；新增模型時上下文上限／最大輸出只在 model ID 改變時才由價目表覆蓋。小缺口：設定頁編輯別處的連線 URL 時，已開著的模型表單不會自動重新比對。
+  - **23G**：`UsageSettingsViewModel`、`UsagePanel`、`DailyCostBars`、`UsageCsvExporter`、`UsageHintSummaryItem`。協調者補的：① 本月沒有用量時「設定每月預算」連結與編輯器仍然顯示（原本空月份整段隱藏，沒用量的人就無法先設預算）；② CSV 的文字欄位以 `= + - @` 開頭時前面補單引號，避免 Excel 當公式執行（對話標題可能是使用者貼進來的）。預算百分比一律無條件捨去（99.6% 顯示 99%），首頁卡片（23L）同一規則。
+  - **23H**：用量面板費用兩行、`BudgetAlertViewModel`／`BudgetBanner`／`BudgetAlertCoordinator`（定義 `ISpriteNotice`）。`WorkbenchViewModel` 建構式加了選用的 `IUsageStore`、`BudgetMonitor`（計畫沒列這個檔案，但無法避免）。沒做「開面板時重新查詢」：費用在載入／切換對話、每次 `RunFinished`、整理完成時更新（缺口：App 一直開著跨月、之後沒有任何回應時，本月數字晚一步更新）。預算提醒文字沒有「≈」前綴（`BudgetMonitor` 不回傳是否有估算）。
+  - **23L**：首頁「本月用量」卡片。「管理 ›」走 `SettingsViewModel.GoToCommand`（和工具卡片相同），不經 `HomeViewModel.NavigateRequested`。進度條放三條 `ProgressBar` 依等級切換顯示。
+  - **Wave 2 整合**：
+    - DI：`Lumi.Infrastructure` 註冊 `SqliteUsageStore`／`IUsageStore`／`UsageRecorder`／`BudgetMonitor`；`Lumi.Core` 預設 `NullUsageHintLog`（Wave 3 由 SQLite 版取代）；`Lumi.Web` 新增 `AddLumiPriceTable(dataDirectory)`（`PriceTableSource` 是 internal，App 不能直接 new）；`AddLumiApp` 註冊 `IImageDownscaler`、`UsageSettingsViewModel`（工廠，`openConversation` = 回到工作台再開對話）、`SpriteNotice`（`SpriteBubbleViewModel.ShowNotice`）、`BudgetAlertCoordinator`。
+    - 啟動：`App.StartAsync` 建立 `BudgetAlertCoordinator`，背景執行 `PricingAutoFill`。
+    - 設定視窗：`SettingsCategory.Usage = 2`，原本的 2–10 各加 1；`SettingsWindow.axaml` 新增選單項目與頁面（頁首：眉標「用量與費用」、標題「這個月花了多少」，沒有說明文字）；切到該分類時自動 `LoadAsync()`；`UsageSettingsViewModel.OpenPricing` 由 `SettingsViewModel` 接到 AI 連線頁。`SettingsViewModel` 建構式在 `home` 之後多了 `UsageSettingsViewModel usage`。
+    - **測試裡寫死分類編號的地方全部改成用 `SettingsCategory` 列舉**（`SettingsRig` 等 7 個檔案原本寫 `CategoryIndex = 2/3/5…`，選單插入一項就整批指到別頁）；選單數量 11 → 12；鍵盤順序測試補上 `Usage`；`CompositionRootTests` 補上新服務。
+    - 架構測試：預算提醒列的 `Margin="64,8,64,0"` 加入間距例外（和通知列、更新提醒同一條版面）。
 
