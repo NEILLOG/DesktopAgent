@@ -1,6 +1,6 @@
 # 23 用量與費用（成本記錄、單價、預算提醒、用量頁）
 
-- 狀態：已確認（2026-10-30 協調者讀完程式碼，補上可行性評估、實作分包、驗收；文末三個問題使用者已回覆）
+- 狀態：**實作完成，待人工驗收**（2026-10-31；分支 `m23-usage-cost`，尚未合併回 main。自動測試全過、建置零警告；實機項目見 `plan/manual-verification.md` 的 M23-01～10）
 - 對應里程碑：M23
 - 來源：2026-10-29～30 與 Claude 的討論（claude.ai）；`plan/misc-backlog.md` 第 4 項
 - 視覺稿：Claude Design 畫布「Lumi 用量頁 UI」。**以最下排「第二版」v2-1～v2-3 為準**；上兩排是第一版，只當作「先不做」項目的參考。
@@ -873,26 +873,28 @@ public sealed record DownscaledImage(byte[] Data, string MediaType);
 
 ## 驗收標準
 
-- [ ] 每次呼叫供應商（含工具迴圈的每一次、摘要）在 `request_usage` 各有一列；失敗且沒收到任何事件的請求沒有列。
-- [ ] 費用照當時的單價快照計算；之後改單價，舊紀錄的費用不變。
-- [ ] 重新產生、刪除對話之後，本月費用不變少。
-- [ ] 沒有 usage 的請求以估算值計入，畫面顯示「≈」。
-- [ ] 不支援 `stream_options` 的相容服務：自動不帶重送，對話正常，用量為估算。
-- [ ] 新增模型時，價目表裡完全相符／正規化後相符的 model ID 自動帶入單價、上下文上限、最大輸出；近似只列候選、不自動套用；本機連線顯示不計費。
-- [ ] 升級後第一次啟動，既有模型自動帶入單價（只做一次、不改上下文上限）。
-- [ ] 「更新價目表」成功時日期更新；失敗時沿用舊表並顯示訊息。
-- [ ] 預算跨 80%、100% 各提醒一次（一起跨過只提醒 100%）；換月重新計算；工作台與小精靈模式各自用對的位置；回應中途不出現。
-- [ ] 用量頁：本月金額、日期範圍、預算列與進度條、預測句（7 天以上）、每日長條、前 5 對話、出現過的情況、頁尾；預算可設定、修改、清除。
-- [ ] 用量面板：本對話與本月 ／ 預算兩行；沒設預算時只有金額；「用量與費用 ›」開到正確分類。
-- [ ] 設定首頁「本月用量」卡片顯示新台幣金額、預算列與進度條（有預算時）、今天的金額；「管理 ›」開到用量頁；輸入／輸出 tokens 標籤仍在。
-- [ ] CSV 匯出可用 Excel 開啟、中文不亂碼，欄位齊全。
-- [ ] 9 條提示各自在對的時機與位置出現；同時只一則；頻率限制正確；「不再提醒這類」生效且可在用量頁重新開啟；小精靈模式不顯示只記錄；每次觸發都有紀錄。
-- [ ] L1：過長的工具結果保留頭尾並寫出省略行數。L2：同工具同參數連續 3 次失敗提早停下。L3：同一則對話的 system 與工具定義在請求之間不變（測試）。L5：大圖縮到長邊 1568px。
-- [ ] 全方案建置零警告、全部測試通過；架構測試（相依、間距、色票）通過。
+（以下以自動測試驗證完成；需要實機、真實金鑰或視覺判斷的部分在人工驗收清單。）
+
+- [x] 每次呼叫供應商（含工具迴圈的每一次、摘要）在 `request_usage` 各有一列；失敗且沒收到任何事件的請求沒有列。
+- [x] 費用照當時的單價快照計算；之後改單價，舊紀錄的費用不變。
+- [x] 重新產生、刪除對話之後，本月費用不變少。
+- [x] 沒有 usage 的請求以估算值計入，畫面顯示「≈」。
+- [x] 不支援 `stream_options` 的相容服務：自動不帶重送，對話正常，用量為估算。
+- [x] 新增模型時，價目表裡完全相符／正規化後相符的 model ID 自動帶入單價、上下文上限、最大輸出；近似只列候選、不自動套用；本機連線顯示不計費。
+- [x] 升級後第一次啟動，既有模型自動帶入單價（只做一次、不改上下文上限）。
+- [x] 「更新價目表」成功時日期更新；失敗時沿用舊表並顯示訊息。
+- [x] 預算跨 80%、100% 各提醒一次（一起跨過只提醒 100%）；換月重新計算；工作台與小精靈模式各自用對的位置；回應中途不出現。
+- [x] 用量頁：本月金額、日期範圍、預算列與進度條、預測句（7 天以上）、每日長條、前 5 對話、出現過的情況、頁尾；預算可設定、修改、清除。
+- [x] 用量面板：本對話與本月 ／ 預算兩行；沒設預算時只有金額；「用量與費用 ›」開到正確分類。
+- [x] 設定首頁「本月用量」卡片顯示新台幣金額、預算列與進度條（有預算時）、今天的金額；「管理 ›」開到用量頁；輸入／輸出 tokens 標籤仍在。
+- [x] CSV 匯出可用 Excel 開啟、中文不亂碼，欄位齊全。
+- [x] 9 條提示各自在對的時機與位置出現；同時只一則；頻率限制正確；「不再提醒這類」生效且可在用量頁重新開啟；小精靈模式不顯示只記錄；每次觸發都有紀錄。
+- [x] L1：過長的工具結果保留頭尾並寫出省略行數。L2：同工具同參數連續 3 次失敗提早停下。L3：同一則對話的 system 與工具定義在請求之間不變（測試）。L5：大圖縮到長邊 1568px。
+- [x] 全方案建置零警告、全部測試通過；架構測試（相依、間距、色票）通過。
 
 ## 人工驗收清單
 
-（整合時搬進 `plan/manual-verification.md` 的「M23」表）
+（已搬進 `plan/manual-verification.md` 的「M23」表 M23-01～10，尚未執行。）
 
 1. **公司 Gateway 實測**（第 3 節）：非串流確認有 `usage`；串流加 `stream_options` 確認 `[DONE]` 前有 usage chunk；同一個超過 1,024 tokens 的 prompt 打兩次，第二次 `cached_tokens > 0`。在 Lumi 裡對話一次，`request_usage` 的 `usage_estimated` 是 0。
 2. **Anthropic 直連**：開思考、用工具的一輪回應，`request_usage` 的列數＝呼叫次數，快取讀寫有值；費用和 Anthropic Console 同一段時間的用量大致相符（±10%）。
@@ -944,4 +946,10 @@ public sealed record DownscaledImage(byte[] Data, string MediaType);
     - 設定視窗：`SettingsCategory.Usage = 2`，原本的 2–10 各加 1；`SettingsWindow.axaml` 新增選單項目與頁面（頁首：眉標「用量與費用」、標題「這個月花了多少」，沒有說明文字）；切到該分類時自動 `LoadAsync()`；`UsageSettingsViewModel.OpenPricing` 由 `SettingsViewModel` 接到 AI 連線頁。`SettingsViewModel` 建構式在 `home` 之後多了 `UsageSettingsViewModel usage`。
     - **測試裡寫死分類編號的地方全部改成用 `SettingsCategory` 列舉**（`SettingsRig` 等 7 個檔案原本寫 `CategoryIndex = 2/3/5…`，選單插入一項就整批指到別頁）；選單數量 11 → 12；鍵盤順序測試補上 `Usage`；`CompositionRootTests` 補上新服務。
     - 架構測試：預算提醒列的 `Margin="64,8,64,0"` 加入間距例外（和通知列、更新提醒同一條版面）。
+- **2026-10-31 Wave 3 完成**（23I、23J、23K，Haiku 5.5 子代理；23J 等 23I 合併後才開，因為依賴規則的 `Args` 格式）：
+  - **23I**：`UsageHintRules.AfterResponse`／`OnResume`（純函式，門檻全用 `UsageHintThresholds`）、`UsageHintMatch`、`SqliteUsageHintLog`。子代理自行判斷的細節（接受）：第 2 條的「最近 10 則」不足 10 則時不觸發；第 9 條比對先前的使用者訊息時不套用「已被摘要整理掉」的範圍（整份歷史都算）；第 4 條以 `ContextBlock.DisplayName` 區分檔案（不同路徑的同名檔視為同一個）；第 5 條的「≥ 5K tokens」實際上被「≥ 3 張」涵蓋；第 8 條沒有 usage 的助理訊息不計入。協調者另外在 Infrastructure 的 DI 以 `SqliteUsageHintLog` 取代 Core 預設的 `NullUsageHintLog`。
+  - **23J**：`ComposerHintViewModel`／`ComposerHint`、`UsageHintCoordinator`、`WorkbenchViewModel.Hints.cs`、`ModelSwitcherViewModel` 的確認區（`PendingSwitch`）與 `ModelPicker.axaml`、`ChatComposer.axaml` 根節點由 `Border` 改成 `StackPanel`（上方加提示列）。與計畫不同、已接受的：重新產生的計數 key 用「對話 id ＋ 目前的回合數」（`MessageViewModel` 沒有 Id，`RegenerateAsync` 是同步路徑）；只有正常結束的回應才判斷提示（停止、失敗不算）；「管理工具」開到工具清單分頁（不是 MCP 分頁）；`RetrySwitcher`（錯誤列換模型重試）不接提示。協調者補的：`WorkbenchWindow.axaml.cs` 接上模型選單 `Flyout.Closed` → `DismissPendingSwitchAsync()`（選單關掉沒選就收起確認區並記為略過）；`ChatComposer.axaml` 提示列外層的 `Margin="64,8,64,8"` 加入間距例外；`UsageHintCoordinator` 註冊成 singleton。已知小缺口：「不再提醒這類」寫設定失敗時例外沒有接住（沒有錯誤顯示位置）。
+  - **23K**：資料來源改用 `IMcpToolSource.GetTools()`（連線中的即時清單，否則快取，不需連線）；顯示的是該伺服器**全部**工具定義的大小，伺服器斷線或個別工具被關掉時會比實際每次請求送出的大；字級沿用 muted（11px，專案沒有 12px token）。
+- **2026-10-31 整體結果**：全方案建置零警告；全部測試通過（App 2,417、Core 1,447、Infrastructure 541、Tools 1,294、Providers 190、Web 182、Architecture 131 等）。文件已更新：`docs/ui-spec.md` 第 15 節、`agent.md` 第 7 節、`plan/manual-verification.md` 的 M23 表、`plan/misc-backlog.md` 第 4 項。
+- **已知限制與後續（沒有排進 M23）**：① 帶 EXIF 旋轉標記的照片不縮圖；帶透明的 WebP 縮圖後失去透明。② 預算提醒文字沒有「≈」標記。③ 費用數字不在串流中即時更新，且 App 開著跨月、之後沒有任何回應時，本月數字會晚一步更新。④ 設定頁編輯別處的連線 URL 時，已開著的模型表單不會自動重新比對價目表。⑤ 「不再提醒這類」寫設定失敗時沒有錯誤顯示。⑥ 圖片生成（22F）的費用不計。⑦ LLM 使用習慣分析、匯率設定、每日預算等仍在 backlog「#4 先不做」。⑧ 提示門檻都是初始值，等有實際資料後用 `usage_hints` 與 `request_usage` 校準。
 
