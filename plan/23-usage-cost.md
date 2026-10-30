@@ -922,3 +922,15 @@ public sealed record DownscaledImage(byte[] Data, string MediaType);
   - 價目表快照：LiteLLM 原檔 3.1 MB、4,538 筆（含 `sample_spec`），快照日期 2026-10-31；`Lumi.Web.csproj` 設成 EmbeddedResource；README 加「第三方資料」段落記來源與 MIT 授權。
   - 字串（約 100 條，`Usage_CostNote` 改新文字）、`LumiIconBarChart`、`SettingsSection.Usage`、兩邊 `FakeModelCatalog` 的 `SetUsageAsync`、`InMemoryUsageStore`／`InMemoryUsageHintLog`（Core 與 App 測試各一份）。
   - 測試：`UsageContractTests`（9）、`JsonModelCatalogUsageTests`（4）；全方案建置零警告、全部測試通過。
+- **2026-10-31 Wave 1 完成**（23A–23E，Haiku 5.5 子代理平行實作，協調者逐包審查後合併；全方案零警告、全部測試通過）：
+  - **23A 價目表與比對**：`PriceTable`／`PriceMatcher`／`JaroWinkler`／`IPriceTableSource`、`LiteLlmPriceParser`、`PriceTableSource`（internal）。內建表解析出 3,126 筆聊天模型。協調者在子代理回報後的決定：
+    ① `PriceTableSource` 的 `dataDirectory` 改成**必填建構式參數**（`Lumi.Web` 只能參考 `Lumi.Core`，不能用 `LumiPaths`），整合包傳入 `LumiPaths.DataDirectory`；
+    ② 正規化多去掉 Bedrock 的廠商前綴（`anthropic.`、`meta.`、`amazon.`、`mistral.`、`cohere.`、`ai21.`、`deepseek.`、`openai.`；LiteLLM 內有 `us.anthropic.claude-…-v1:0` 這種鍵名）；
+    ③ **本機判斷不用 `ChatFailureText.IsLocalTarget`**（它把 10.x、172.16–31、192.168.x 與無點主機名也當本機，公司內網 Gateway 會被當成免費）；新增 `LocalConnection.IsLoopback`（只認 localhost、127/8、::1、0.0.0.0），`PriceMatcher` 與 `UsageRecorder` 都用它。計畫決定 9 的「本機」以此為準；
+    ④ 前綴候選與近似候選合併去重，最多 3 筆。
+  - **23B 費用紀錄**：`CostCalculator`、`UsageRecorder`、`SqliteUsageStore`，`ConversationService` 兩個呼叫點與 L2。實作細節：估算輸出把思考文字也算進去，但不放進「已停止」訊息的內容（另用 `CallUsage` 追蹤）；摘要呼叫用 `finally` 記錄（有 `yield` 的區塊不能用 `catch`）；`ListTopConversationsAsync` 略過全部沒單價的對話。協調者補的：L2 不把使用者按的「拒絕」（`ToolApproval.Denied`）算成工具失敗；`CompactSummaryAsync` 註解補上 L6 的理由。
+  - **23C**：`stream_options` 被拒（400 且內文含 `stream_options`）時不帶重送一次並記住連線（只在記憶體）；`ToolExecutor.Truncate` 改保留開頭 70%／結尾 30%，中間寫出省略行數（換行對齊最多找 200 字元）。
+  - **23D**：`MoneyFormat`、`MonthlyUsageSummary`、`BudgetMonitor`。`MoneyFormat.Tokens` 與 `WorkbenchViewModel.FormatTokens` 規則完全相同（兩邊要一起改）；`BudgetMonitor` 用 `SemaphoreSlim` 避免兩個回應同時結束時重複提醒。
+  - **23E**：`SkiaImageDownscaler`（SkiaSharp 2.88，用 `SKFilterQuality.High`）。**帶 EXIF 旋轉標記的照片不縮**（縮圖會丟掉方向資訊，保守處理；手機照片因此不會變小，之後可改成縮前先套用旋轉）；帶透明的 WebP 會轉 JPEG 失去透明（照計畫，未另外處理）。
+  - **踩到的坑**：完整 `dotnet test` 在本機同時跑多個 worktree 後變得很慢（App.Tests 30 分鐘）。子代理之後只跑篩選過的測試，完整測試由協調者在整合時跑一次。
+
