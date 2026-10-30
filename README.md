@@ -126,6 +126,10 @@ dotnet run -c Release
 - 離線判斷只在請求失敗後才補說明，不主動偵測網路。
 - 歷史搜尋只比對標題與訊息文字（不分大小寫，英文以外的大小寫折疊不做），命中字只在清單中加粗，不捲動到內文。
 
+## 第三方資料
+
+- 模型價目表：[LiteLLM](https://github.com/BerriAI/litellm) 的 `model_prices_and_context_window.json`（MIT 授權），快照放在 `src/Lumi.Web/Pricing/`，用來自動帶入模型單價與上下文上限；快照日期見同資料夾的 `litellm-model-prices.date.txt`。
+
 ## 授權
 
 尚未決定。
