@@ -111,6 +111,7 @@ Lumi.App ──► Lumi.Sprites.* ──► Lumi.Sprites.Abstractions
 - token 用量以供應商回傳的 `usage` 為準。只有送出前的上下文預估才用估算值（`ITokenEstimator`，顯示成「≈ N tokens」）。
 - 工具呼叫迴圈要有最大次數限制，預設 10 次（`ToolLoopOptions.MaxIterations`），超過就停止並回報 `ToolLoopLimit`；同一個工具、相同參數連續失敗 3 次（使用者按的「拒絕」不算）也會提早停下。
 - **每次呼叫供應商都記一筆用量與費用**（M23）：只有 `ConversationService` 的 `StreamOnceAsync`（對話與工具迴圈的每一次）與 `CompactSummaryAsync`（摘要）會呼叫供應商，兩處結束時各回報一次給 `IUsageRecorder`，寫進 `request_usage` 表（`conversation_id` 不設外鍵：刪除對話、重新產生都不能讓已經花掉的費用消失）。每筆存**當時的單價快照**與算好的費用（美元）；供應商沒回報 usage 時用估算值並標記 `usage_estimated`；**不從網址判斷地端或雲端**（地端與雲端模型常整合在同一個 Gateway 後面）：免費靠 `ModelPricing.IsFree`：model ID 符合 `LocalModelList`（原始碼內的地端模型關鍵字）時自動勾選，使用者也可以自己勾或取消；沒設單價就是「未設定」，不計入預算。記錄失敗只記 log，絕不能讓對話失敗。新增的呼叫點要記得照做。單價在 `ModelSettings.Pricing`（不是 model ID 上）；價目表是打包進 App 的 LiteLLM 快照，使用者資料夾的更新版優先。預算只提醒、不中斷回應。
+- **兩個常需要人工維護的檔案**（也寫在 README 最上方）：地端模型名單 `src/Lumi.Core/Usage/LocalModelList.cs`（`Keywords`）；LiteLLM 價目表快照 `src/Lumi.Web/Pricing/litellm-model-prices.json`（＋`.date.txt`，內嵌資源，App 不會自己上網查，使用者按「更新價目表」才下載）。
 - **一輪回應可以有多個 `Completed`**（每次呼叫供應商一個）。一次工具呼叫的事件順序：`Completed`（`StopReason.ToolUse`）→ 每個呼叫依序 `ToolCallStarted` →（需要確認時 `ApprovalRequired`）→ `ToolCallCompleted`，然後下一次供應商呼叫。工具依序執行，不平行。
 - **每個 `tool_use` 都必須有 `tool_result`**，兩家 API 都會拒絕缺結果的歷史：使用者停止時要補「已停止」結果（包含同一輪還沒開始的呼叫），存檔不受取消影響；送出請求前 `BuildRequestMessages` 還會修補歷史（補上缺的結果、丟掉沒有對應呼叫的孤兒結果），只改請求，不改存檔。
 - 工具結果存成 `ChatRole.Tool` 訊息（一則可含多個 `ToolResultBlock`）；工具卡片標題需要的資料（顯示名稱、對象、摘要、耗時、確認方式）都存在結果區塊裡，重開程式後可重建。

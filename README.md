@@ -9,6 +9,15 @@ Lumi 是一個跨平台（Windows / macOS）的桌面 AI 助理。使用者自�
 
 > 目前狀態：M0～M8 與 M12（UI 重新設計）程式完成，多數待人工驗收與 Windows 驗證（各里程碑見 `plan/00-master-plan.md`）。M9「歷史對話與完成度」：歷史對話的搜尋、分組、改名、刪除，視窗位置記憶，啟動失敗說明，log 程式完成並待人工驗收；Windows 國旗 emoji 的判定等待實機結果。M10「WPF 小工具的工具移植」：10A～10E 程式完成，待人工驗收。M14「長期記憶」：程式完成，待人工驗收（`plan/14-long-term-memory.md` 第 14F 節）。M15「工具清單」與 M16「MCP 伺服器」：程式完成，待人工驗收（`plan/manual-verification.md` 的 M15、M16）。M17「網路基礎與網頁讀取」：程式完成，待人工驗收（需要公司網路，`plan/manual-verification.md` 的 M17）。M18「瀏覽器操作」：程式完成，待人工驗收（需要公司的 Windows＋Edge，`plan/manual-verification.md` 的 M18）。M19「網站爬取」：程式完成，待人工驗收（`plan/manual-verification.md` 的 M19）。M20「設定頁補強、App 圖示、單一檔案發佈」：程式完成，待人工驗收（`plan/manual-verification.md` 的 M20；發佈方式見 `plan/20-settings-release.md`）。
 
+## 維護提醒：兩個需要常改的位置（用量與費用）
+
+| 要做的事 | 檔案 | 說明 |
+|---|---|---|
+| **增減地端模型名單** | [`src/Lumi.Core/Usage/LocalModelList.cs`](src/Lumi.Core/Usage/LocalModelList.cs)（`Keywords` 陣列） | model ID 符合名單（qwen、llama、gemma、gpt-oss…）就視為地端，在模型設定自動勾選「不計費」，費用算 0。公司 AI Gateway 後面新增了開源模型家族，或有雲端服務被誤判成地端（例如 mistral、deepseek、glm 的雲端版），改這裡。 |
+| **LiteLLM 價目表（模型單價）** | [`src/Lumi.Web/Pricing/litellm-model-prices.json`](src/Lumi.Web/Pricing/litellm-model-prices.json)＋同資料夾的 `litellm-model-prices.date.txt` | 打包進 App 的內嵌快照（約 3 MB），App 啟動後不會自己上網查。使用者在設定按「更新價目表」才會下載新版存到使用者資料夾（`model-prices.json`），之後優先讀那份。發新版前想更新內建快照：重新下載 [LiteLLM 的 `model_prices_and_context_window.json`](https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json) 覆蓋這個檔案，並把今天的日期寫進 `.date.txt`。 |
+
+詳細設計見 [`plan/23-usage-cost.md`](plan/23-usage-cost.md)。
+
 ## 特色
 
 - **BYOK、多模型**：可以新增多組連線與模型，工作台和小精靈可以各自用不同的模型
